@@ -19,7 +19,7 @@ FROM base AS builder
 WORKDIR /app
 RUN npm i -g turbo
 COPY . .
-RUN turbo prune web --docker
+RUN turbo prune @seunovocarro/web --docker
 
 # 2. Install dependencies
 FROM base AS installer
@@ -32,7 +32,7 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 # 3. Build the project
 COPY --from=builder /app/out/full/ .
-RUN pnpm turbo run build --filter=web...
+RUN pnpm turbo run build --filter=@seunovocarro/web...
 
 # 4. Final image Runner
 FROM alpine AS runner

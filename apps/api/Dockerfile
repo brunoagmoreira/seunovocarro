@@ -16,7 +16,7 @@ FROM base AS builder
 WORKDIR /app
 RUN npm i -g turbo
 COPY . .
-RUN turbo prune api --docker
+RUN turbo prune @seunovocarro/api --docker
 
 # 2. Install
 FROM base AS installer
@@ -30,7 +30,7 @@ COPY --from=builder /app/out/full/ ./
 RUN cd apps/api && npx prisma generate
 
 # 3. Build
-RUN pnpm turbo run build --filter=api...
+RUN pnpm turbo run build --filter=@seunovocarro/api...
 
 # 4. Runner
 FROM alpine AS runner
