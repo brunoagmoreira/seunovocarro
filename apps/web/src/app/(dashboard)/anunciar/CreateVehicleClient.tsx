@@ -1,0 +1,557 @@
+"use client";
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { ArrowLeft, X, Loader2, ImagePlus } from 'lucide-react';
+import { applyWatermark } from '@/lib/watermark';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+// TODO: Replace with Next.js API abstraction in backend migration phase
+import { supabase } from '@/integrations/supabase/client';
+import { BRANDS, STATES, FUEL_TYPES, TRANSMISSION_TYPES } from '@/types/vehicle';
+import { useCities } from '@/hooks/useCities';
+
+export function CreateVehicleClient() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const { user, profile, isApproved } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [images, setImages] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  
+  // Note: userRole was removed from useAuth in the JWT refactor (now inferred from profile.role)
+  const isDealer = profile?.role === 'dealer' || profile?.role === 'admin';
+  
+  const [formData, setFormData] = useState({
+    brand: '',
+    model: '',
+    version: '',
+    year: new Date().getFullYear(),
+    mileage: 0,
+    transmission: 'automatic',
+    fuel: 'flex',
+    color: '',
+    doors: 4,
+    plateEnding: '',
+    price: 0,
+    description: '',
+    city: profile?.city || '',
+    state: profile?.state || '',
+    whatsapp: profile?.whatsapp || profile?.phone || '',
+    phone: profile?.phone || ''
+  });
+
+  const { cities, isLoading: citiesLoading } = useCities(formData.state);
+
+  useEffect(() => {
+    if (formData.state && formData.city) {
+      const cityExists = cities.some(c => c.nome === formData.city);
+      if (!cityExists && cities.length > 0) {
+        setFormData(prev => ({ ...prev, city: '' }));
+      }
+    }
+  }, [formData.state, cities]);
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background pt-16">
+        <div className="text-center px-6 max-w-md">
+          <h1 className="font-heading text-2xl font-bold mb-4">Faça login para anunciar</h1>
+          <p className="text-muted-foreground mb-6">
+            Você precisa estar logado para criar anúncios.
+          </p>
+          <Button variant="kairos" asChild>
+            <Link href="/login">Fazer login</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isDealer) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background pt-16">
+        <div className="text-center px-6 max-w-md">
+          <div className="w-24 h-24 mx-auto mb-8 rounded-full gradient-kairos-soft flex items-center justify-center">
+            <span className="text-4xl">🚗</span>
+          </div>
+          <h1 className="font-heading text-2xl font-bold mb-4">Quer anunciar?</h1>
+          <p className="text-muted-foreground mb-6">
+            Para anunciar veículos, você precisa atualizar seu cadastro para perfil vendedor/lojista.
+          </p>
+          <Button variant="kairos" onClick={() => router.push('/perfil')}>
+            Atualizar Perfil
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isApproved) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background pt-16">
+        <div className="text-center px-6 max-w-md">
+          <div className="w-24 h-24 mx-auto mb-8 rounded-full gradient-kairos-soft flex items-center justify-center">
+            <span className="text-4xl">⏳</span>
+          </div>
+          <h1 className="font-heading text-2xl font-bold mb-4">Aguardando aprovação</h1>
+          <p className="text-muted-foreground">
+            Seu cadastro como vendedor está sendo analisado.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (images.length + files.length > 10) {
+      toast({
+        title: "Limite de imagens",
+        description: "Máximo de 10 imagens por anúncio.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setImages([...images, ...files]);
+    
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviews(prev => [...prev, reader.result as string]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (index: number) => {
+    setImages(images.filter((_, i) => i !== index));
+    setPreviews(previews.filter((_, i) => i !== index));
+  };
+
+  const generateSlug = () => {
+    const slug = `${formData.brand}-${formData.model}-${formData.year}-${Date.now()}`
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    return slug;
+  };
+
+  const handleSubmit = async (e: React.FormEvent, asDraft = false) => {
+    e.preventDefault();
+    
+    if (!formData.brand || !formData.model || !formData.price) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha marca, modelo e preço.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (images.length === 0) {
+      toast({
+        title: "Adicione fotos",
+        description: "É necessário pelo menos 1 foto do veículo.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const slug = generateSlug();
+      const { data: vehicle, error: vehicleError } = await supabase
+        .from('vehicles')
+        .insert({
+          user_id: user.id,
+          brand: formData.brand,
+          model: formData.model,
+          version: formData.version || null,
+          year: formData.year,
+          mileage: formData.mileage,
+          transmission: formData.transmission,
+          fuel: formData.fuel,
+          color: formData.color || null,
+          doors: formData.doors,
+          plate_ending: formData.plateEnding || null,
+          price: formData.price,
+          description: formData.description || null,
+          city: formData.city,
+          state: formData.state,
+          whatsapp: formData.whatsapp || null,
+          phone: formData.phone || null,
+          status: asDraft ? 'draft' : 'pending',
+          slug
+        })
+        .select()
+        .single();
+
+      if (vehicleError) throw vehicleError;
+
+      for (let i = 0; i < images.length; i++) {
+        const file = images[i];
+        
+        const watermarkedBlob = await applyWatermark(file, {
+          opacity: 0.3,
+          position: 'center',
+          scale: 0.3,
+        });
+
+        const fileExt = 'jpg';
+        const fileName = `${user.id}/${vehicle.id}/${i}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('vehicle-media')
+          .upload(fileName, watermarkedBlob, { contentType: 'image/jpeg' });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('vehicle-media')
+          .getPublicUrl(fileName);
+
+        await supabase.from('vehicle_media').insert({
+          vehicle_id: vehicle.id,
+          url: publicUrl,
+          type: 'image',
+          order: i
+        });
+      }
+
+      toast({
+        title: asDraft ? "Rascunho salvo!" : "Anúncio enviado!",
+        description: asDraft 
+          ? "Seu rascunho foi salvo." 
+          : "Seu anúncio foi enviado para aprovação.",
+      });
+
+      router.push('/meus-anuncios');
+
+    } catch (error: any) {
+      console.error('Error creating vehicle:', error);
+      toast({
+        title: "Erro ao criar anúncio",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen pb-24 md:pb-8 bg-background pt-16">
+      <div className="sticky top-16 z-10 bg-background/95 backdrop-blur-lg border-b border-border">
+        <div className="container py-4">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => router.back()}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="font-heading text-xl font-bold">Criar Anúncio</h1>
+          </div>
+        </div>
+      </div>
+
+      <div className="container py-6">
+        <form onSubmit={(e) => handleSubmit(e, false)} className="max-w-2xl mx-auto space-y-6">
+          <div className="space-y-4">
+            <Label>Fotos do veículo *</Label>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+              {previews.map((preview, index) => (
+                <div key={index} className="relative aspect-square rounded-xl overflow-hidden border border-border">
+                  <img src={preview} alt="" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    className="absolute top-2 right-2 p-1 rounded-full bg-destructive text-white"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+              {images.length < 10 && (
+                <label className="aspect-square rounded-xl border-2 border-dashed border-border hover:border-primary transition-colors cursor-pointer flex flex-col items-center justify-center gap-2">
+                  <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Adicionar</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                </label>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Máximo 10 fotos. Formatos: JPG, PNG, WebP
+            </p>
+          </div>
+
+          <div className="bg-card rounded-2xl p-6 shadow-card space-y-4">
+            <h2 className="font-heading font-semibold">Informações do veículo</h2>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Marca *</Label>
+                <Select
+                  value={formData.brand}
+                  onValueChange={(v) => setFormData({ ...formData, brand: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BRANDS.map(brand => (
+                      <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Modelo *</Label>
+                <Input
+                  value={formData.model}
+                  onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                  placeholder="Ex: Civic"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Versão</Label>
+              <Input
+                value={formData.version}
+                onChange={(e) => setFormData({ ...formData, version: e.target.value })}
+                placeholder="Ex: Touring"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Ano *</Label>
+                <Input
+                  type="number"
+                  value={formData.year}
+                  onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
+                  min={1990}
+                  max={new Date().getFullYear() + 1}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>KM *</Label>
+                <Input
+                  type="number"
+                  value={formData.mileage}
+                  onChange={(e) => setFormData({ ...formData, mileage: parseInt(e.target.value) || 0 })}
+                  min={0}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Câmbio</Label>
+                <Select
+                  value={formData.transmission}
+                  onValueChange={(v) => setFormData({ ...formData, transmission: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(TRANSMISSION_TYPES).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Combustível</Label>
+                <Select
+                  value={formData.fuel}
+                  onValueChange={(v) => setFormData({ ...formData, fuel: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(FUEL_TYPES).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>{label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>Cor</Label>
+                <Input
+                  value={formData.color}
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  placeholder="Ex: Preto"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Portas</Label>
+                <Select
+                  value={formData.doors.toString()}
+                  onValueChange={(v) => setFormData({ ...formData, doors: parseInt(v) })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="2">2 portas</SelectItem>
+                    <SelectItem value="4">4 portas</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Final da Placa</Label>
+                <Input
+                  value={formData.plateEnding}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 1);
+                    setFormData({ ...formData, plateEnding: value });
+                  }}
+                  placeholder="Ex: 5"
+                  maxLength={1}
+                  className="text-center"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Apenas o último dígito será exibido
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Preço (R$) *</Label>
+              <Input
+                type="number"
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                min={0}
+                step={100}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Descrição</Label>
+              <Textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Descreva os diferenciais do veículo, opcionais, histórico..."
+                rows={4}
+              />
+            </div>
+          </div>
+
+          <div className="bg-card rounded-2xl p-6 shadow-card space-y-4">
+            <h2 className="font-heading font-semibold">Localização e contato</h2>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Estado *</Label>
+                <Select
+                  value={formData.state}
+                  onValueChange={(v) => setFormData({ ...formData, state: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="UF" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATES.map(state => (
+                      <SelectItem key={state.uf} value={state.uf}>{state.uf}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Cidade *</Label>
+                <Select
+                  value={formData.city}
+                  onValueChange={(v) => setFormData({ ...formData, city: v })}
+                  disabled={!formData.state || citiesLoading}
+                >
+                  <SelectTrigger>
+                    {citiesLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <SelectValue placeholder="Selecione" />
+                    )}
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cities.map(city => (
+                      <SelectItem key={city.id} value={city.nome}>{city.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>WhatsApp *</Label>
+              <Input
+                value={formData.whatsapp}
+                onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                placeholder="11999999999"
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={(e) => handleSubmit(e as any, true)}
+              disabled={isLoading}
+            >
+              Salvar rascunho
+            </Button>
+            <Button
+              type="submit"
+              variant="kairos"
+              className="flex-1"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+               <>
+                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                 Enviando...
+               </>
+              ) : (
+                'Enviar para aprovação'
+              )}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

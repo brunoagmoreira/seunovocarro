@@ -1,0 +1,297 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Kairós Brand Colors */
+    --kairos-teal: 187 91% 37%;
+    --kairos-emerald: 160 75% 39%;
+    
+    /* Light Mode */
+    --background: 0 0% 96%;
+    --foreground: 0 0% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+
+    --primary: 187 91% 37%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 92%;
+    --secondary-foreground: 0 0% 10%;
+
+    --muted: 0 0% 92%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 160 75% 39%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 187 91% 37%;
+
+    --radius: 0.75rem;
+
+    /* Kairós Gradients */
+    --gradient-kairos: linear-gradient(135deg, hsl(187 91% 37%) 0%, hsl(160 75% 39%) 100%);
+    --gradient-kairos-soft: linear-gradient(135deg, hsl(187 91% 37% / 0.1) 0%, hsl(160 75% 39% / 0.1) 100%);
+    --gradient-kairos-vertical: linear-gradient(180deg, hsl(187 91% 37%) 0%, hsl(160 75% 39%) 100%);
+    
+    /* Shadows */
+    --shadow-card: 0 2px 8px -2px hsl(0 0% 0% / 0.08), 0 4px 16px -4px hsl(0 0% 0% / 0.04);
+    --shadow-elevated: 0 8px 24px -8px hsl(0 0% 0% / 0.12), 0 16px 48px -16px hsl(0 0% 0% / 0.08);
+    --shadow-kairos: 0 8px 24px -8px hsl(187 91% 37% / 0.25);
+  }
+
+  .dark {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 187 91% 37%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 55%;
+
+    --accent: 160 75% 39%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 187 91% 37%;
+
+    --shadow-card: 0 2px 8px -2px hsl(0 0% 0% / 0.4), 0 4px 16px -4px hsl(0 0% 0% / 0.3);
+    --shadow-elevated: 0 8px 24px -8px hsl(0 0% 0% / 0.5), 0 16px 48px -16px hsl(0 0% 0% / 0.4);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-bold tracking-tight;
+  }
+}
+
+@layer utilities {
+  .gradient-kairos {
+    background: var(--gradient-kairos);
+  }
+
+  .gradient-kairos-text {
+    background: var(--gradient-kairos);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-kairos-soft {
+    background: var(--gradient-kairos-soft);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .shadow-kairos {
+    box-shadow: var(--shadow-kairos);
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Touch-friendly targets */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Safe area for mobile */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
+
+/* Blog/Prose Styling */
+.prose {
+  @apply text-foreground;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  @apply font-heading font-bold text-foreground mt-8 mb-4;
+}
+
+.prose h2 {
+  @apply text-2xl md:text-3xl border-b border-border pb-3;
+}
+
+.prose h3 {
+  @apply text-xl md:text-2xl;
+}
+
+.prose h4 {
+  @apply text-lg md:text-xl;
+}
+
+.prose p {
+  @apply mb-4 leading-relaxed;
+}
+
+.prose ul, .prose ol {
+  @apply my-4 pl-6 space-y-2;
+}
+
+.prose ul {
+  @apply list-disc;
+}
+
+.prose ol {
+  @apply list-decimal;
+}
+
+.prose li {
+  @apply leading-relaxed;
+}
+
+.prose li::marker {
+  @apply text-primary;
+}
+
+.prose strong {
+  @apply font-semibold text-foreground;
+}
+
+.prose a {
+  @apply text-primary underline underline-offset-2 hover:text-primary/80 transition-colors;
+}
+
+.prose blockquote {
+  @apply border-l-4 border-primary pl-4 italic my-6 text-muted-foreground;
+}
+
+.prose code {
+  @apply bg-muted px-1.5 py-0.5 rounded text-sm font-mono;
+}
+
+.prose pre {
+  @apply bg-muted p-4 rounded-lg overflow-x-auto my-6;
+}
+
+.prose pre code {
+  @apply bg-transparent p-0;
+}
+
+.prose img {
+  @apply rounded-lg my-6;
+}
+
+.prose hr {
+  @apply my-8 border-border;
+}
+
+.prose table {
+  @apply w-full my-6 border-collapse;
+}
+
+.prose th, .prose td {
+  @apply border border-border px-4 py-2 text-left;
+}
+
+.prose th {
+  @apply bg-muted font-semibold;
+}
+
+/* Custom animations */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse-kairos {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 0%,
+    hsl(var(--muted-foreground) / 0.1) 50%,
+    hsl(var(--muted)) 100%
+  );
+  background-size: 200% 100%;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-kairos {
+  animation: pulse-kairos 2s ease-in-out infinite;
+}

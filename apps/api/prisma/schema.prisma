@@ -1,0 +1,546 @@
+// Seu Novo Carro — Schema Prisma Otimizado
+// ==========================================
+// Este schema foi remodelado para:
+// 1. Separar profiles em users + dealers
+// 2. Eliminar N+1 queries com relações explícitas
+// 3. Usar enums para campos com valores fixos
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ ENUMS ============
+
+enum AppRole {
+  user
+  editor
+  admin
+}
+
+enum UserStatus {
+  active
+  pending
+  suspended
+}
+
+enum VehicleStatus {
+  draft
+  pending
+  approved
+  sold
+  expired
+}
+
+enum Transmission {
+  manual
+  automatic
+  cvt
+  automated
+}
+
+enum FuelType {
+  flex
+  gasoline
+  ethanol
+  diesel
+  electric
+  hybrid
+}
+
+enum MediaType {
+  image
+  video
+}
+
+enum SenderType {
+  lead
+  seller
+}
+
+enum ProposalStatus {
+  pending
+  accepted
+  rejected
+  counter
+  expired
+}
+
+enum CampaignStatus {
+  active
+  paused
+  completed
+  cancelled
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  refunded
+}
+
+enum BlogPostStatus {
+  draft
+  published
+}
+
+enum BannerType {
+  hero
+  sidebar
+  popup
+}
+
+// ============ USERS & AUTH ============
+
+model User {
+  id            String     @id @default(uuid())
+  email         String     @unique
+  password_hash String
+  full_name     String?
+  phone         String?
+  whatsapp      String?
+  avatar_url    String?
+  city          String?
+  state         String?
+  role          AppRole    @default(user)
+  status        UserStatus @default(active)
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+
+  // Relações
+  dealer          Dealer?
+  vehicles        Vehicle[]
+  favorites       Favorite[]
+  notifications   Notification[]
+  blog_posts      BlogPost[]       @relation("author")
+  ad_campaigns    AdCampaign[]
+
+  @@map("users")
+}
+
+// ============ DEALERS (antes era parte de profiles) ============
+
+model Dealer {
+  id            String   @id @default(uuid())
+  user_id       String   @unique
+  name          String
+  slug          String   @unique
+  cnpj          String?  @unique
+  description   String?
+  address       String?
+  logo_url      String?
+  banner_url    String?
+  website       String?
+  instagram     String?
+  facebook      String?
+  working_hours Json?
+  verified      Boolean  @default(false)
+  featured      Boolean  @default(false)
+  since         DateTime?
+  created_at    DateTime @default(now())
+
+  // Relações
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("dealers")
+}
+
+// ============ VEHICLES ============
+
+model Vehicle {
+  id            String        @id @default(uuid())
+  user_id       String
+  brand         String
+  model         String
+  version       String?
+  year          Int
+  mileage       Int           @default(0)
+  transmission  Transmission  @default(manual)
+  fuel          FuelType      @default(flex)
+  color         String?
+  doors         Int           @default(4)
+  plate_ending  String?
+  price         Decimal       @db.Decimal(12, 2)
+  description   String?
+  city          String
+  state         String
+  phone         String?
+  whatsapp      String?
+  status        VehicleStatus @default(pending)
+  slug          String        @unique
+  display_id    String?
+  ad_code       String?
+  view_count    Int           @default(0)
+  created_at    DateTime      @default(now())
+  updated_at    DateTime      @updatedAt
+
+  // Relações
+  seller         User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  media          VehicleMedia[]
+  views          VehicleView[]
+  leads          Lead[]
+  conversations  Conversation[]
+  proposals      Proposal[]
+  favorites      Favorite[]
+  ad_campaigns   AdCampaign[]
+
+  @@index([brand])
+  @@index([city, state])
+  @@index([status])
+  @@index([user_id])
+  @@index([slug])
+  @@index([price])
+  @@index([created_at])
+  @@map("vehicles")
+}
+
+model VehicleMedia {
+  id         String    @id @default(uuid())
+  vehicle_id String
+  url        String
+  type       MediaType @default(image)
+  order      Int       @default(0)
+  created_at DateTime  @default(now())
+
+  // Relações
+  vehicle Vehicle @relation(fields: [vehicle_id], references: [id], onDelete: Cascade)
+
+  @@index([vehicle_id])
+  @@map("vehicle_media")
+}
+
+model VehicleView {
+  id           String   @id @default(uuid())
+  vehicle_id   String
+  viewer_id    String?
+  referrer     String?
+  utm_source   String?
+  utm_medium   String?
+  utm_campaign String?
+  utm_content  String?
+  utm_term     String?
+  created_at   DateTime @default(now())
+
+  // Relações
+  vehicle Vehicle @relation(fields: [vehicle_id], references: [id], onDelete: Cascade)
+
+  @@index([vehicle_id])
+  @@index([created_at])
+  @@map("vehicle_views")
+}
+
+// ============ LEADS ============
+
+model Lead {
+  id           String   @id @default(uuid())
+  vehicle_id   String
+  name         String
+  phone        String
+  email        String?
+  source       String   @default("website")
+  utm_source   String?
+  utm_medium   String?
+  utm_campaign String?
+  created_at   DateTime @default(now())
+
+  // Relações
+  vehicle       Vehicle        @relation(fields: [vehicle_id], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+
+  @@index([vehicle_id])
+  @@index([email])
+  @@index([phone])
+  @@map("leads")
+}
+
+// ============ CHAT ============
+
+model Conversation {
+  id         String   @id @default(uuid())
+  vehicle_id String
+  lead_id    String
+  seller_id  String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relações
+  vehicle  Vehicle   @relation(fields: [vehicle_id], references: [id], onDelete: Cascade)
+  lead     Lead      @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@unique([vehicle_id, lead_id])
+  @@index([seller_id])
+  @@map("conversations")
+}
+
+model Message {
+  id              String     @id @default(uuid())
+  conversation_id String
+  sender_id       String
+  sender_type     SenderType @default(lead)
+  content         String
+  read_at         DateTime?
+  created_at      DateTime   @default(now())
+
+  // Relações
+  conversation Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+
+  @@index([conversation_id])
+  @@index([created_at])
+  @@map("messages")
+}
+
+// ============ PROPOSALS ============
+
+model Proposal {
+  id              String         @id @default(uuid())
+  vehicle_id      String
+  buyer_id        String?
+  buyer_name      String
+  buyer_phone     String
+  buyer_email     String?
+  amount          Decimal        @db.Decimal(12, 2)
+  message         String?
+  status          ProposalStatus @default(pending)
+  counter_amount  Decimal?       @db.Decimal(12, 2)
+  counter_message String?
+  expires_at      DateTime       @default(dbgenerated("NOW() + INTERVAL '7 days'"))
+  created_at      DateTime       @default(now())
+  updated_at      DateTime       @updatedAt
+
+  // Relações
+  vehicle Vehicle @relation(fields: [vehicle_id], references: [id], onDelete: Cascade)
+
+  @@index([vehicle_id])
+  @@map("proposals")
+}
+
+// ============ FAVORITES ============
+
+model Favorite {
+  id         String   @id @default(uuid())
+  user_id    String
+  vehicle_id String
+  created_at DateTime @default(now())
+
+  // Relações
+  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  vehicle Vehicle @relation(fields: [vehicle_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, vehicle_id])
+  @@map("favorites")
+}
+
+// ============ NOTIFICATIONS ============
+
+model Notification {
+  id         String   @id @default(uuid())
+  user_id    String
+  title      String
+  body       String?
+  type       String
+  data       Json?
+  read_at    DateTime?
+  created_at DateTime  @default(now())
+
+  // Relações
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("notifications")
+}
+
+// ============ BLOG ============
+
+model BlogCategory {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  color       String   @default("#3B82F6")
+  description String?
+  created_at  DateTime @default(now())
+
+  // Relações
+  posts BlogPost[]
+
+  @@map("blog_categories")
+}
+
+model BlogPost {
+  id                   String         @id @default(uuid())
+  title                String
+  slug                 String         @unique
+  content              String
+  excerpt              String?
+  featured_image       String?
+  featured_image_alt   String?
+  author_id            String?
+  category_id          String?
+  status               BlogPostStatus @default(draft)
+  meta_title           String?
+  meta_description     String?
+  meta_keywords        String[]       @default([])
+  reading_time_minutes Int            @default(5)
+  views_count          Int            @default(0)
+  published_at         DateTime?
+  created_at           DateTime       @default(now())
+  updated_at           DateTime       @updatedAt
+
+  // Relações
+  author   User?         @relation("author", fields: [author_id], references: [id], onDelete: SetNull)
+  category BlogCategory? @relation(fields: [category_id], references: [id], onDelete: SetNull)
+
+  @@index([slug])
+  @@index([status])
+  @@map("blog_posts")
+}
+
+model BlogTag {
+  id   String @id @default(uuid())
+  name String
+  slug String @unique
+
+  @@map("blog_tags")
+}
+
+// ============ BANNERS ============
+
+model Banner {
+  id         String     @id @default(uuid())
+  title      String?
+  subtitle   String?
+  image_url  String?
+  link_url   String?
+  type       BannerType @default(hero)
+  order      Int        @default(0)
+  is_active  Boolean    @default(true)
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+
+  @@map("banners")
+}
+
+// ============ AD CAMPAIGNS (Meta Ads) ============
+
+model AdPlan {
+  id                     String   @id @default(uuid())
+  name                   String
+  slug                   String   @unique
+  plan_type              String   @default("individual")
+  price                  Decimal  @db.Decimal(10, 2)
+  daily_budget           Decimal  @db.Decimal(10, 2)
+  duration_days          Int      @default(30)
+  min_vehicles           Int      @default(1)
+  max_vehicles           Int      @default(1)
+  features               Json     @default("[]")
+  has_individual_metrics Boolean  @default(false)
+  badge_text             String?
+  badge_color            String?
+  display_order          Int      @default(0)
+  active                 Boolean  @default(true)
+  created_at             DateTime @default(now())
+
+  // Relações
+  campaigns AdCampaign[]
+
+  @@map("ad_plans")
+}
+
+model AdCampaign {
+  id               String         @id @default(uuid())
+  vehicle_id       String
+  seller_id        String
+  plan_id          String?
+  campaign_type    String         @default("individual")
+  status           CampaignStatus @default(active)
+  start_date       DateTime
+  end_date         DateTime
+  daily_budget     Decimal        @db.Decimal(10, 2) @default(0)
+  total_budget     Decimal        @db.Decimal(10, 2) @default(0)
+  days_total       Int            @default(30)
+  amount_paid      Decimal        @db.Decimal(10, 2) @default(0)
+  payment_status   PaymentStatus  @default(pending)
+  payment_date     DateTime?
+  meta_campaign_id String?
+  meta_adset_id    String?
+  meta_ad_id       String?
+  vehicle_ids      String[]       @default([])
+  notes            String?
+  created_at       DateTime       @default(now())
+  updated_at       DateTime       @updatedAt
+
+  // Relações
+  vehicle Vehicle     @relation(fields: [vehicle_id], references: [id], onDelete: Cascade)
+  seller  User        @relation(fields: [seller_id], references: [id], onDelete: Cascade)
+  plan    AdPlan?     @relation(fields: [plan_id], references: [id], onDelete: SetNull)
+  metrics AdMetric[]
+  totals  AdTotal?
+
+  @@index([vehicle_id])
+  @@index([seller_id])
+  @@map("ad_campaigns")
+}
+
+model AdMetric {
+  id             String   @id @default(uuid())
+  campaign_id    String
+  vehicle_id     String
+  date           DateTime @db.Date
+  impressions    Int      @default(0)
+  reach          Int      @default(0)
+  clicks         Int      @default(0)
+  link_clicks    Int      @default(0)
+  whatsapp_clicks Int     @default(0)
+  phone_calls    Int      @default(0)
+  leads          Int      @default(0)
+  spend          Decimal  @db.Decimal(10, 2) @default(0)
+  cpc            Decimal  @db.Decimal(10, 2) @default(0)
+  cpm            Decimal  @db.Decimal(10, 2) @default(0)
+  ctr            Decimal  @db.Decimal(6, 4)  @default(0)
+  cost_per_lead  Decimal  @db.Decimal(10, 2) @default(0)
+
+  // Relações
+  campaign AdCampaign @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+
+  @@index([campaign_id])
+  @@index([date])
+  @@map("ad_metrics")
+}
+
+model AdTotal {
+  id                String  @id @default(uuid())
+  campaign_id       String  @unique
+  vehicle_id        String
+  days_active       Int     @default(0)
+  total_impressions Int     @default(0)
+  total_reach       Int     @default(0)
+  total_clicks      Int     @default(0)
+  total_link_clicks Int     @default(0)
+  total_leads       Int     @default(0)
+  total_spend       Decimal @db.Decimal(10, 2) @default(0)
+  avg_cpc           Decimal @db.Decimal(10, 2) @default(0)
+  avg_cpm           Decimal @db.Decimal(10, 2) @default(0)
+  avg_ctr           Decimal @db.Decimal(6, 4)  @default(0)
+  avg_cost_per_lead Decimal @db.Decimal(10, 2) @default(0)
+
+  // Relações
+  campaign AdCampaign @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+
+  @@map("ad_totals")
+}
+
+// ============ SITE SETTINGS ============
+
+model SiteSettings {
+  id            String   @id @default(uuid())
+  ga_id         String?
+  gtm_id        String?
+  meta_pixel_id String?
+  updated_at    DateTime @updatedAt
+
+  @@map("site_settings")
+}

@@ -1,0 +1,20 @@
+# Docker Compose para desenvolvimento local
+# Roda o banco de dados PostgreSQL no seu computador
+
+services:
+  # Banco de dados PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: seunovocarro-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: seunovocarro
+      POSTGRES_PASSWORD: seunovocarro123
+      POSTGRES_DB: seunovocarro
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

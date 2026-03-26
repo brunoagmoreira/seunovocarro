@@ -1,0 +1,25 @@
+{
+  "name": "seunovocarro",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "dev:web": "turbo dev --filter=@seunovocarro/web",
+    "dev:api": "turbo dev --filter=@seunovocarro/api",
+    "build:web": "turbo build --filter=@seunovocarro/web",
+    "build:api": "turbo build --filter=@seunovocarro/api"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "npm@10.9.3"
+}
