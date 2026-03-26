@@ -1,18 +1,8 @@
 FROM node:20-alpine AS alpine
 
-# Setup pnpm
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
-
 FROM alpine AS base
 RUN apk update
 RUN apk add --no-cache libc6-compat
-
-# Setup pnpm on base
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
 
 # 1. Prune the workspace
 FROM base AS builder
@@ -27,12 +17,12 @@ WORKDIR /app
 
 # Copy lockfile and package.json's of isolated subworkspace
 COPY --from=builder /app/out/json/ .
-COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+COPY --from=builder /app/out/package-lock.json ./package-lock.json
+RUN npm ci
 
 # 3. Build the project
 COPY --from=builder /app/out/full/ .
-RUN pnpm turbo run build --filter=@seunovocarro/web...
+RUN npx turbo run build --filter=@seunovocarro/web...
 
 # 4. Final image Runner
 FROM alpine AS runner
@@ -53,4 +43,4 @@ COPY --from=installer --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/we
 COPY --from=installer --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 
 EXPOSE 3000
-CMD node apps/web/server.js
+CMD ["node", "server.js"]

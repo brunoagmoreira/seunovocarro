@@ -1,15 +1,8 @@
 FROM node:20-alpine AS alpine
 
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
-
 FROM alpine AS base
 RUN apk update
 RUN apk add --no-cache libc6-compat openssl
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
 
 # 1. Prune
 FROM base AS builder
@@ -22,15 +15,15 @@ RUN turbo prune @seunovocarro/api --docker
 FROM base AS installer
 WORKDIR /app
 COPY --from=builder /app/out/json/ .
-COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+COPY --from=builder /app/out/package-lock.json ./package-lock.json
+RUN npm ci
 
 # Generate prisma client inside the api folder
 COPY --from=builder /app/out/full/ ./
 RUN cd apps/api && npx prisma generate
 
 # 3. Build
-RUN pnpm turbo run build --filter=@seunovocarro/api...
+RUN npx turbo run build --filter=@seunovocarro/api...
 
 # 4. Runner
 FROM alpine AS runner
