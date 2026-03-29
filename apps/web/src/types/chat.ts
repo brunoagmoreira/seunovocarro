@@ -6,18 +6,24 @@ export interface Conversation {
   created_at: string;
   updated_at: string;
   // Joined data
+  unread_count?: number;
+  last_message?: Message;
   vehicle?: {
+    id: string;
     brand: string;
     model: string;
     year: number;
     slug: string;
     media: { url: string }[];
+    images?: { url: string }[];
   };
   lead?: {
+    id: string;
     name: string;
     phone: string;
   };
   seller?: {
+    id: string;
     full_name: string;
     avatar_url: string;
   };
