@@ -388,7 +388,7 @@ function RegisterForm() {
               </div>
             )}
 
-            <Button type="submit" variant="brand" size="lg" className="w-full" disabled={isLoading}>
+            <Button type="submit" variant="kairos" size="lg" className="w-full" disabled={isLoading}>
               {isLoading ? 'Criando conta...' : 'Criar conta'}
             </Button>
           </form>

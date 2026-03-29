@@ -65,6 +65,9 @@ export class CreateVehicleDto {
 
   @IsString()
   slug!: string;
+
+  @IsOptional()
+  media?: { url: string; type: 'image' | 'video'; order: number }[];
 }
 
 export class UpdateVehicleDto extends CreateVehicleDto {

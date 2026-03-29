@@ -119,7 +119,6 @@
   .gradient-brand-soft {
     background: var(--gradient-brand-soft);
   }
-}
 
   .shadow-card {
     box-shadow: var(--shadow-card);

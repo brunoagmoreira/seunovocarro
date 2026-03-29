@@ -30,22 +30,14 @@ export function Logo({ variant = 'full', size = 'md', className = '', light = fa
   }
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <div className={`flex items-center ${className}`}>
       <Image 
         src={logoIcon} 
         alt="Seu Novo Carro" 
-        width={icon} 
+        width={icon * 3} // Increased width to accommodate the horizontal logo image
         height={icon}
         className="object-contain"
       />
-      <div className="flex flex-col leading-[0.9]">
-        <span className={`font-bold ${text} tracking-tight ${light ? 'text-white' : 'text-primary'}`}>
-          SEU NOVO
-        </span>
-        <span className={`font-black ${subtext} tracking-[0.3em] ${light ? 'text-white/90' : 'text-secondary'}`}>
-          CARRO
-        </span>
-      </div>
     </div>
   );
 }

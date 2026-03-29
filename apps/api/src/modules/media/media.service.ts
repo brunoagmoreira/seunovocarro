@@ -34,7 +34,7 @@ export class MediaService {
       await this.s3Client.send(command);
 
       // Return public URL based on the public R2 domain
-      const publicDomain = process.env.R2_PUBLIC_DOMAIN || 'https://pub-your-r2-domain.r2.dev';
+      const publicDomain = process.env.R2_PUBLIC_URL || 'https://pub-your-r2-domain.r2.dev';
       return `${publicDomain}/${fileName}`;
     } catch (error) {
       console.error('Error uploading file to R2:', error);
@@ -44,7 +44,7 @@ export class MediaService {
 
   async deleteFile(fileUrl: string): Promise<void> {
     try {
-      const publicDomain = process.env.R2_PUBLIC_DOMAIN || 'https://pub-your-r2-domain.r2.dev';
+      const publicDomain = process.env.R2_PUBLIC_URL || 'https://pub-your-r2-domain.r2.dev';
       const key = fileUrl.replace(`${publicDomain}/`, '');
 
       const command = new DeleteObjectCommand({

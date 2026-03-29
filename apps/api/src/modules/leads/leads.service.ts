@@ -19,7 +19,10 @@ export class LeadsService {
 
     // Criar o lead
     const lead = await this.prisma.lead.create({
-      data: createLeadDto,
+      data: {
+        ...createLeadDto,
+        user_id: createLeadDto.user_id || null,
+      },
     });
 
     // Criar a conversa associada ao lead automaticamente

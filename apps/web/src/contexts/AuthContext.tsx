@@ -62,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.seunovocarro.com.br/api';
 
   useEffect(() => {
     // 1. Initial Load: Check token

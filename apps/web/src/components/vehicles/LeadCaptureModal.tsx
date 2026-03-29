@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { fetchApi } from '@/lib/api';
 import { getStoredUTM } from '@/hooks/useUTM';
 
 interface LeadCaptureModalProps {
@@ -56,24 +56,19 @@ export function LeadCaptureModal({
       // Get UTM params
       const utmParams = getStoredUTM();
 
-      // Save lead to database with UTM data
-      const { error } = await supabase.from('leads').insert({
-        vehicle_id: vehicleId,
-        name: formData.name,
-        phone: formData.phone,
-        source: 'whatsapp',
-        utm_source: utmParams.utm_source,
-        utm_medium: utmParams.utm_medium,
-        utm_campaign: utmParams.utm_campaign,
-        utm_term: utmParams.utm_term,
-        utm_content: utmParams.utm_content,
-        referrer: utmParams.referrer,
-      } as any);
-
-      if (error) {
-        console.error('Lead save error:', error);
-        // Continue anyway - we want the user to be able to contact
-      }
+      // Gravar lead no banco através da API NestJS
+      const lead = await fetchApi<any>('/leads', {
+        method: 'POST',
+        body: JSON.stringify({
+          vehicle_id: vehicleId,
+          name: formData.name,
+          phone: formData.phone,
+          source: 'whatsapp',
+          utm_source: utmParams.utm_source,
+          utm_medium: utmParams.utm_medium,
+          utm_campaign: utmParams.utm_campaign,
+        }),
+      });
 
       // Redirect to WhatsApp
       const message = encodeURIComponent(

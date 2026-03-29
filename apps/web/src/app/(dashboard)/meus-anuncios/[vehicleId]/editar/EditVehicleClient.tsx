@@ -16,8 +16,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-// TODO: Replace with Next.js API abstraction in backend migration phase
-import { supabase } from '@/integrations/supabase/client';
+import { fetchApi } from '@/lib/api';
 import { BRANDS, STATES, FUEL_TYPES, TRANSMISSION_TYPES } from '@/types/vehicle';
 import { applyWatermark } from '@/lib/watermark';
 import { useCities } from '@/hooks/useCities';
@@ -86,53 +85,54 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
   }, [vehicleId, user]);
 
   const fetchVehicle = async () => {
-    const { data: vehicle, error } = await supabase
-      .from('vehicles')
-      .select(`*, vehicle_media (id, url, type, order)`)
-      .eq('id', vehicleId)
-      .eq('user_id', user?.id)
-      .single();
+    try {
+      const vehicle = await fetchApi<any>(`/vehicles/${vehicleId}`, {
+        params: { anyStatus: true },
+        requireAuth: true
+      });
 
-    if (error || !vehicle) {
+      if (!vehicle) throw new Error('Not found');
+
+      const vehicleFormData = {
+        brand: vehicle.brand,
+        model: vehicle.model,
+        version: vehicle.version || '',
+        year: vehicle.year,
+        mileage: vehicle.mileage,
+        transmission: vehicle.transmission,
+        fuel: vehicle.fuel,
+        color: vehicle.color || '',
+        doors: vehicle.doors || 4,
+        plateEnding: vehicle.plate_ending || '',
+        price: vehicle.price,
+        description: vehicle.description || '',
+        city: vehicle.city,
+        state: vehicle.state,
+        whatsapp: vehicle.whatsapp || '',
+        phone: vehicle.phone || ''
+      };
+      
+      setFormData(vehicleFormData);
+      setOriginalData(vehicleFormData);
+
+      const media = (vehicle.media || []).sort((a: any, b: any) => a.order - b.order);
+      setExistingMedia(media.map((m: any, i: number) => ({ 
+        ...m, 
+        is_primary: i === 0 
+      })));
+      
+      const videoMedia = media.filter((m: any) => m.type === 'video');
+      setYoutubeUrls(videoMedia.map((v: any) => v.url));
+      
+      setIsLoading(false);
+    } catch (error) {
       toast({
         title: "Veículo não encontrado",
         description: "Este veículo não existe ou você não tem permissão.",
         variant: "destructive"
       });
       router.push('/meus-anuncios');
-      return;
     }
-
-    const vehicleFormData = {
-      brand: vehicle.brand,
-      model: vehicle.model,
-      version: vehicle.version || '',
-      year: vehicle.year,
-      mileage: vehicle.mileage,
-      transmission: vehicle.transmission,
-      fuel: vehicle.fuel,
-      color: vehicle.color || '',
-      doors: vehicle.doors || 4,
-      plateEnding: vehicle.plate_ending || '',
-      price: vehicle.price,
-      description: vehicle.description || '',
-      city: vehicle.city,
-      state: vehicle.state,
-      whatsapp: vehicle.whatsapp || '',
-      phone: vehicle.phone || ''
-    };
-    
-    setFormData(vehicleFormData);
-    setOriginalData(vehicleFormData);
-
-    const media = (vehicle.vehicle_media || []).sort((a: any, b: any) => a.order - b.order);
-    const images = media.filter((m: any) => m.type === 'image');
-    const videos = media.filter((m: any) => m.type === 'video');
-    
-    setExistingMedia(images.map((m: any, i: number) => ({ ...m, is_primary: i === 0 })));
-    setYoutubeUrls(videos.map((v: any) => v.url));
-    
-    setIsLoading(false);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -252,79 +252,45 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
     setIsSaving(true);
 
     try {
-      const { error: vehicleError } = await supabase
-        .from('vehicles')
-        .update({
-          ...formData,
-          status: asDraft ? 'draft' : 'pending',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', vehicleId);
-
-      if (vehicleError) throw vehicleError;
-
-      if (mediaToDelete.length > 0) {
-        await supabase
-          .from('vehicle_media')
-          .delete()
-          .in('id', mediaToDelete);
-      }
-
-      for (const media of existingMedia) {
-        await supabase
-          .from('vehicle_media')
-          .update({ order: media.order })
-          .eq('id', media.id);
-      }
-
-      const startOrder = existingMedia.length;
+      // Step 1: Upload NEW images to R2
+      const newUploadedMedia: any[] = [];
       for (let i = 0; i < newImages.length; i++) {
         const file = newImages[i];
         const watermarkedBlob = await applyWatermark(file, {
-          opacity: 0.3,
-          position: 'center',
-          scale: 0.3,
+          opacity: 0.3, position: 'center', scale: 0.3,
         });
-
-        const fileName = `${user!.id}/${vehicleId}/${Date.now()}-${i}.jpg`;
-        const { error: uploadError } = await supabase.storage
-          .from('vehicle-media')
-          .upload(fileName, watermarkedBlob, { contentType: 'image/jpeg' });
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('vehicle-media')
-          .getPublicUrl(fileName);
-
-        await supabase.from('vehicle_media').insert({
-          vehicle_id: vehicleId,
-          url: publicUrl,
-          type: 'image',
-          order: startOrder + i
+        
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', new File([watermarkedBlob], `edit_${Date.now()}_${i}.jpg`, { type: 'image/jpeg' }));
+        
+        const { url } = await fetchApi<{ url: string }>('/media/upload/vehicle', {
+          method: 'POST', body: uploadFormData, requireAuth: true
         });
+        
+        newUploadedMedia.push({ url, type: 'image', order: 0 }); // Order will be set below
       }
 
-      await supabase
-        .from('vehicle_media')
-        .delete()
-        .eq('vehicle_id', vehicleId)
-        .eq('type', 'video');
+      // Step 2: Combine existing and new media with new orders
+      const finalMedia = [
+        ...existingMedia.map((m, i) => ({ url: m.url, type: 'image', order: i })),
+        ...newUploadedMedia.map((m, i) => ({ ...m, order: existingMedia.length + i })),
+        ...youtubeUrls.map((url, i) => ({ url, type: 'video', order: 100 + i }))
+      ];
 
-      for (let i = 0; i < youtubeUrls.length; i++) {
-        await supabase.from('vehicle_media').insert({
-          vehicle_id: vehicleId,
-          url: youtubeUrls[i],
-          type: 'video',
-          order: 100 + i
-        });
-      }
+      // Step 3: Update vehicle data and media via single PATCH
+      await fetchApi(`/vehicles/${vehicleId}`, {
+        method: 'PATCH',
+        body: {
+          ...formData,
+          status: asDraft ? 'draft' : 'pending',
+          media: finalMedia
+        },
+        requireAuth: true
+      });
 
       toast({
         title: asDraft ? "Rascunho salvo!" : "Anúncio atualizado!",
-        description: asDraft 
-          ? "Seu rascunho foi salvo." 
-          : "Seu anúncio foi enviado para aprovação novamente.",
+        description: asDraft ? "Seu rascunho foi salvo." : "Seu anúncio foi atualizado com sucesso.",
       });
 
       router.push('/meus-anuncios');
@@ -610,8 +576,8 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
             <Button type="button" variant="outline" className="flex-1" onClick={(e) => handleSubmit(e as any, true)} disabled={isSaving}>
               Salvar rascunho
             </Button>
-            <Button type="submit" variant="brand" className="flex-1" disabled={isSaving}>
-              {isSaving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Atualizando...</> : 'Enviar para aprovação'}
+            <Button type="submit" variant="kairos" className="flex-1" disabled={isSaving}>
+              {isSaving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Atualizando...</> : 'Salvar Alterações'}
             </Button>
           </div>
         </form>

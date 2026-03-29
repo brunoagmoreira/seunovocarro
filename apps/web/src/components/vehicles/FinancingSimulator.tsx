@@ -120,7 +120,7 @@ export function FinancingSimulator({ vehiclePrice, vehicleName, onSimulate }: Fi
           </div>
 
           <Button 
-            variant="brand" 
+            variant="kairos" 
             className="w-full"
             onClick={handleSimulate}
           >

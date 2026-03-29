@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, UseGuards } from '@nestjs/common';
 import { ChatService } from './chat.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -17,5 +17,10 @@ export class ChatController {
   @Get('conversations/:id/messages')
   getMessages(@Param('id') conversationId: string, @CurrentUser() user: User) {
     return this.chatService.getConversationMessages(conversationId, user.id);
+  }
+
+  @Post('conversations/:id/read')
+  markAsRead(@Param('id') conversationId: string, @CurrentUser() user: User) {
+    return this.chatService.markAsRead(conversationId, user.id);
   }
 }

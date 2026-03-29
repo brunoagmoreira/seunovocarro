@@ -1,11 +1,8 @@
-"use client";
-
 import { useState, useEffect } from 'react';
-import { MessageSquare, Phone, Calendar, Car, TrendingUp } from 'lucide-react';
+import { MessageSquare, Phone, Calendar, Car, TrendingUp, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-// TODO: Replace with Next.js API abstraction in backend migration phase
-import { supabase } from '@/integrations/supabase/client';
+import { fetchApi } from '@/lib/api';
 
 interface LeadWithVehicle {
   id: string;
@@ -39,54 +36,31 @@ export function LeadsClient() {
   }, [user]);
 
   const fetchLeads = async () => {
-    // First get user's vehicles
-    const { data: userVehicles } = await supabase
-      .from('vehicles')
-      .select('id, brand, model, year')
-      .eq('user_id', user?.id);
+    setIsLoading(true);
+    try {
+      const data = await fetchApi<LeadWithVehicle[]>('/leads/mine', {
+        requireAuth: true
+      });
+      
+      setLeads(data);
 
-    if (!userVehicles?.length) {
+      // Calculate stats
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      setStats({
+        total: data.length,
+        today: data.filter(l => new Date(l.created_at) >= todayStart).length,
+        thisWeek: data.filter(l => new Date(l.created_at) >= weekStart).length,
+        thisMonth: data.filter(l => new Date(l.created_at) >= monthStart).length,
+      });
+    } catch (err) {
+      console.error('Error fetching leads:', err);
+    } finally {
       setIsLoading(false);
-      return;
     }
-
-    const vehicleIds = userVehicles.map((v: any) => v.id);
-
-    // Then get leads for those vehicles
-    const { data: leadsData, error } = await (supabase as any)
-      .from('leads')
-      .select('id, name, phone, source, created_at, vehicle_id')
-      .in('vehicle_id', vehicleIds)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching leads:', error);
-      setIsLoading(false);
-      return;
-    }
-
-    // Map leads with vehicle info
-    const leadsWithVehicles = (leadsData as any[])?.map((lead: any) => ({
-      ...lead,
-      vehicle: userVehicles.find((v: any) => v.id === lead.vehicle_id) || null
-    })) || [];
-
-    setLeads(leadsWithVehicles);
-
-    // Calculate stats
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    setStats({
-      total: leadsWithVehicles.length,
-      today: leadsWithVehicles.filter(l => new Date(l.created_at) >= todayStart).length,
-      thisWeek: leadsWithVehicles.filter(l => new Date(l.created_at) >= weekStart).length,
-      thisMonth: leadsWithVehicles.filter(l => new Date(l.created_at) >= monthStart).length,
-    });
-
-    setIsLoading(false);
   };
 
   const formatDate = (dateString: string) => {
@@ -116,10 +90,8 @@ export function LeadsClient() {
   if (isLoading) {
     return (
       <div className="container py-8 pt-24">
-        <div className="animate-pulse space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-24 bg-muted rounded-xl" />
-          ))}
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       </div>
     );
@@ -134,9 +106,9 @@ export function LeadsClient() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-card rounded-xl p-4 shadow-card">
+          <div className="bg-card rounded-xl p-4 shadow-card border border-border">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg gradient-brand-soft">
+              <div className="p-2 rounded-lg bg-primary/10">
                 <TrendingUp className="h-5 w-5 text-primary" />
               </div>
               <div>
@@ -145,7 +117,7 @@ export function LeadsClient() {
               </div>
             </div>
           </div>
-          <div className="bg-card rounded-xl p-4 shadow-card">
+          <div className="bg-card rounded-xl p-4 shadow-card border border-border">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-green-500/10">
                 <Calendar className="h-5 w-5 text-green-600" />
@@ -156,7 +128,7 @@ export function LeadsClient() {
               </div>
             </div>
           </div>
-          <div className="bg-card rounded-xl p-4 shadow-card">
+          <div className="bg-card rounded-xl p-4 shadow-card border border-border">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-blue-500/10">
                 <Calendar className="h-5 w-5 text-blue-600" />
@@ -167,7 +139,7 @@ export function LeadsClient() {
               </div>
             </div>
           </div>
-          <div className="bg-card rounded-xl p-4 shadow-card">
+          <div className="bg-card rounded-xl p-4 shadow-card border border-border">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-purple-500/10">
                 <Calendar className="h-5 w-5 text-purple-600" />
@@ -181,8 +153,8 @@ export function LeadsClient() {
         </div>
 
         {leads.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-24 h-24 mx-auto mb-6 rounded-full gradient-brand-soft flex items-center justify-center">
+          <div className="text-center py-16 bg-card rounded-2xl border border-dashed">
+            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
               <MessageSquare className="h-10 w-10 text-primary" />
             </div>
             <h2 className="font-heading text-xl font-bold mb-2">Nenhum lead ainda</h2>
@@ -195,13 +167,13 @@ export function LeadsClient() {
             {leads.map((lead) => (
               <div
                 key={lead.id}
-                className="bg-card rounded-2xl p-4 shadow-card"
+                className="bg-card rounded-2xl p-4 shadow-card border border-border hover:border-primary/50 transition-colors"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <h3 className="font-heading font-semibold">{lead.name}</h3>
-                      <Badge variant="outline">
+                      <Badge variant="secondary" className="bg-primary/10 text-primary border-none">
                         {lead.source === 'whatsapp' ? 'WhatsApp' : lead.source}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
@@ -231,10 +203,10 @@ export function LeadsClient() {
                       href={`https://wa.me/55${lead.phone.replace(/\D/g, '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-[#25D366] text-white text-sm font-medium hover:bg-[#20BD5A] transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#25D366] text-white text-sm font-medium hover:bg-[#20BD5A] transition-all transform hover:scale-105 shadow-sm"
                     >
                       <MessageSquare className="h-4 w-4" />
-                      Responder
+                      Responder no WhatsApp
                     </a>
                   </div>
                 </div>

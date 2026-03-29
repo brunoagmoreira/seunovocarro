@@ -8,17 +8,23 @@ export class ChatService {
   constructor(private prisma: PrismaService) {}
 
   async getUserConversations(userId: string) {
-    // Busca conversas onde o usuário é o seller ou o lead (baseado nos relacionamentos)
-    // No nosso modelo atual, lead nao tem user_id atrelado diretamente, 
-    // mas vamos retornar todas em que o seller_id = userId.
-    // Em um cenário completo, o lead associado ao User poderia ser filtrado.
+    // Busca conversas onde o usuário é o seller OU o dono do lead (buyer)
     return this.prisma.conversation.findMany({
       where: {
-        seller_id: userId,
+        OR: [
+          { seller_id: userId },
+          { lead: { user_id: userId } }
+        ]
       },
       include: {
         vehicle: {
-          select: { brand: true, model: true, year: true, slug: true },
+          select: { 
+            brand: true, 
+            model: true, 
+            year: true, 
+            slug: true, 
+            media: { take: 1, orderBy: { order: 'asc' } } 
+          },
         },
         lead: {
           select: { name: true, phone: true },
@@ -35,13 +41,17 @@ export class ChatService {
   async getConversationMessages(conversationId: string, userId: string) {
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: conversationId },
+      include: { lead: true }
     });
 
     if (!conversation) {
       throw new NotFoundException('Conversa não encontrada');
     }
 
-    if (conversation.seller_id !== userId) {
+    const isSeller = conversation.seller_id === userId;
+    const isBuyer = conversation.lead.user_id === userId;
+
+    if (!isSeller && !isBuyer) {
       throw new ForbiddenException('Acesso negado a esta conversa');
     }
 
@@ -54,10 +64,18 @@ export class ChatService {
   async saveMessage(sendMessageDto: SendMessageDto, userId: string) {
     const conversation = await this.prisma.conversation.findUnique({
       where: { id: sendMessageDto.conversation_id },
+      include: { lead: true }
     });
 
     if (!conversation) {
       throw new NotFoundException('Conversa não encontrada');
+    }
+
+    const isSeller = conversation.seller_id === userId;
+    const isBuyer = conversation.lead.user_id === userId;
+
+    if (!isSeller && !isBuyer) {
+      throw new ForbiddenException('Não autorizado a enviar mensagens nesta conversa');
     }
 
     // Cria a mensagem
@@ -77,5 +95,33 @@ export class ChatService {
     });
 
     return message;
+  }
+
+  async markAsRead(conversationId: string, userId: string) {
+    const conversation = await this.prisma.conversation.findUnique({
+      where: { id: conversationId },
+      include: { lead: true }
+    });
+
+    if (!conversation) throw new NotFoundException('Conversa não encontrada');
+
+    const isSeller = conversation.seller_id === userId;
+    const isBuyer = conversation.lead.user_id === userId;
+
+    if (!isSeller && !isBuyer) throw new ForbiddenException();
+
+    // Se for o seller lendo, marca mensagens do lead como lidas
+    const targetSenderType = isSeller ? 'lead' : 'seller';
+
+    return this.prisma.message.updateMany({
+      where: {
+        conversation_id: conversationId,
+        sender_type: targetSenderType,
+        read_at: null
+      },
+      data: {
+        read_at: new Date()
+      }
+    });
   }
 }

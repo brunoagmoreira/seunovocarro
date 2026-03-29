@@ -29,4 +29,8 @@ export class CreateLeadDto {
   @IsString()
   @IsOptional()
   utm_campaign?: string;
+
+  @IsString()
+  @IsOptional()
+  user_id?: string;
 }

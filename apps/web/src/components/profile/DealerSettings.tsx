@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { fetchApi } from '@/lib/api';
 import { compressImage } from '@/lib/imageCompression';
 import { generateDealerSlug } from '@/hooks/useDealers';
 
@@ -85,24 +85,16 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
         fileToUpload = await compressImage(file, 0.7, type === 'logo' ? 400 : 1200);
       }
 
-      const fileName = `${profile.id}/dealer-${type}.jpg`;
+      const formData = new FormData();
+      formData.append('file', fileToUpload);
 
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, fileToUpload, { 
-          upsert: true,
-          contentType: 'image/jpeg'
-        });
+      const response = await fetchApi<{ url: string }>('/media/upload/avatar', {
+        method: 'POST',
+        body: formData,
+        requireAuth: true,
+      });
 
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName);
-
-      const urlWithCacheBust = `${publicUrl}?t=${Date.now()}`;
-      
-      return urlWithCacheBust;
+      return response.url;
     } catch (error: any) {
       console.error(`${type} upload error:`, error);
       toast({
@@ -383,7 +375,7 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
 
           <Button
             type="button"
-            variant="brand"
+            variant="kairos"
             className="w-full"
             onClick={handleSave}
             disabled={isLoading || !dealerData.dealer_name}

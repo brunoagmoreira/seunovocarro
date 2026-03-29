@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchApi } from '@/lib/api';
-import { socketService } from '@/lib/socket';
+import { getSocket } from '@/lib/socket';
 import { Conversation, Message } from '@/types/chat';
 
 export function useConversation(vehicleId: string | undefined, forceNewSession?: string) {
@@ -26,7 +26,7 @@ export function useSellerConversations() {
   return useQuery({
     queryKey: ['chat', 'seller_conversations'],
     queryFn: async () => {
-      return await fetchApi<Conversation[]>('/chat/conversations/seller', { requireAuth: true });
+      return await fetchApi<Conversation[]>('/chat/conversations', { requireAuth: true });
     },
     staleTime: 30000,
   });
@@ -36,7 +36,7 @@ export function useBuyerConversations() {
   return useQuery({
     queryKey: ['chat', 'buyer_conversations'],
     queryFn: async () => {
-      return await fetchApi<Conversation[]>('/chat/conversations/buyer', { requireAuth: true });
+      return await fetchApi<Conversation[]>('/chat/conversations', { requireAuth: true });
     },
     staleTime: 30000,
   });
@@ -58,10 +58,11 @@ export function useMessages(conversationId: string | undefined) {
   useEffect(() => {
     if (!conversationId) return;
 
-    const socket = socketService.connect();
+    const token = typeof window !== 'undefined' ? localStorage.getItem('snc_auth_token') : null;
+    const socket = getSocket(token);
     
     // Join the specific conversation room
-    socket.emit('joinConversation', conversationId);
+    socket.emit('joinConversation', { conversationId });
 
     const handleNewMessage = (newMessage: Message) => {
       queryClient.setQueryData<Message[]>(['chat', 'messages', conversationId], (oldData) => {
@@ -78,14 +79,15 @@ export function useMessages(conversationId: string | undefined) {
 
     return () => {
       socket.off('newMessage', handleNewMessage);
-      socket.emit('leaveConversation', conversationId);
+      socket.emit('leaveConversation', { conversationId });
+      socket.disconnect();
     };
   }, [conversationId, queryClient]);
 
   return query;
 }
 
-export async function sendMessage(conversationId: string, content: string, senderType: 'lead' | 'seller') {
+export async function sendMessage(conversationId: string, content: string, senderType: 'lead' | 'seller' | 'buyer') {
   return await fetchApi<Message>(`/chat/conversations/${conversationId}/messages`, {
     method: 'POST',
     requireAuth: true,
@@ -95,7 +97,7 @@ export async function sendMessage(conversationId: string, content: string, sende
 
 export async function markMessagesAsRead(conversationId: string) {
   return await fetchApi(`/chat/conversations/${conversationId}/read`, {
-    method: 'PUT',
+    method: 'POST',
     requireAuth: true,
   });
 }
@@ -108,7 +110,7 @@ export function useSendMessage() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ conversationId, content, senderType }: { conversationId: string; content: string; senderType: 'lead' | 'seller' }) => {
+    mutationFn: async ({ conversationId, content, senderType }: { conversationId: string; content: string; senderType: 'lead' | 'seller' | 'buyer' }) => {
       return await sendMessage(conversationId, content, senderType);
     },
     onSuccess: (_, variables) => {
@@ -136,8 +138,9 @@ export const useChatSubscription = (id?: string | null, cb?: (payload: any) => v
   useEffect(() => {
     if (!id || !cb) return;
 
-    const socket = socketService.connect();
-    socket.emit('joinConversation', id);
+    const token = typeof window !== 'undefined' ? localStorage.getItem('snc_auth_token') : null;
+    const socket = getSocket(token);
+    socket.emit('joinConversation', { conversationId: id });
 
     const handleMessage = (payload: any) => {
       cb(payload);
@@ -147,7 +150,8 @@ export const useChatSubscription = (id?: string | null, cb?: (payload: any) => v
 
     return () => {
       socket.off('newMessage', handleMessage);
-      socket.emit('leaveConversation', id);
+      socket.emit('leaveConversation', { conversationId: id });
+      socket.disconnect();
     };
   }, [id, cb]);
 };

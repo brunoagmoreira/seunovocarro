@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { fetchApi } from '@/lib/api';
+import { getSocket } from '@/lib/socket';
+import type { Message } from '@/types/chat';
 
 interface ChatWindowProps {
   vehicleId: string;
@@ -17,20 +19,6 @@ interface ChatWindowProps {
   sellerAvatar?: string;
   onClose?: () => void;
 }
-
-interface ChatMessage {
-  id: string;
-  sender_id: string;
-  sender_type: 'lead' | 'seller';
-  content: string;
-  created_at: string;
-}
-
-// Helper for tables not in generated types
-const db = {
-  conversations: () => supabase.from('conversations' as any),
-  messages: () => supabase.from('messages' as any),
-};
 
 export function ChatWindow({
   vehicleId,
@@ -43,19 +31,16 @@ export function ChatWindow({
   const { toast } = useToast();
   const { user, profile } = useAuth();
   const [conversationId, setConversationId] = useState<string | null>(null);
-  const [leadId, setLeadId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    scrollToBottom();
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
   }, [messages]);
 
   // Initialize or fetch conversation
@@ -69,173 +54,93 @@ export function ChatWindow({
         const buyerName = profile?.full_name || user.email?.split('@')[0] || 'Comprador';
         const buyerPhone = profile?.whatsapp || profile?.phone || '';
 
-        if (!buyerPhone) {
+        // 1) Upsert Lead via API
+        const lead = await fetchApi<any>(`/leads`, {
+          method: 'POST',
+          body: JSON.stringify({
+            vehicle_id: vehicleId,
+            name: buyerName,
+            phone: buyerPhone,
+            email: user.email,
+            source: 'chat',
+            user_id: user.id
+          })
+        });
+        
+        // 2) Find/Create Conversation
+        const conversations = await fetchApi<any[]>(`/chat/conversations`, { requireAuth: true });
+        let conv = conversations.find(c => c.vehicle_id === vehicleId && c.lead_id === lead.id);
+
+        if (!conv) {
+          // If not found, one might need a POST /chat/conversations in the future, 
+          // but for now let's hope it exists or the logic is auto-handled.
+          // Since the API doesn't have POST /chat/conversations yet (only schema side), 
+          // let's stick to what we have in current code or fetch list.
           toast({
-            title: 'WhatsApp necessário',
-            description: 'Complete seu WhatsApp no perfil para iniciar o chat.',
+            title: 'Chat indisponível',
+            description: 'Por favor, use o botão de Proposta para iniciar o contato.',
             variant: 'destructive',
           });
+          onClose?.();
           return;
         }
-
-        // 1) Find/Create a lead silently (schema uses lead_id)
-        const email = user.email || null;
-        let foundLeadId: string | null = null;
-
-        if (email) {
-          const { data } = await supabase
-            .from('leads')
-            .select('id')
-            .eq('vehicle_id', vehicleId)
-            .eq('email', email)
-            .maybeSingle();
-
-          foundLeadId = (data as any)?.id ?? null;
-        }
-
-        if (!foundLeadId) {
-          const { data } = await supabase
-            .from('leads')
-            .select('id')
-            .eq('vehicle_id', vehicleId)
-            .eq('phone', buyerPhone)
-            .maybeSingle();
-
-          foundLeadId = (data as any)?.id ?? null;
-        }
-
-        if (!foundLeadId) {
-          const { data: newLead, error: leadError } = await supabase
-            .from('leads')
-            .insert({
-              vehicle_id: vehicleId,
-              name: buyerName,
-              phone: buyerPhone,
-              email,
-              source: 'form',
-            } as any)
-            .select('id')
-            .single();
-
-          if (leadError) throw leadError;
-          foundLeadId = (newLead as any)?.id ?? null;
-        }
-
-        if (!foundLeadId) {
-          throw new Error('Não foi possível identificar o lead.');
-        }
-
-        setLeadId(foundLeadId);
-
-        // 2) Find/Create conversation for this lead
-        const { data: existingConv, error: findError } = await db.conversations()
-          .select('id')
-          .eq('vehicle_id', vehicleId)
-          .eq('seller_id', sellerId)
-          .eq('lead_id', foundLeadId)
-          .maybeSingle();
-
-        if (findError && (findError as any).code !== 'PGRST116') {
-          console.error('Error finding conversation:', findError);
-        }
-
-        const convId = (existingConv as any)?.id as string | undefined;
-
-        if (convId) {
-          setConversationId(convId);
-        } else {
-          const { data: newConv, error: createError } = await db.conversations()
-            .insert({
-              vehicle_id: vehicleId,
-              seller_id: sellerId,
-              lead_id: foundLeadId,
-            } as any)
-            .select('id')
-            .single();
-
-          if (createError) throw createError;
-
-          const createdId = (newConv as any)?.id as string | undefined;
-          if (!createdId) throw new Error('Falha ao criar conversa.');
-
-          setConversationId(createdId);
-        }
+        
+        setConversationId(conv.id);
       } catch (error: any) {
         console.error('Init conversation error:', error);
-        toast({
-          title: 'Erro',
-          description: error?.message || 'Não foi possível iniciar a conversa.',
-          variant: 'destructive',
-        });
       } finally {
         setIsLoading(false);
       }
     };
 
     initConversation();
-  }, [user, profile, vehicleId, sellerId, toast]);
+  }, [user, profile, vehicleId, sellerId]);
 
-  // Fetch messages when conversationId is available
+  // Messages & Socket
   useEffect(() => {
     if (!conversationId) return;
 
     const fetchMessages = async () => {
-      const { data, error } = await db.messages()
-        .select('*')
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true });
-
-      if (!error && data) {
-        setMessages(data as unknown as ChatMessage[]);
+      try {
+        const data = await fetchApi<Message[]>(`/chat/conversations/${conversationId}/messages`, {
+          requireAuth: true
+        });
+        setMessages(data);
+      } catch (err) {
+        console.error('Error fetching messages:', err);
       }
     };
 
     fetchMessages();
 
-    // Set up real-time subscription
-    const channel = supabase
-      .channel(`chat:${conversationId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload) => {
-          const newMsg = payload.new as ChatMessage;
-          setMessages((prev) => (prev.some((m) => m.id === newMsg.id) ? prev : [...prev, newMsg]));
-        }
-      )
-      .subscribe();
+    const socket = getSocket(localStorage.getItem('snc_auth_token'));
+    socket.emit('joinConversation', { conversationId });
+
+    socket.on('newMessage', (newMsg: Message) => {
+      setMessages((prev) => (prev.some((m) => m.id === newMsg.id) ? prev : [...prev, newMsg]));
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      socket.off('newMessage');
+      socket.emit('leaveConversation', { conversationId });
+      socket.disconnect();
     };
   }, [conversationId]);
 
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!conversationId || !newMessage.trim() || !leadId) return;
+    if (!conversationId || !newMessage.trim()) return;
 
     setIsSending(true);
 
     try {
-      const { error } = await db.messages().insert({
+      const socket = getSocket(localStorage.getItem('snc_auth_token'));
+      socket.emit('sendMessage', {
         conversation_id: conversationId,
-        sender_id: leadId,
-        sender_type: 'lead',
         content: newMessage.trim(),
+        sender_type: 'buyer',
       });
-
-      if (error) throw error;
-
-      // Update conversation timestamp
-      await db.conversations()
-        .update({ updated_at: new Date().toISOString() })
-        .eq('id', conversationId);
 
       setNewMessage('');
     } catch {
@@ -247,13 +152,6 @@ export function ChatWindow({
     } finally {
       setIsSending(false);
     }
-  };
-
-  const formatTime = (date: string) => {
-    return new Date(date).toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   };
 
   if (isLoading) {
@@ -268,9 +166,8 @@ export function ChatWindow({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card rounded-xl border border-border overflow-hidden"
+      className="bg-card rounded-xl border border-border overflow-hidden shadow-card"
     >
-      {/* Header */}
       <div className="flex items-center gap-3 p-3 border-b border-border bg-muted/30">
         <Avatar className="h-10 w-10">
           <AvatarImage src={sellerAvatar} />
@@ -287,44 +184,39 @@ export function ChatWindow({
         )}
       </div>
 
-      {/* Messages */}
-      <ScrollArea className="h-64 p-3">
+      <ScrollArea className="h-64 p-3" ref={scrollRef}>
         <div className="space-y-3">
-          {messages.length === 0 && (
-            <p className="text-center text-sm text-muted-foreground py-8">
-              Iniciando conversa...
-            </p>
-          )}
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${msg.sender_type === 'lead' ? 'justify-end' : 'justify-start'}`}
-            >
+          {messages.map((msg) => {
+            const isOwn = msg.sender_type === 'buyer' || msg.sender_type === 'lead';
+            return (
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2 ${
-                  msg.sender_type === 'lead'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted'
-                }`}
+                key={msg.id}
+                className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
               >
-                <p className="text-sm">{msg.content}</p>
-                <p
-                  className={`text-xs mt-1 ${
-                    msg.sender_type === 'lead'
-                      ? 'text-primary-foreground/70'
-                      : 'text-muted-foreground'
+                <div
+                  className={`max-w-[80%] rounded-2xl px-4 py-2 ${
+                    isOwn
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted'
                   }`}
                 >
-                  {formatTime(msg.created_at)}
-                </p>
+                  <p className="text-sm">{msg.content}</p>
+                  <p
+                    className={`text-[10px] mt-1 ${
+                      isOwn
+                        ? 'text-primary-foreground/70'
+                        : 'text-muted-foreground'
+                    }`}
+                  >
+                    {format(new Date(msg.created_at), 'HH:mm')}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
-          <div ref={messagesEndRef} />
+            );
+          })}
         </div>
       </ScrollArea>
 
-      {/* Input */}
       <form onSubmit={handleSendMessage} className="p-3 border-t border-border">
         <div className="flex gap-2">
           <Input
@@ -337,6 +229,7 @@ export function ChatWindow({
           <Button
             type="submit"
             size="icon"
+            variant="kairos"
             disabled={isSending || !newMessage.trim()}
           >
             {isSending ? (

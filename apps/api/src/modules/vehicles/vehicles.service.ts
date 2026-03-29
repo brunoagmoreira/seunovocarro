@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateVehicleDto, UpdateVehicleDto } from './dto/vehicles.dto';
-import { User, Vehicle } from '@prisma/client';
+import { User, Vehicle, MediaType } from '@prisma/client';
 
 @Injectable()
 export class VehiclesService {
@@ -49,11 +49,23 @@ export class VehiclesService {
   }
 
   async create(createDto: CreateVehicleDto, user: User) {
+    const { media, ...vehicleData } = createDto;
+    
     return this.prisma.vehicle.create({
       data: {
-        ...createDto,
+        ...vehicleData,
         user_id: user.id,
+        media: media ? {
+          create: media.map((m: { url: string; type: MediaType; order: number }) => ({
+            url: m.url,
+            type: m.type || 'image',
+            order: m.order || 0
+          }))
+        } : undefined
       },
+      include: {
+        media: true
+      }
     });
   }
 
@@ -68,9 +80,35 @@ export class VehiclesService {
       throw new ForbiddenException('Você só pode editar seus próprios anúncios');
     }
 
+    const { media, ...vehicleData } = updateDto;
+
+    // Se houver novas mídias no update, limpamos as antigas e inserimos as novas
+    // Em uma versão real, você faria um diff, mas para simplificar aqui:
+    if (media) {
+      return this.prisma.$transaction(async (tx) => {
+        await tx.vehicleMedia.deleteMany({ where: { vehicle_id: id } });
+        
+        return tx.vehicle.update({
+          where: { id },
+          data: {
+            ...vehicleData,
+            media: {
+              create: media.map((m: { url: string; type: MediaType; order: number }) => ({
+                url: m.url,
+                type: m.type || 'image',
+                order: m.order || 0
+              }))
+            }
+          },
+          include: { media: true }
+        });
+      });
+    }
+
     return this.prisma.vehicle.update({
       where: { id },
-      data: updateDto,
+      data: vehicleData,
+      include: { media: true }
     });
   }
 

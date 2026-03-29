@@ -7,32 +7,28 @@ export interface Conversation {
   updated_at: string;
   // Joined data
   vehicle?: {
-    id: string;
     brand: string;
     model: string;
     year: number;
-    images: { url: string }[];
+    slug: string;
+    media: { url: string }[];
   };
   lead?: {
-    id: string;
     name: string;
-    email: string;
     phone: string;
   };
   seller?: {
-    id: string;
     full_name: string;
     avatar_url: string;
   };
-  last_message?: Message;
-  unread_count?: number;
+  messages?: Message[];
 }
 
 export interface Message {
   id: string;
   conversation_id: string;
   sender_id: string;
-  sender_type: 'lead' | 'seller';
+  sender_type: 'lead' | 'seller' | 'buyer';
   content: string;
   read_at: string | null;
   created_at: string;

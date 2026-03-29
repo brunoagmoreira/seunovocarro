@@ -16,8 +16,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-// TODO: Replace with Next.js API abstraction in backend migration phase
-import { supabase } from '@/integrations/supabase/client';
+import { fetchApi } from '@/lib/api';
 import { STATES } from '@/types/vehicle';
 import { Badge } from '@/components/ui/badge';
 import { compressImage } from '@/lib/imageCompression';
@@ -74,30 +73,16 @@ export function ProfileClient() {
         fileToUpload = await compressImage(file, 0.5, 400);
       }
 
-      const fileExt = 'jpg'; 
-      const fileName = `${user.id}/avatar.${fileExt}`;
+      const formData = new FormData();
+      formData.append('file', fileToUpload);
 
-      const { error: uploadError, data: uploadData } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, fileToUpload, { 
-          upsert: true,
-          contentType: 'image/jpeg'
-        });
+      const response = await fetchApi<{ url: string }>('/media/upload/avatar', {
+        method: 'POST',
+        body: formData,
+        requireAuth: true,
+      });
 
-      if (uploadError) {
-        if (uploadError.message.includes('row-level security') || uploadError.message.includes('Bucket not found')) {
-          throw new Error('O bucket "avatars" precisa ser criado como público no Supabase. Veja as instruções no console.');
-        }
-        throw uploadError;
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName);
-
-      const urlWithCacheBust = `${publicUrl}?t=${Date.now()}`;
-
-      await updateProfile({ avatar_url: urlWithCacheBust });
+      await updateProfile({ avatar_url: response.url });
 
       toast({
         title: "Foto atualizada!",
@@ -107,7 +92,7 @@ export function ProfileClient() {
       console.error('Avatar upload error:', error);
       toast({
         title: "Erro ao enviar foto",
-        description: error.message || "Tente novamente. Certifique-se de que o bucket 'avatars' existe no Supabase.",
+        description: error.message || "Tente novamente.",
         variant: "destructive"
       });
     } finally {
@@ -314,7 +299,7 @@ export function ProfileClient() {
 
             <Button
               type="submit"
-              variant="brand"
+              variant="kairos"
               className="w-full mt-4"
               disabled={isLoading}
             >

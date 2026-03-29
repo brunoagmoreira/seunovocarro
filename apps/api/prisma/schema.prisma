@@ -60,6 +60,7 @@ enum MediaType {
 enum SenderType {
   lead
   seller
+  buyer
 }
 
 enum ProposalStatus {
@@ -118,6 +119,7 @@ model User {
   notifications   Notification[]
   blog_posts      BlogPost[]       @relation("author")
   ad_campaigns    AdCampaign[]
+  leads           Lead[]
 
   @@map("users")
 }
@@ -238,6 +240,7 @@ model VehicleView {
 model Lead {
   id           String   @id @default(uuid())
   vehicle_id   String
+  user_id      String?  // Link to logged-in user
   name         String
   phone        String
   email        String?
@@ -249,6 +252,7 @@ model Lead {
 
   // Relações
   vehicle       Vehicle        @relation(fields: [vehicle_id], references: [id], onDelete: Cascade)
+  user          User?          @relation(fields: [user_id], references: [id], onDelete: SetNull)
   conversations Conversation[]
 
   @@index([vehicle_id])

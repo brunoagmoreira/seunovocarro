@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Eye, MessageSquare, TrendingUp, Car, BarChart3, Calendar, Target, DollarSign, MousePointer, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-// TODO: Replace with Next.js API abstraction in backend migration phase
-import { supabase } from '@/integrations/supabase/client';
+import { fetchApi } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -70,79 +69,68 @@ export function MetricsClient() {
   const fetchMetrics = async () => {
     setIsLoading(true);
 
-    const { data: vehicles } = await supabase
-      .from('vehicles')
-      .select('id, brand, model, year, status')
-      .eq('user_id', user?.id);
-
-    if (!vehicles?.length) {
-      setIsLoading(false);
-      return;
-    }
-
-    const vehicleIds = vehicles.map((v: any) => v.id);
-    const periodDays = parseInt(period);
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - periodDays);
-
-    const { data: viewsData } = await (supabase as any)
-      .from('vehicle_views')
-      .select('vehicle_id, created_at')
-      .in('vehicle_id', vehicleIds)
-      .gte('created_at', startDate.toISOString());
-
-    const { data: leadsData } = await supabase
-      .from('leads')
-      .select('vehicle_id')
-      .in('vehicle_id', vehicleIds)
-      .gte('created_at', startDate.toISOString());
-
-    const allDates: string[] = [];
-    for (let i = periodDays - 1; i >= 0; i--) {
-      allDates.push(format(subDays(new Date(), i), 'yyyy-MM-dd'));
-    }
-
-    const metrics: VehicleMetrics[] = vehicles.map(vehicle => {
-      const vehicleViews = viewsData?.filter(v => v.vehicle_id === vehicle.id) || [];
-      const views = vehicleViews.length;
-      const leads = leadsData?.filter(l => l.vehicle_id === vehicle.id).length || 0;
-      const conversionRate = views > 0 ? (leads / views) * 100 : 0;
-
-      const viewsByDate: Record<string, number> = {};
-      vehicleViews.forEach(v => {
-        const date = format(parseISO(v.created_at), 'yyyy-MM-dd');
-        viewsByDate[date] = (viewsByDate[date] || 0) + 1;
+    try {
+      const data = await fetchApi<any>('/vehicles/metrics', {
+        params: { period },
+        requireAuth: true
       });
 
-      const dailyViews = allDates.map(date => ({
-        date,
-        views: viewsByDate[date] || 0,
-      }));
+      const { vehicles, views: viewsData, leads: leadsData } = data;
 
-      return {
-        ...vehicle,
-        views,
-        leads,
-        conversionRate,
-        dailyViews,
-      };
-    });
+      if (!vehicles?.length) {
+        setIsLoading(false);
+        return;
+      }
 
-    metrics.sort((a, b) => b.views - a.views);
+      const periodDays = parseInt(period);
+      const allDates: string[] = [];
+      for (let i = periodDays - 1; i >= 0; i--) {
+        allDates.push(format(subDays(new Date(), i), 'yyyy-MM-dd'));
+      }
 
-    setVehicleMetrics(metrics);
+      const metrics: VehicleMetrics[] = vehicles.map((vehicle: any) => {
+        const vehicleViews = viewsData?.filter((v: any) => v.vehicle_id === vehicle.id) || [];
+        const viewsCount = vehicleViews.length;
+        const leadsCount = leadsData?.filter((l: any) => l.vehicle_id === vehicle.id).length || 0;
+        const conversionRate = viewsCount > 0 ? (leadsCount / viewsCount) * 100 : 0;
 
-    const totalViews = metrics.reduce((sum, v) => sum + v.views, 0);
-    const totalLeads = metrics.reduce((sum, v) => sum + v.leads, 0);
+        const viewsByDate: Record<string, number> = {};
+        vehicleViews.forEach((v: any) => {
+          const date = format(parseISO(v.created_at), 'yyyy-MM-dd');
+          viewsByDate[date] = (viewsByDate[date] || 0) + 1;
+        });
 
-    setTotals({
-      vehicles: vehicles.length,
-      views: totalViews,
-      leads: totalLeads,
-      conversionRate: totalViews > 0 ? (totalLeads / totalViews) * 100 : 0,
-      activeVehicles: vehicles.filter(v => v.status === 'approved').length,
-      soldVehicles: vehicles.filter(v => v.status === 'sold').length,
-    });
+        const dailyViews = allDates.map(date => ({
+          date,
+          views: viewsByDate[date] || 0,
+        }));
+
+        return {
+          ...vehicle,
+          views: viewsCount,
+          leads: leadsCount,
+          conversionRate,
+          dailyViews,
+        };
+      });
+
+      metrics.sort((a, b) => b.views - a.views);
+      setVehicleMetrics(metrics);
+
+      const totalViews = metrics.reduce((sum, v) => sum + v.views, 0);
+      const totalLeads = metrics.reduce((sum, v) => sum + v.leads, 0);
+
+      setTotals({
+        vehicles: vehicles.length,
+        views: totalViews,
+        leads: totalLeads,
+        conversionRate: totalViews > 0 ? (totalLeads / totalViews) * 100 : 0,
+        activeVehicles: vehicles.filter((v: any) => v.status === 'approved').length,
+        soldVehicles: vehicles.filter((v: any) => v.status === 'sold').length,
+      });
+    } catch (error) {
+      console.error('Error fetching metrics:', error);
+    }
 
     setIsLoading(false);
   };

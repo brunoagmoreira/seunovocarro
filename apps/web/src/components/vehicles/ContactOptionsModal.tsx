@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
-import { supabase } from '@/integrations/supabase/client';
+import { fetchApi } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { getStoredUTM } from '@/hooks/useUTM';
 import { trackLead } from '@/lib/tracking';
@@ -55,16 +55,10 @@ export function ContactOptionsModal({
       const userEmail = user.email || '';
 
       // Check if lead already exists for this user + vehicle
-      const { data: existingLead } = await supabase
-        .from('leads')
-        .select('id')
-        .eq('vehicle_id', vehicleId)
-        .eq('email', userEmail)
-        .maybeSingle();
-
-      if (!existingLead) {
-        // Create new lead
-        await supabase.from('leads').insert({
+      // Registrar o lead na API NestJS
+      await fetchApi('/leads', {
+        method: 'POST',
+        body: JSON.stringify({
           vehicle_id: vehicleId,
           name: userName,
           phone: userPhone,
@@ -73,11 +67,8 @@ export function ContactOptionsModal({
           utm_source: utmParams.utm_source,
           utm_medium: utmParams.utm_medium,
           utm_campaign: utmParams.utm_campaign,
-          utm_term: utmParams.utm_term,
-          utm_content: utmParams.utm_content,
-          referrer: utmParams.referrer,
-        });
-      }
+        }),
+      });
 
       // Track lead event
       trackLead('whatsapp', {

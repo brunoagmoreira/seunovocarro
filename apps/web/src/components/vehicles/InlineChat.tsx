@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { supabase } from '@/integrations/supabase/client';
+import { fetchApi } from '@/lib/api';
+import { getSocket } from '@/lib/socket';
+import { Socket } from 'socket.io-client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { getStoredUTM } from '@/hooks/useUTM';
@@ -35,11 +37,7 @@ interface UserData {
   type: 'lead' | 'user';
 }
 
-// Helper for tables not in generated types
-const db = {
-  conversations: () => supabase.from('conversations' as any),
-  messages: () => supabase.from('messages' as any),
-};
+// Helpers removed to use direct fetchApi calls
 
 export function InlineChat({
   vehicleId,
@@ -100,33 +98,20 @@ export function InlineChat({
       try {
         if (!user.email) return;
 
-        const { data: lead } = await supabase
-          .from('leads')
-          .select('id')
-          .eq('vehicle_id', vehicleId)
-          .eq('email', user.email)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        const leadId = (lead as any)?.id as string | undefined;
+        const lead = await fetchApi<any>(`/leads/check?vehicleId=${vehicleId}&email=${user.email}`);
+        const leadId = lead?.id;
         if (!leadId) return;
 
-        const { data: conv } = await db.conversations()
-          .select('id')
-          .eq('vehicle_id', vehicleId)
-          .eq('seller_id', sellerId)
-          .eq('lead_id', leadId)
-          .maybeSingle();
-
-        const convId = (conv as any)?.id as string | undefined;
+        const conv = await fetchApi<any>(`/chat/conversations/check?vehicleId=${vehicleId}&sellerId=${sellerId}&leadId=${leadId}`);
+        const convId = conv?.id;
+        
         if (convId) {
           setConversationId(convId);
           setIsRegistered(true);
           localStorage.setItem(storageKey, convId);
         }
-      } catch {
-        // ignore (best-effort)
+      } catch (e) {
+        console.error('Best-effort initialization failed:', e);
       }
     };
 
@@ -154,38 +139,29 @@ export function InlineChat({
     if (!conversationId) return;
 
     const fetchMessages = async () => {
-      const { data, error } = await db.messages()
-        .select('*')
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true });
-
-      if (!error && data) {
-        setMessages(data as unknown as ChatMessage[]);
+      try {
+        const data = await fetchApi<ChatMessage[]>(`/chat/${conversationId}/messages`);
+        setMessages(data);
+      } catch (err) {
+        console.error('Error fetching messages:', err);
       }
     };
 
     fetchMessages();
 
-    // Set up real-time subscription
-    const channel = supabase
-      .channel(`chat:${conversationId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload) => {
-          const newMsg = payload.new as ChatMessage;
-          setMessages((prev) => (prev.some((m) => m.id === newMsg.id) ? prev : [...prev, newMsg]));
-        }
-      )
-      .subscribe();
+    // Set up Socket.io client
+    const socket = getSocket(localStorage.getItem('snc_auth_token'));
+    
+    socket.emit('joinConversation', { conversationId });
+
+    socket.on('newMessage', (newMsg: ChatMessage) => {
+      setMessages((prev) => (prev.some((m) => m.id === newMsg.id) ? prev : [...prev, newMsg]));
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      socket.off('newMessage');
+      socket.emit('leaveConversation', { conversationId });
+      socket.disconnect();
     };
   }, [conversationId]);
 
@@ -240,129 +216,49 @@ export function InlineChat({
 
     try {
       let leadId: string | undefined;
+      let convId: string | null = null;
 
       if (user) {
-        // Logged-in users: we create/find a lead silently (no passo extra) to satisfy schema (lead_id)
-        const utmParams = getStoredUTM();
-
-        // Prefer email match; fallback to phone match
+        // Logged-in users: create/find a lead via API
         const email = user.email || null;
-
-        let existingLead: any = null;
-        if (email) {
-          const { data } = await supabase
-            .from('leads')
-            .select('id')
-            .eq('vehicle_id', vehicleId)
-            .eq('email', email)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          existingLead = data;
-        }
-
-        if (!existingLead && userData.phone) {
-          const { data } = await supabase
-            .from('leads')
-            .select('id')
-            .eq('vehicle_id', vehicleId)
-            .eq('phone', userData.phone)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          existingLead = data;
-        }
-
-        leadId = existingLead?.id;
-
-        if (!leadId) {
-          const { data: newLead, error: leadError } = await supabase
-            .from('leads')
-            .insert({
-              vehicle_id: vehicleId,
-              name: userData.name,
-              phone: userData.phone,
-              email: email,
-              source: 'form',
-              user_id: user.id, // Include user_id for RLS policy
-              utm_source: utmParams.utm_source,
-              utm_medium: utmParams.utm_medium,
-              utm_campaign: utmParams.utm_campaign,
-              utm_term: utmParams.utm_term,
-              utm_content: utmParams.utm_content,
-              referrer: utmParams.referrer,
-            } as any)
-            .select('id')
-            .single();
-
-          if (leadError) throw leadError;
-          leadId = (newLead as any)?.id;
-        }
+        const lead = await fetchApi<any>('/leads/register', {
+          method: 'POST',
+          body: JSON.stringify({
+            vehicle_id: vehicleId,
+            name: userData.name,
+            phone: userData.phone,
+            email: email,
+            source: 'form',
+            user_id: user.id
+          }),
+        });
+        leadId = lead.id;
       } else {
-        // Anonymous user - create/find a lead
-        const utmParams = getStoredUTM();
-
-        const { data: existingLead } = await supabase
-          .from('leads')
-          .select('id')
-          .eq('vehicle_id', vehicleId)
-          .eq('phone', userData.phone)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        leadId = (existingLead as any)?.id;
-
-        if (!leadId) {
-          const { data: newLead, error: leadError } = await supabase
-            .from('leads')
-            .insert({
-              vehicle_id: vehicleId,
-              name: userData.name,
-              phone: userData.phone,
-              source: 'form', // Use 'form' instead of 'chat' to match DB constraint
-              utm_source: utmParams.utm_source,
-              utm_medium: utmParams.utm_medium,
-              utm_campaign: utmParams.utm_campaign,
-              utm_term: utmParams.utm_term,
-              utm_content: utmParams.utm_content,
-              referrer: utmParams.referrer,
-            } as any)
-            .select('id')
-            .single();
-
-          if (leadError) throw leadError;
-          leadId = (newLead as any)?.id;
-        }
+        // Anonymous user via API
+        const lead = await fetchApi<any>('/leads/register', {
+          method: 'POST',
+          body: JSON.stringify({
+            vehicle_id: vehicleId,
+            name: userData.name,
+            phone: userData.phone,
+            source: 'form'
+          }),
+        });
+        leadId = lead.id;
       }
 
       if (!leadId) throw new Error('Não foi possível identificar o lead.');
 
-      // Find/create conversation (always with lead_id)
-      let convId: string | null = null;
-
-      const { data: existingConv } = await db.conversations()
-        .select('id')
-        .eq('vehicle_id', vehicleId)
-        .eq('seller_id', sellerId)
-        .eq('lead_id', leadId)
-        .maybeSingle();
-
-      convId = (existingConv as any)?.id || null;
-
-      if (!convId) {
-        const { data: newConv, error: convError } = await db.conversations()
-          .insert({
-            vehicle_id: vehicleId,
-            seller_id: sellerId,
-            lead_id: leadId,
-          } as any)
-          .select('id')
-          .single();
-
-        if (convError) throw convError;
-        convId = (newConv as any)?.id || null;
-      }
+      // Find/create conversation via API
+      const conversation = await fetchApi<any>('/chat/conversations', {
+        method: 'POST',
+        body: JSON.stringify({
+          vehicle_id: vehicleId,
+          seller_id: sellerId,
+          lead_id: leadId,
+        }),
+      });
+      convId = conversation.id;
 
       // Track lead event for chat
       trackLead('chat', {
@@ -395,7 +291,6 @@ export function InlineChat({
     senderType?: 'lead' | 'seller' | 'buyer'
   ) => {
     const targetConvId = convId || conversationId;
-    const targetSenderId = senderId || userData.id || user?.id;
     const targetSenderType = senderType || (user ? 'buyer' : 'lead');
 
     if (!targetConvId || !content.trim()) return;
@@ -403,22 +298,12 @@ export function InlineChat({
     setIsSending(true);
 
     try {
-      const { error } = await db.messages().insert({
+      const socket = getSocket(localStorage.getItem('snc_auth_token'));
+      socket.emit('sendMessage', {
         conversation_id: targetConvId,
-        sender_id: targetSenderId || 'anonymous',
-        sender_type: targetSenderType,
         content: content.trim(),
+        sender_type: user ? 'buyer' : 'lead',
       });
-
-      if (error) {
-        console.error('Message send error:', error);
-        throw error;
-      }
-
-      // Update conversation timestamp
-      await db.conversations()
-        .update({ updated_at: new Date().toISOString() })
-        .eq('id', targetConvId);
 
       setNewMessage('');
     } catch (error) {

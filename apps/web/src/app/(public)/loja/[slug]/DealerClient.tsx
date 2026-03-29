@@ -89,7 +89,7 @@ export function DealerClient({ slug }: { slug: string }) {
           <p className="text-muted-foreground mb-6">
             A loja que você está procurando não existe ou foi removida.
           </p>
-          <Button variant="brand" asChild>
+          <Button variant="kairos" asChild>
             <Link href="/veiculos">Ver todos os veículos</Link>
           </Button>
         </div>
@@ -208,7 +208,7 @@ export function DealerClient({ slug }: { slug: string }) {
 
             <div className="flex flex-wrap gap-2 mt-6 pt-6 border-t border-border">
               {dealer.whatsapp && (
-                <Button variant="brand" size="sm" asChild>
+                <Button variant="kairos" size="sm" asChild>
                   <a
                     href={`https://wa.me/55${dealer.whatsapp.replace(/\D/g, '')}?text=Olá! Vi sua loja na Seu Novo Carro e gostaria de saber mais.`}
                     target="_blank"

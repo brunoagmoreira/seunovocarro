@@ -19,8 +19,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-// TODO: Phase 4 API Migration - Replace Supabase queries with NestJS API calls
-import { supabase } from '@/integrations/supabase/client';
+import { fetchApi } from '@/lib/api';
 
 interface VehicleWithMedia {
   id: string;
@@ -67,86 +66,73 @@ export function MyVehiclesClient() {
   }, [user]);
 
   const fetchVehicles = async () => {
-    const { data, error } = await supabase
-      .from('vehicles')
-      .select(`
-        id, brand, model, year, price, status, slug, created_at,
-        vehicle_media (url)
-      `)
-      .eq('user_id', user?.id)
-      .order('created_at', { ascending: false });
+    try {
+      const data = await fetchApi<any[]>('/vehicles/mine', { requireAuth: true });
+      
+      const mappedVehicles = data.map(v => ({
+        ...v,
+        vehicle_media: v.media || []
+      }));
+      
+      setVehicles(mappedVehicles);
 
-    if (error) {
+      // Extract leads count from counts in the same response if available
+      const counts: Record<string, number> = {};
+      data.forEach(v => {
+        counts[v.id] = v._count?.leads || 0;
+      });
+      setLeadsCount(counts);
+
+    } catch (error) {
       console.error('Error fetching vehicles:', error);
-    } else {
-      // @ts-ignore
-      setVehicles(data || []);
     }
     setIsLoading(false);
   };
 
-  const fetchLeadsCount = async () => {
-    const { data: userVehicles } = await supabase
-      .from('vehicles')
-      .select('id')
-      .eq('user_id', user?.id);
-
-    if (!userVehicles?.length) return;
-
-    const vehicleIds = userVehicles.map(v => v.id);
-    const { data: leads } = await supabase
-      .from('leads')
-      .select('vehicle_id')
-      .in('vehicle_id', vehicleIds);
-
-    if (leads) {
-      const counts: Record<string, number> = {};
-      leads.forEach(lead => {
-        counts[lead.vehicle_id] = (counts[lead.vehicle_id] || 0) + 1;
-      });
-      setLeadsCount(counts);
-    }
+  const fetchLeadsCount = () => {
+    // Already handled in fetchVehicles with _count
   };
 
   const handleDelete = async (vehicleId: string) => {
-    const { error } = await supabase
-      .from('vehicles')
-      .delete()
-      .eq('id', vehicleId);
-
-    if (error) {
-      toast({
-        title: "Erro ao excluir",
-        description: error.message,
-        variant: "destructive"
+    try {
+      await fetchApi(`/vehicles/${vehicleId}`, {
+        method: 'DELETE',
+        requireAuth: true
       });
-    } else {
+      
       toast({
         title: "Anúncio excluído",
         description: "O anúncio foi removido com sucesso.",
       });
       fetchVehicles();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao excluir",
+        description: error.message,
+        variant: "destructive"
+      });
     }
   };
 
   const handleMarkAsSold = async (vehicleId: string) => {
-    const { error } = await supabase
-      .from('vehicles')
-      .update({ status: 'sold' })
-      .eq('id', vehicleId);
-
-    if (error) {
-      toast({
-        title: "Erro ao atualizar",
-        description: error.message,
-        variant: "destructive"
+    try {
+      await fetchApi(`/vehicles/${vehicleId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'sold' }),
+        requireAuth: true
       });
-    } else {
+
       toast({
         title: "Parabéns pela venda! 🎉",
         description: "Seu anúncio foi marcado como vendido.",
       });
       fetchVehicles();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar",
+        description: error.message,
+        variant: "destructive"
+      });
     }
   };
 
@@ -191,7 +177,7 @@ export function MyVehiclesClient() {
       <div className="container py-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="font-heading text-2xl font-bold">Meus Anúncios</h1>
-          <Button variant="brand" asChild>
+          <Button variant="kairos" asChild>
             <Link href="/anunciar">
               <Plus className="h-4 w-4 mr-2" />
               Novo anúncio
@@ -278,7 +264,7 @@ export function MyVehiclesClient() {
               {activeTab === 'all' ? 'Comece a vender seus veículos agora mesmo!' : 'Seus anúncios aparecerão aqui.'}
             </p>
             {activeTab === 'all' && (
-              <Button variant="brand" asChild>
+              <Button variant="kairos" asChild>
                 <Link href="/anunciar">Criar primeiro anúncio</Link>
               </Button>
             )}

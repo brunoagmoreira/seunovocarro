@@ -1,8 +1,9 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.seunovocarro.com.br/api';
 
-interface FetchOptions extends RequestInit {
+interface FetchOptions extends Omit<RequestInit, 'body'> {
   requireAuth?: boolean;
   params?: Record<string, string | number | boolean | undefined>;
+  body?: any;
 }
 
 export async function fetchApi<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
@@ -40,9 +41,16 @@ export async function fetchApi<T>(endpoint: string, options: FetchOptions = {}):
     }
   }
 
+  // Auto-stringify body if it's an object and not FormData
+  let body = rest.body;
+  if (body && typeof body === 'object' && !(body instanceof FormData) && !(body instanceof Blob)) {
+    body = JSON.stringify(body);
+  }
+
   try {
     const response = await fetch(url, {
       ...rest,
+      body,
       headers,
     });
 

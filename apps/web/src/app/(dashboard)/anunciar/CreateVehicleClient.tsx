@@ -18,8 +18,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-// TODO: Replace with Next.js API abstraction in backend migration phase
-import { supabase } from '@/integrations/supabase/client';
+import { fetchApi } from '@/lib/api';
 import { BRANDS, STATES, FUEL_TYPES, TRANSMISSION_TYPES } from '@/types/vehicle';
 import { useCities } from '@/hooks/useCities';
 
@@ -73,7 +72,7 @@ export function CreateVehicleClient() {
           <p className="text-muted-foreground mb-6">
             Você precisa estar logado para criar anúncios.
           </p>
-          <Button variant="brand" asChild>
+          <Button variant="kairos" asChild>
             <Link href="/login">Fazer login</Link>
           </Button>
         </div>
@@ -92,7 +91,7 @@ export function CreateVehicleClient() {
           <p className="text-muted-foreground mb-6">
             Para anunciar veículos, você precisa atualizar seu cadastro para perfil vendedor/lojista.
           </p>
-          <Button variant="brand" onClick={() => router.push('/perfil')}>
+          <Button variant="kairos" onClick={() => router.push('/perfil')}>
             Atualizar Perfil
           </Button>
         </div>
@@ -178,10 +177,40 @@ export function CreateVehicleClient() {
 
     try {
       const slug = generateSlug();
-      const { data: vehicle, error: vehicleError } = await supabase
-        .from('vehicles')
-        .insert({
-          user_id: user.id,
+      
+      // Step 1: Upload images one by one and collect URLs
+      const uploadedMedia: { url: string; type: 'image'; order: number }[] = [];
+      
+      for (let i = 0; i < images.length; i++) {
+        const file = images[i];
+        const watermarkedBlob = await applyWatermark(file, {
+          opacity: 0.3,
+          position: 'center',
+          scale: 0.3,
+        });
+
+        const uploadFormData = new FormData();
+        // Convert blob back to file for Multer
+        const watermarkedFile = new File([watermarkedBlob], `vehicle_${i}.jpg`, { type: 'image/jpeg' });
+        uploadFormData.append('file', watermarkedFile);
+
+        const { url } = await fetchApi<{ url: string }>('/media/upload/vehicle', {
+          method: 'POST',
+          body: uploadFormData,
+          requireAuth: true
+        });
+
+        uploadedMedia.push({
+          url,
+          type: 'image',
+          order: i
+        });
+      }
+
+      // Step 2: Create vehicle with all its data and media links
+      await fetchApi('/vehicles', {
+        method: 'POST',
+        body: {
           brand: formData.brand,
           model: formData.model,
           version: formData.version || null,
@@ -199,42 +228,11 @@ export function CreateVehicleClient() {
           whatsapp: formData.whatsapp || null,
           phone: formData.phone || null,
           status: asDraft ? 'draft' : 'pending',
-          slug
-        })
-        .select()
-        .single();
-
-      if (vehicleError) throw vehicleError;
-
-      for (let i = 0; i < images.length; i++) {
-        const file = images[i];
-        
-        const watermarkedBlob = await applyWatermark(file, {
-          opacity: 0.3,
-          position: 'center',
-          scale: 0.3,
-        });
-
-        const fileExt = 'jpg';
-        const fileName = `${user.id}/${vehicle.id}/${i}.${fileExt}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('vehicle-media')
-          .upload(fileName, watermarkedBlob, { contentType: 'image/jpeg' });
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('vehicle-media')
-          .getPublicUrl(fileName);
-
-        await supabase.from('vehicle_media').insert({
-          vehicle_id: vehicle.id,
-          url: publicUrl,
-          type: 'image',
-          order: i
-        });
-      }
+          slug,
+          media: uploadedMedia
+        },
+        requireAuth: true
+      });
 
       toast({
         title: asDraft ? "Rascunho salvo!" : "Anúncio enviado!",
@@ -537,7 +535,7 @@ export function CreateVehicleClient() {
             </Button>
             <Button
               type="submit"
-              variant="brand"
+              variant="kairos"
               className="flex-1"
               disabled={isLoading}
             >

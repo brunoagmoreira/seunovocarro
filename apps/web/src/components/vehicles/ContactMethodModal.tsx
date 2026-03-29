@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { fetchApi } from '@/lib/api';
 import { getStoredUTM } from '@/hooks/useUTM';
 
 interface ContactMethodModalProps {
@@ -72,42 +72,21 @@ export function ContactMethodModal({
     try {
       const utmParams = getStoredUTM();
 
-      // First, create/get lead
-      const { data: existingLead } = await supabase
-        .from('leads')
-        .select('id')
-        .eq('vehicle_id', vehicleId)
-        .eq('phone', formData.phone)
-        .maybeSingle();
+      // Registrar o lead na API NestJS
+      const lead = await fetchApi<any>('/leads', {
+        method: 'POST',
+        body: JSON.stringify({
+          vehicle_id: vehicleId,
+          name: formData.name,
+          phone: formData.phone,
+          source: contactMethod === 'chat' ? 'form' : contactMethod,
+          utm_source: utmParams.utm_source,
+          utm_medium: utmParams.utm_medium,
+          utm_campaign: utmParams.utm_campaign,
+        }),
+      });
 
-      let leadId = existingLead?.id;
-
-      if (!leadId) {
-        // Create new lead with UTM data - map 'chat' to 'form' for DB constraint
-        const sourceValue = contactMethod === 'chat' ? 'form' : contactMethod;
-        const { data: newLead, error: leadError } = await supabase
-          .from('leads')
-          .insert({
-            vehicle_id: vehicleId,
-            name: formData.name,
-            phone: formData.phone,
-            source: sourceValue,
-            utm_source: utmParams.utm_source,
-            utm_medium: utmParams.utm_medium,
-            utm_campaign: utmParams.utm_campaign,
-            utm_term: utmParams.utm_term,
-            utm_content: utmParams.utm_content,
-            referrer: utmParams.referrer,
-          } as any)
-          .select('id')
-          .single();
-
-        if (leadError) {
-          console.error('Lead save error:', leadError);
-          throw leadError;
-        }
-        leadId = newLead?.id;
-      }
+      const leadId = lead.id;
 
       if (contactMethod === 'whatsapp') {
         // Redirect to WhatsApp
@@ -123,47 +102,16 @@ export function ContactMethodModal({
           description: "Você será redirecionado para o WhatsApp.",
         });
       } else {
-        // Create conversation for chat using lead_id
-        const db = supabase as any;
-        
-        // Check if conversation already exists
-        const { data: existingConv } = await db
-          .from('conversations')
-          .select('id')
-          .eq('vehicle_id', vehicleId)
-          .eq('lead_id', leadId)
-          .maybeSingle();
-
-        let conversationId = existingConv?.id;
-
-        if (!conversationId) {
-          // Create new conversation with lead_id
-          const { data: newConv, error: convError } = await db
-            .from('conversations')
-            .insert({
-              vehicle_id: vehicleId,
-              seller_id: sellerId,
-              lead_id: leadId,
-            })
-            .select('id')
-            .single();
-
-          if (convError) {
-            console.error('Error creating conversation:', convError);
-            throw convError;
-          }
-          conversationId = newConv?.id;
-        }
-
-        if (conversationId) {
-          // Send initial message
-          await db.from('messages').insert({
-            conversation_id: conversationId,
-            sender_id: leadId,
-            sender_type: 'lead',
-            content: `Olá! Sou ${formData.name} e vi o ${vehicleName}. Gostaria de mais informações!`,
-          });
-        }
+        // Iniciar conversa via API NestJS
+        const conversation = await fetchApi<any>('/chat/conversations', {
+          method: 'POST',
+          body: JSON.stringify({
+            vehicle_id: vehicleId,
+            seller_id: sellerId,
+            lead_id: leadId,
+            initial_message: `Olá! Sou ${formData.name} e vi o ${vehicleName}. Gostaria de mais informações!`
+          }),
+        });
 
         toast({
           title: "Mensagem enviada!",

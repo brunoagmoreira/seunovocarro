@@ -393,7 +393,7 @@ export function VehicleClient({ slug }: { slug: string }) {
               </div>
 
               <Button 
-                variant="brand" 
+                variant="kairos" 
                 size="lg" 
                 className="w-full text-base"
                 onClick={() => setShowContactModal(true)}
@@ -441,7 +441,7 @@ export function VehicleClient({ slug }: { slug: string }) {
       <div className="fixed bottom-16 left-0 right-0 p-4 bg-background/95 backdrop-blur-lg border-t border-border md:hidden safe-bottom">
         <div className="container">
           <Button 
-            variant="brand" 
+            variant="kairos" 
             size="lg" 
             className="w-full text-base"
             onClick={() => setShowContactModal(true)}
