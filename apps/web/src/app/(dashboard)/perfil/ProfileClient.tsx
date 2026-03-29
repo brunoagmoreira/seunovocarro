@@ -40,10 +40,12 @@ export function ProfileClient() {
     state: profile?.state || '',
   });
 
-  if (!user) {
-    // Should be handled by layout wrapper typically, but as fallback:
-    router.push('/login');
-    return null;
+  if (!user && !isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-20">
+        <p className="text-muted-foreground">Redirecionando para login...</p>
+      </div>
+    );
   }
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { Suspense } from 'react';
 import { ProfileClient } from './ProfileClient';
 
 export const metadata: Metadata = {
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <ProfileClient />;
+  return (
+    <Suspense fallback={<div className="min-h-screen pt-20 flex items-center justify-center text-muted-foreground">Carregando perfil...</div>}>
+      <ProfileClient />
+    </Suspense>
+  );
 }

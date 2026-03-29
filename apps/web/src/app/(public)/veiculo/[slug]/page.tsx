@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { Suspense } from 'react';
 import { VehicleClient } from './VehicleClient';
 
 type Props = {
@@ -8,8 +9,6 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   
-  // A Server-side fetch to get basic data for SEO could be implemented here.
-  // For now we return generic metadata, but it will dynamically render the slug.
   const title = `Detalhes do Veículo - ${slug.replace(/-/g, ' ')}`;
   
   return {
@@ -21,5 +20,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Page({ params }: Props) {
   const { slug } = await params;
   
-  return <VehicleClient slug={slug} />;
+  return (
+    <Suspense fallback={<div className="min-h-screen pt-20 flex items-center justify-center text-muted-foreground">Carregando detalhes do veículo...</div>}>
+      <VehicleClient slug={slug} />
+    </Suspense>
+  );
 }
