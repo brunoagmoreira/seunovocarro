@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { Suspense } from 'react';
 import { HomeClient } from './HomeClient';
 import { ClientLayout } from '@/components/layout/Layout';
 
@@ -14,7 +15,9 @@ export const metadata: Metadata = {
 export default function Page() {
   return (
     <ClientLayout>
-      <HomeClient />
+      <Suspense fallback={<div className="min-h-screen pt-20 flex items-center justify-center text-muted-foreground">Carregando portal...</div>}>
+        <HomeClient />
+      </Suspense>
     </ClientLayout>
   );
 }

@@ -14,23 +14,25 @@ const UTM_STORAGE_KEY = 'kairos_utm_params';
 
 export function useUTM() {
   const searchParams = useSearchParams();
-  const [utmParams, setUtmParams] = useState<UTMParams>(() => {
-    // Try to get from sessionStorage first
-    const stored = sessionStorage.getItem(UTM_STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-    return {
-      utm_source: null,
-      utm_medium: null,
-      utm_campaign: null,
-      utm_term: null,
-      utm_content: null,
-      referrer: null,
-    };
+  const [utmParams, setUtmParams] = useState<UTMParams>({
+    utm_source: null,
+    utm_medium: null,
+    utm_campaign: null,
+    utm_term: null,
+    utm_content: null,
+    referrer: null,
   });
 
   useEffect(() => {
+    // Client-side initialization
+    const stored = typeof window !== 'undefined' ? sessionStorage.getItem(UTM_STORAGE_KEY) : null;
+    let currentParams = utmParams;
+
+    if (stored) {
+      currentParams = JSON.parse(stored);
+      setUtmParams(currentParams);
+    }
+
     // Check for UTM params in URL
     const utm_source = searchParams.get('utm_source');
     const utm_medium = searchParams.get('utm_medium');
@@ -41,21 +43,25 @@ export function useUTM() {
     // If any UTM param is present in URL, update storage
     if (utm_source || utm_medium || utm_campaign || utm_term || utm_content) {
       const newParams: UTMParams = {
-        utm_source: utm_source || utmParams.utm_source,
-        utm_medium: utm_medium || utmParams.utm_medium,
-        utm_campaign: utm_campaign || utmParams.utm_campaign,
-        utm_term: utm_term || utmParams.utm_term,
-        utm_content: utm_content || utmParams.utm_content,
-        referrer: document.referrer || utmParams.referrer,
+        utm_source: utm_source || currentParams.utm_source,
+        utm_medium: utm_medium || currentParams.utm_medium,
+        utm_campaign: utm_campaign || currentParams.utm_campaign,
+        utm_term: utm_term || currentParams.utm_term,
+        utm_content: utm_content || currentParams.utm_content,
+        referrer: (typeof document !== 'undefined' ? document.referrer : null) || currentParams.referrer,
       };
       
       setUtmParams(newParams);
-      sessionStorage.setItem(UTM_STORAGE_KEY, JSON.stringify(newParams));
-    } else if (!utmParams.referrer && document.referrer) {
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(UTM_STORAGE_KEY, JSON.stringify(newParams));
+      }
+    } else if (!currentParams.referrer && typeof document !== 'undefined' && document.referrer) {
       // Capture referrer if no UTMs but we have a referrer
-      const newParams = { ...utmParams, referrer: document.referrer };
+      const newParams = { ...currentParams, referrer: document.referrer };
       setUtmParams(newParams);
-      sessionStorage.setItem(UTM_STORAGE_KEY, JSON.stringify(newParams));
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(UTM_STORAGE_KEY, JSON.stringify(newParams));
+      }
     }
   }, [searchParams]);
 
@@ -63,6 +69,9 @@ export function useUTM() {
 }
 
 export function getStoredUTM(): UTMParams {
+  if (typeof window === 'undefined') {
+    return { utm_source: null, utm_medium: null, utm_campaign: null, utm_term: null, utm_content: null, referrer: null };
+  }
   const stored = sessionStorage.getItem(UTM_STORAGE_KEY);
   if (stored) {
     return JSON.parse(stored);
