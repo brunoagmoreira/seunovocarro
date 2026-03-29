@@ -9,6 +9,7 @@ import { VehicleCard } from '@/components/vehicles/VehicleCard';
 import { SearchFilters } from '@/components/vehicles/SearchFilters';
 
 // Components
+import { HeroBanner } from '@/components/home/HeroBanner';
 import { BuyerBanners } from '@/components/home/BuyerBanners';
 import { TrustBadges } from '@/components/home/TrustBadges';
 
@@ -51,40 +52,16 @@ export function HomeClient() {
       <WebsiteSearchSchema />
       <LocalBusinessSchema />
 
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 gradient-brand opacity-10" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/50 to-background" />
-        
-        <div className="container relative pt-8 pb-12 md:pt-16 md:pb-20">
-          <div className="text-center max-w-3xl mx-auto mb-8 md:mb-12 animate-fade-in">
-            <h1 className="font-heading text-3xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight">
-              Encontre seu{' '}
-              <span className="gradient-brand-text">carro ideal</span>
-            </h1>
-            <p className="text-muted-foreground text-lg md:text-xl mb-6">
-              Os melhores veículos seminovos e usados, selecionados para você
-            </p>
-            
-            <div className="flex justify-center gap-8 md:gap-12">
-              <div className="text-center animate-fade-in" style={{ animationDelay: '0.1s' }}>
-                <span className="text-2xl md:text-3xl font-bold gradient-brand-text">{vehicleCount}</span>
-                <p className="text-xs md:text-sm text-muted-foreground">veículos disponíveis</p>
-              </div>
-              <div className="text-center animate-fade-in" style={{ animationDelay: '0.15s' }}>
-                <span className="text-2xl md:text-3xl font-bold gradient-brand-text">500+</span>
-                <p className="text-xs md:text-sm text-muted-foreground">carros vendidos</p>
-              </div>
-            </div>
-          </div>
+      <HeroBanner />
 
-          <div className="max-w-4xl mx-auto animate-fade-in" style={{ animationDelay: '0.1s' }}>
-            <SearchFilters 
-              filters={filters}
-              onFilterChange={setFilters}
-              onSearch={handleSearch}
-              variant="hero"
-            />
-          </div>
+      <section className="bg-background border-b border-border py-6 shadow-sm relative z-20 -mt-6 rounded-t-3xl md:rounded-t-none md:-mt-0">
+        <div className="container max-w-5xl mx-auto">
+          <SearchFilters 
+            filters={filters}
+            onFilterChange={setFilters}
+            onSearch={handleSearch}
+            variant="hero"
+          />
         </div>
       </section>
 

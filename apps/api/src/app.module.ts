@@ -16,6 +16,8 @@ import { AdsModule } from './modules/ads/ads.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { BlogModule } from './modules/blog/blog.module';
 
+import { BannersModule } from './modules/banners/banners.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -31,6 +33,7 @@ import { BlogModule } from './modules/blog/blog.module';
     AdsModule,
     NotificationsModule,
     BlogModule,
+    BannersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -148,6 +148,12 @@ export function Header() {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
+                      <Link href="/admin/banners" className="cursor-pointer">
+                        <Rocket className="mr-2 h-4 w-4 text-kairos-primary" />
+                        Vitrine (Banners)
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
                       <Link href="/admin/blog" className="cursor-pointer">
                         <FileText className="mr-2 h-4 w-4" />
                         Admin Blog
@@ -300,6 +306,14 @@ export function Header() {
                           className="text-lg font-medium hover:text-primary transition-colors"
                         >
                           Painel Admin
+                        </Link>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Link 
+                          href="/admin/banners" 
+                          className="text-lg font-medium hover:text-kairos-primary transition-colors"
+                        >
+                          Vitrine (Banners)
                         </Link>
                       </SheetClose>
                       <SheetClose asChild>
