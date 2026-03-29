@@ -21,6 +21,7 @@ export interface Conversation {
     id: string;
     name: string;
     phone: string;
+    email?: string | null;
   };
   seller?: {
     id: string;
