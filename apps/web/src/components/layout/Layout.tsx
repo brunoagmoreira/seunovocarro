@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { usePathname } from 'next/navigation';
 import { Header } from './Header';
 import { Footer } from './Footer';
@@ -8,15 +8,20 @@ import { BottomNav } from './BottomNav';
 import { InboxPopup } from '@/components/chat/InboxPopup';
 import { useUTM } from '@/hooks/useUTM';
 
-export function ClientLayout({ children }: { children: React.ReactNode }) {
-  // Capture UTM parameters on any page entry
+// Isolated component for UTM tracking to satisfy Next.js Suspense requirement
+function UTMTracker() {
   useUTM();
-  
+  return null;
+}
+
+export function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   // Scroll to top on route change (in Next.js Link handles this, but kept for full compatibility)
   useEffect(() => {
-    window.scrollTo(0, 0);
+    if (typeof window !== 'undefined') {
+      window.scrollTo(0, 0);
+    }
   }, [pathname]);
   
   return (
@@ -27,7 +32,10 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
       </main>
       <Footer />
       <BottomNav />
-      {/* InboxPopup could also be moved here if it doesn't conflict */}
+      {/* Tracker wrapped in Suspense because useUTM uses useSearchParams */}
+      <Suspense fallback={null}>
+        <UTMTracker />
+      </Suspense>
       <InboxPopup />
     </div>
   );

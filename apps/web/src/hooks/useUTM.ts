@@ -24,13 +24,19 @@ export function useUTM() {
   });
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     // Client-side initialization
-    const stored = typeof window !== 'undefined' ? sessionStorage.getItem(UTM_STORAGE_KEY) : null;
+    const stored = sessionStorage.getItem(UTM_STORAGE_KEY);
     let currentParams = utmParams;
 
     if (stored) {
-      currentParams = JSON.parse(stored);
-      setUtmParams(currentParams);
+      try {
+        currentParams = JSON.parse(stored);
+        setUtmParams(currentParams);
+      } catch (e) {
+        console.error('Failed to parse UTM params', e);
+      }
     }
 
     // Check for UTM params in URL
@@ -52,16 +58,12 @@ export function useUTM() {
       };
       
       setUtmParams(newParams);
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem(UTM_STORAGE_KEY, JSON.stringify(newParams));
-      }
+      sessionStorage.setItem(UTM_STORAGE_KEY, JSON.stringify(newParams));
     } else if (!currentParams.referrer && typeof document !== 'undefined' && document.referrer) {
       // Capture referrer if no UTMs but we have a referrer
       const newParams = { ...currentParams, referrer: document.referrer };
       setUtmParams(newParams);
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem(UTM_STORAGE_KEY, JSON.stringify(newParams));
-      }
+      sessionStorage.setItem(UTM_STORAGE_KEY, JSON.stringify(newParams));
     }
   }, [searchParams]);
 
@@ -74,7 +76,11 @@ export function getStoredUTM(): UTMParams {
   }
   const stored = sessionStorage.getItem(UTM_STORAGE_KEY);
   if (stored) {
-    return JSON.parse(stored);
+    try {
+      return JSON.parse(stored);
+    } catch (e) {
+      return { utm_source: null, utm_medium: null, utm_campaign: null, utm_term: null, utm_content: null, referrer: null };
+    }
   }
   return {
     utm_source: null,
