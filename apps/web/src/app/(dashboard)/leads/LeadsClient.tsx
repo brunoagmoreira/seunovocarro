@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { MessageSquare, Phone, Calendar, Car, TrendingUp, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';

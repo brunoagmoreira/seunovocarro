@@ -127,4 +127,37 @@ export class VehiclesService {
       where: { id },
     });
   }
+  async findForUser(userId: string) {
+    return this.prisma.vehicle.findMany({
+      where: { user_id: userId },
+      include: {
+        media: {
+          orderBy: { order: 'asc' },
+        },
+      },
+      orderBy: { created_at: 'desc' },
+    });
+  }
+
+  async getMetrics(userId: string, days: number = 30) {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const [total, approved, pending, sold, expired] = await Promise.all([
+      this.prisma.vehicle.count({ where: { user_id: userId } }),
+      this.prisma.vehicle.count({ where: { user_id: userId, status: 'approved' } }),
+      this.prisma.vehicle.count({ where: { user_id: userId, status: 'pending' } }),
+      this.prisma.vehicle.count({ where: { user_id: userId, status: 'sold' } }),
+      this.prisma.vehicle.count({ where: { user_id: userId, status: 'expired' } }),
+    ]);
+
+    return {
+      total,
+      approved,
+      pending,
+      sold,
+      expired,
+      period: days,
+    };
+  }
 }

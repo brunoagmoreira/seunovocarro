@@ -26,7 +26,7 @@ export class VehiclesController {
     const days = period ? parseInt(period) : 30;
     return this.vehiclesService.getMetrics(user.id, days);
   }
-Applied Lints: [7661a21b-2f7a-4e6a-adb1-e5ded1cf4717]
+
 
   @Get(':slug')
   findBySlug(@Param('slug') slug: string) {
