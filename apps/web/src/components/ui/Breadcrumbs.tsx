@@ -14,10 +14,10 @@ interface BreadcrumbsProps {
 
 export function Breadcrumbs({ items, className = '' }: BreadcrumbsProps) {
   const schemaItems = [
-    { name: 'Início', url: 'https://kairosauto.com.br' },
+    { name: 'Início', url: 'https://seunovocarro.com.br' },
     ...items.map(item => ({
       name: item.label,
-      url: item.href ? `https://kairosauto.com.br${item.href}` : ''
+      url: item.href ? `https://seunovocarro.com.br${item.href}` : ''
     }))
   ].filter(item => item.url);
 

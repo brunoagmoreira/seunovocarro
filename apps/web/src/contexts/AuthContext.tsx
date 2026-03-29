@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // 1. Initial Load: Check token
-    const storedToken = localStorage.getItem('kairos_auth_token');
+    const storedToken = localStorage.getItem('snc_auth_token');
     
     if (storedToken) {
       setToken(storedToken);
@@ -129,7 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
       
       if (data.access_token) {
-        localStorage.setItem('kairos_auth_token', data.access_token);
+        localStorage.setItem('snc_auth_token', data.access_token);
         setToken(data.access_token);
         await fetchMe(data.access_token);
       }
@@ -155,7 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
       
       if (data.access_token) {
-        localStorage.setItem('kairos_auth_token', data.access_token);
+        localStorage.setItem('snc_auth_token', data.access_token);
         setToken(data.access_token);
         await fetchMe(data.access_token);
       }
@@ -167,7 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    localStorage.removeItem('kairos_auth_token');
+    localStorage.removeItem('snc_auth_token');
     setToken(null);
     setUser(null);
     setProfile(null);

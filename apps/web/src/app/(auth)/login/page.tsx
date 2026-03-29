@@ -3,8 +3,8 @@ import { Suspense } from 'react';
 import { LoginClient } from './LoginClient';
 
 export const metadata: Metadata = {
-  title: 'Entrar | Kairós Auto',
-  description: 'Acesse sua conta na Kairós Auto para gerenciar seus anúncios.',
+  title: 'Entrar | Seu Novo Carro',
+  description: 'Acesse sua conta na Seu Novo Carro para gerenciar seus anúncios.',
 };
 
 export default function Page() {

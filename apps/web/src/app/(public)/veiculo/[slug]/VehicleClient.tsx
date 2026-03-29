@@ -321,7 +321,7 @@ export function VehicleClient({ slug }: { slug: string }) {
                 {vehicle.year} • {FUEL_TYPES[vehicle.fuel]} • {vehicle.color || 'Cor não informada'}
               </p>
               <div className="flex items-center gap-3">
-                <span className="font-heading text-3xl md:text-4xl font-bold gradient-kairos-text">
+                <span className="font-heading text-3xl md:text-4xl font-bold gradient-brand-text">
                   {formatPrice(vehicle.price)}
                 </span>
               </div>
@@ -340,7 +340,7 @@ export function VehicleClient({ slug }: { slug: string }) {
                   { icon: CreditCard, label: 'Final da placa', value: vehicle.plateEnding || '-' }
                 ].map((spec) => (
                   <div key={spec.label} className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl gradient-kairos-soft">
+                    <div className="p-2.5 rounded-xl gradient-brand-soft">
                       <spec.icon className="h-5 w-5 text-primary" />
                     </div>
                     <div>
@@ -364,7 +364,7 @@ export function VehicleClient({ slug }: { slug: string }) {
             <div className="bg-card rounded-2xl p-6 shadow-card">
               <h2 className="font-heading font-semibold text-lg mb-4">Localização</h2>
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl gradient-kairos-soft">
+                <div className="p-2.5 rounded-xl gradient-brand-soft">
                   <MapPin className="h-5 w-5 text-primary" />
                 </div>
                 <div>
@@ -393,7 +393,7 @@ export function VehicleClient({ slug }: { slug: string }) {
               </div>
 
               <Button 
-                variant="kairos" 
+                variant="brand" 
                 size="lg" 
                 className="w-full text-base"
                 onClick={() => setShowContactModal(true)}
@@ -441,7 +441,7 @@ export function VehicleClient({ slug }: { slug: string }) {
       <div className="fixed bottom-16 left-0 right-0 p-4 bg-background/95 backdrop-blur-lg border-t border-border md:hidden safe-bottom">
         <div className="container">
           <Button 
-            variant="kairos" 
+            variant="brand" 
             size="lg" 
             className="w-full text-base"
             onClick={() => setShowContactModal(true)}

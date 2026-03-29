@@ -79,7 +79,7 @@ function RegisterForm() {
       // await fetch('/api/leads', { method: 'POST', body: JSON.stringify({...}) })
 
       const message = encodeURIComponent(
-        `Olá! Sou ${userName} e vi o ${vehicleNameParam} no Kairós Auto. Gostaria de mais informações!`
+        `Olá! Sou ${userName} e vi o ${vehicleNameParam} no Seu Novo Carro. Gostaria de mais informações!`
       );
       const cleanPhone = sellerWhatsappParam.replace(/\D/g, '');
       window.open(`https://wa.me/55${cleanPhone}?text=${message}`, '_blank');
@@ -378,7 +378,7 @@ function RegisterForm() {
             )}
 
             {(sellerType === 'seller' || sellerType === 'dealer') && (
-              <div className="p-4 rounded-xl gradient-kairos-soft border border-primary/20">
+              <div className="p-4 rounded-xl gradient-brand-soft border border-primary/20">
                 <p className="text-sm text-muted-foreground">
                   {sellerType === 'dealer' 
                     ? 'Sua loja passará por aprovação antes de aparecer publicamente. Você poderá completar os dados no seu perfil.'
@@ -388,7 +388,7 @@ function RegisterForm() {
               </div>
             )}
 
-            <Button type="submit" variant="kairos" size="lg" className="w-full" disabled={isLoading}>
+            <Button type="submit" variant="brand" size="lg" className="w-full" disabled={isLoading}>
               {isLoading ? 'Criando conta...' : 'Criar conta'}
             </Button>
           </form>

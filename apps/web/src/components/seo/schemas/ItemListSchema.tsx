@@ -17,7 +17,7 @@ export function ItemListSchema({ vehicles, listName = 'Veículos Disponíveis' }
       "item": {
         "@type": "Vehicle",
         "name": `${vehicle.brand} ${vehicle.model} ${vehicle.year}`,
-        "url": `https://kairosauto.com.br/veiculo/${vehicle.slug}`,
+        "url": `https://seunovocarro.com.br/veiculo/${vehicle.slug}`,
         "image": vehicle.images[0]?.url,
         "offers": {
           "@type": "Offer",

@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   
   return {
     title,
-    description: "Confira todos os detalhes, fotos e especificações deste veículo incrível na Kairós Auto.",
+    description: "Confira todos os detalhes, fotos e especificações deste veículo incrível na Seu Novo Carro.",
   };
 }
 

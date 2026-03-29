@@ -120,7 +120,7 @@ function LoginForm() {
               </div>
             </div>
 
-            <Button type="submit" variant="kairos" size="lg" className="w-full" disabled={isLoading}>
+            <Button type="submit" variant="brand" size="lg" className="w-full" disabled={isLoading}>
               {isLoading ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>

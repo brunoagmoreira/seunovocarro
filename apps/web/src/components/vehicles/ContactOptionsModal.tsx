@@ -88,7 +88,7 @@ export function ContactOptionsModal({
 
       // Redirect to WhatsApp
       const message = encodeURIComponent(
-        `Olá! Sou ${userName} e vi o ${vehicleName} no Kairós Auto. Gostaria de mais informações!`
+        `Olá! Sou ${userName} e vi o ${vehicleName} no Seu Novo Carro. Gostaria de mais informações!`
       );
       const cleanPhone = sellerWhatsapp.replace(/\D/g, '');
       window.open(`https://wa.me/55${cleanPhone}?text=${message}`, '_blank');

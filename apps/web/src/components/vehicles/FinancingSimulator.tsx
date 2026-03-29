@@ -60,7 +60,7 @@ export function FinancingSimulator({ vehiclePrice, vehicleName, onSimulate }: Fi
           <div className="p-4 bg-muted rounded-xl">
             <p className="text-sm text-muted-foreground">Veículo</p>
             <p className="font-semibold">{vehicleName}</p>
-            <p className="text-2xl font-bold gradient-kairos-text">{formatCurrency(vehiclePrice)}</p>
+            <p className="text-2xl font-bold gradient-brand-text">{formatCurrency(vehiclePrice)}</p>
           </div>
 
           <div className="space-y-4">
@@ -100,7 +100,7 @@ export function FinancingSimulator({ vehiclePrice, vehicleName, onSimulate }: Fi
 
           <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-xl p-6 text-center border border-primary/20">
             <p className="text-sm text-muted-foreground mb-1">Parcela estimada</p>
-            <p className="text-4xl font-bold gradient-kairos-text">
+            <p className="text-4xl font-bold gradient-brand-text">
               {formatCurrency(monthlyPayment)}
             </p>
             <p className="text-xs text-muted-foreground mt-2">
@@ -120,7 +120,7 @@ export function FinancingSimulator({ vehiclePrice, vehicleName, onSimulate }: Fi
           </div>
 
           <Button 
-            variant="kairos" 
+            variant="brand" 
             className="w-full"
             onClick={handleSimulate}
           >

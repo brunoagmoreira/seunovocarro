@@ -1,87 +1,84 @@
-@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 
 @import "tailwindcss";
 @config "../../tailwind.config.ts";
 
 @layer base {
   :root {
-    /* Kairós Brand Colors */
-    --kairos-teal: 187 91% 37%;
-    --kairos-emerald: 160 75% 39%;
+    /* Seu Novo Carro Brand Colors */
+    --brand-green: 149 54% 33%; /* #268052 */
+    --brand-dark-green: 126 29% 31%; /* #346739 */
+    --brand-yellow: 51 100% 55%; /* #ffd91a */
     
     /* Light Mode */
-    --background: 0 0% 96%;
-    --foreground: 0 0% 10%;
+    --background: 210 17% 98%; /* #f8f9fa */
+    --foreground: 215 28% 17%; /* #1f2937 */
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card-foreground: 215 28% 17%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover-foreground: 215 28% 17%;
 
-    --primary: 187 91% 37%;
+    --primary: 149 54% 33%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 92%;
-    --secondary-foreground: 0 0% 10%;
+    --secondary: 126 29% 31%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 92%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 210 17% 92%;
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 160 75% 39%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 51 100% 55%;
+    --accent-foreground: 215 28% 17%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 88%;
-    --input: 0 0% 88%;
-    --ring: 187 91% 37%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 149 54% 33%;
 
     --radius: 0.75rem;
 
-    /* Kairós Gradients */
-    --gradient-kairos: linear-gradient(135deg, hsl(187 91% 37%) 0%, hsl(160 75% 39%) 100%);
-    --gradient-kairos-soft: linear-gradient(135deg, hsl(187 91% 37% / 0.1) 0%, hsl(160 75% 39% / 0.1) 100%);
-    --gradient-kairos-vertical: linear-gradient(180deg, hsl(187 91% 37%) 0%, hsl(160 75% 39%) 100%);
+    /* Gradiente Manual: 160 graus */
+    --gradient-brand: linear-gradient(160deg, #268052 0%, #346739 100%);
+    --gradient-brand-soft: linear-gradient(160deg, rgba(38, 128, 82, 0.1) 0%, rgba(52, 103, 57, 0.1) 100%);
     
     /* Shadows */
-    --shadow-card: 0 2px 8px -2px hsl(0 0% 0% / 0.08), 0 4px 16px -4px hsl(0 0% 0% / 0.04);
-    --shadow-elevated: 0 8px 24px -8px hsl(0 0% 0% / 0.12), 0 16px 48px -16px hsl(0 0% 0% / 0.08);
-    --shadow-kairos: 0 8px 24px -8px hsl(187 91% 37% / 0.25);
+    --shadow-card: 0 2px 8px -2px rgba(0,0,0,0.08), 0 4px 16px -4px rgba(0,0,0,0.04);
+    --shadow-elevated: 0 8px 24px -8px rgba(0,0,0,0.12), 0 16px 48px -16px rgba(0,0,0,0.08);
+    --shadow-brand: 0 8px 24px -8px rgba(38, 128, 82, 0.25);
   }
 
   .dark {
-    --background: 0 0% 4%;
+    --background: 215 28% 8%;
     --foreground: 0 0% 100%;
 
-    --card: 0 0% 7%;
+    --card: 215 28% 10%;
     --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 7%;
+    --popover: 215 28% 10%;
     --popover-foreground: 0 0% 100%;
 
-    --primary: 187 91% 37%;
+    --primary: 149 54% 33%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 12%;
+    --secondary: 126 29% 31%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 55%;
+    --muted: 215 28% 15%;
+    --muted-foreground: 215 16% 65%;
 
-    --accent: 160 75% 39%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 51 100% 55%;
+    --accent-foreground: 215 28% 17%;
 
     --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
-    --ring: 187 91% 37%;
-
-    --shadow-card: 0 2px 8px -2px hsl(0 0% 0% / 0.4), 0 4px 16px -4px hsl(0 0% 0% / 0.3);
-    --shadow-elevated: 0 8px 24px -8px hsl(0 0% 0% / 0.5), 0 16px 48px -16px hsl(0 0% 0% / 0.4);
+    --border: 215 28% 18%;
+    --input: 215 28% 18%;
+    --ring: 149 54% 33%;
   }
 }
 
@@ -97,29 +94,32 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground;
+    font-family: 'Outfit', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-heading font-bold tracking-tight;
+    @apply font-bold tracking-tight;
+    font-family: 'Outfit', sans-serif;
   }
 }
 
 @layer utilities {
-  .gradient-kairos {
-    background: var(--gradient-kairos);
+  .gradient-brand {
+    background: var(--gradient-brand);
   }
 
-  .gradient-kairos-text {
-    background: var(--gradient-kairos);
+  .gradient-brand-text {
+    background: var(--gradient-brand);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  .gradient-kairos-soft {
-    background: var(--gradient-kairos-soft);
+  .gradient-brand-soft {
+    background: var(--gradient-brand-soft);
   }
+}
 
   .shadow-card {
     box-shadow: var(--shadow-card);
@@ -129,8 +129,8 @@
     box-shadow: var(--shadow-elevated);
   }
 
-  .shadow-kairos {
-    box-shadow: var(--shadow-kairos);
+  .shadow-brand {
+    box-shadow: var(--shadow-brand);
   }
 
   /* Hide scrollbar but keep functionality */
@@ -270,7 +270,7 @@
   }
 }
 
-@keyframes pulse-kairos {
+@keyframes pulse-brand {
   0%, 100% {
     opacity: 1;
   }
@@ -294,6 +294,6 @@
   animation: float 3s ease-in-out infinite;
 }
 
-.animate-pulse-kairos {
-  animation: pulse-kairos 2s ease-in-out infinite;
+.animate-pulse-brand {
+  animation: pulse-brand 2s ease-in-out infinite;
 }

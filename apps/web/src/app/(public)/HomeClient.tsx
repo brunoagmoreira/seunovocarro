@@ -52,14 +52,14 @@ export function HomeClient() {
       <LocalBusinessSchema />
 
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 gradient-kairos opacity-10" />
+        <div className="absolute inset-0 gradient-brand opacity-10" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/50 to-background" />
         
         <div className="container relative pt-8 pb-12 md:pt-16 md:pb-20">
           <div className="text-center max-w-3xl mx-auto mb-8 md:mb-12 animate-fade-in">
             <h1 className="font-heading text-3xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight">
               Encontre seu{' '}
-              <span className="gradient-kairos-text">carro ideal</span>
+              <span className="gradient-brand-text">carro ideal</span>
             </h1>
             <p className="text-muted-foreground text-lg md:text-xl mb-6">
               Os melhores veículos seminovos e usados, selecionados para você
@@ -67,11 +67,11 @@ export function HomeClient() {
             
             <div className="flex justify-center gap-8 md:gap-12">
               <div className="text-center animate-fade-in" style={{ animationDelay: '0.1s' }}>
-                <span className="text-2xl md:text-3xl font-bold gradient-kairos-text">{vehicleCount}</span>
+                <span className="text-2xl md:text-3xl font-bold gradient-brand-text">{vehicleCount}</span>
                 <p className="text-xs md:text-sm text-muted-foreground">veículos disponíveis</p>
               </div>
               <div className="text-center animate-fade-in" style={{ animationDelay: '0.15s' }}>
-                <span className="text-2xl md:text-3xl font-bold gradient-kairos-text">500+</span>
+                <span className="text-2xl md:text-3xl font-bold gradient-brand-text">500+</span>
                 <p className="text-xs md:text-sm text-muted-foreground">carros vendidos</p>
               </div>
             </div>
@@ -112,7 +112,7 @@ export function HomeClient() {
                 key={i}
                 className="flex items-start gap-4"
               >
-                <div className="p-3 rounded-xl gradient-kairos-soft">
+                <div className="p-3 rounded-xl gradient-brand-soft">
                   <feature.icon className="h-6 w-6 text-primary" />
                 </div>
                 <div>
@@ -289,7 +289,7 @@ export function HomeClient() {
           <div className="container">
             <div className="flex items-center justify-between mb-6 md:mb-8">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg gradient-kairos">
+                <div className="p-2 rounded-lg gradient-brand">
                   <Store className="h-6 w-6 text-white" />
                 </div>
                 <div>
@@ -297,7 +297,7 @@ export function HomeClient() {
                     Lojas Parceiras
                   </h2>
                   <p className="text-muted-foreground text-sm">
-                    Lojistas verificados pela Kairós Auto
+                    Lojistas verificados pela Seu Novo Carro
                   </p>
                 </div>
               </div>
@@ -342,7 +342,7 @@ export function HomeClient() {
                         {dealer.dealer_logo ? (
                           <img src={dealer.dealer_logo} alt="" className="w-full h-full object-contain p-1" loading="lazy" />
                         ) : (
-                          <div className="w-full h-full gradient-kairos flex items-center justify-center text-white font-bold text-lg">
+                          <div className="w-full h-full gradient-brand flex items-center justify-center text-white font-bold text-lg">
                             {dealer.dealer_name.charAt(0)}
                           </div>
                         )}
@@ -388,7 +388,7 @@ export function HomeClient() {
                   Perguntas Frequentes
                 </h2>
                 <p className="text-muted-foreground text-sm">
-                  Tire suas dúvidas sobre a Kairós Auto
+                  Tire suas dúvidas sobre a Seu Novo Carro
                 </p>
               </div>
             </div>
@@ -432,7 +432,7 @@ export function HomeClient() {
 
       <section className="py-12 md:py-16">
         <div className="container">
-          <div className="relative overflow-hidden rounded-3xl gradient-kairos p-8 md:p-12 text-center">
+          <div className="relative overflow-hidden rounded-3xl gradient-brand p-8 md:p-12 text-center">
             <div className="relative z-10 max-w-2xl mx-auto">
               <h2 className="font-heading text-2xl md:text-4xl font-bold text-white mb-4">
                 Quer vender seu carro?

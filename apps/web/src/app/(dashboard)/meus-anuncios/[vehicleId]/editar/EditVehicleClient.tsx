@@ -610,7 +610,7 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
             <Button type="button" variant="outline" className="flex-1" onClick={(e) => handleSubmit(e as any, true)} disabled={isSaving}>
               Salvar rascunho
             </Button>
-            <Button type="submit" variant="kairos" className="flex-1" disabled={isSaving}>
+            <Button type="submit" variant="brand" className="flex-1" disabled={isSaving}>
               {isSaving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Atualizando...</> : 'Enviar para aprovação'}
             </Button>
           </div>

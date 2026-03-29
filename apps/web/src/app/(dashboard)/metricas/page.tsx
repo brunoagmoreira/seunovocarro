@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import { MetricsClient } from './MetricsClient';
 
 export const metadata: Metadata = {
-  title: 'Métricas | Kairós Auto',
+  title: 'Métricas | Seu Novo Carro',
   description: 'Visualize as métricas e performance dos seus anúncios.',
 };
 

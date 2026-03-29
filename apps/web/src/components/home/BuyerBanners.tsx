@@ -158,11 +158,11 @@ function BannerCard({ banner, isGrid }: BannerCardProps) {
   const getIconStyles = () => {
     switch (banner.variant) {
       case 'gradient':
-        return 'gradient-kairos text-white';
+        return 'gradient-brand text-white';
       case 'whatsapp':
         return 'bg-emerald-500 text-white';
       default:
-        return 'gradient-kairos-soft text-primary';
+        return 'gradient-brand-soft text-primary';
     }
   };
 
@@ -171,7 +171,7 @@ function BannerCard({ banner, isGrid }: BannerCardProps) {
       {/* Badge */}
       {banner.badge && (
         <div className="absolute top-3 right-3">
-          <span className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full gradient-kairos text-white">
+          <span className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full gradient-brand text-white">
             {banner.badge}
           </span>
         </div>

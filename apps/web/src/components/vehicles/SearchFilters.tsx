@@ -203,7 +203,7 @@ export function SearchFilters({
           </Button>
         )}
         <Button 
-          className="flex-1 gradient-kairos text-white shadow-kairos hover:opacity-90"
+          className="flex-1 gradient-brand text-white shadow-brand hover:opacity-90"
           onClick={() => {
             onSearch();
             setIsOpen(false);
@@ -259,7 +259,7 @@ export function SearchFilters({
             </SelectContent>
           </Select>
 
-          <Button className="gradient-kairos text-white shadow-kairos hover:opacity-90 h-12" onClick={onSearch} size="lg">
+          <Button className="gradient-brand text-white shadow-brand hover:opacity-90 h-12" onClick={onSearch} size="lg">
             <Search className="h-5 w-5 mr-2" />
             Buscar
           </Button>
@@ -419,7 +419,7 @@ export function SearchFilters({
               <SlidersHorizontal className="h-4 w-4 mr-2" />
               Filtros
               {hasFilters && (
-                <span className="ml-2 px-2 py-0.5 rounded-full gradient-kairos text-white text-xs">
+                <span className="ml-2 px-2 py-0.5 rounded-full gradient-brand text-white text-xs">
                   {Object.values(filters).filter(v => v !== undefined && v !== '').length}
                 </span>
               )}

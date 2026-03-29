@@ -15,7 +15,7 @@ export function TrustBadges() {
               key={stat.label}
               className="p-4"
             >
-              <span className="text-3xl md:text-4xl font-bold gradient-kairos-text">
+              <span className="text-3xl md:text-4xl font-bold gradient-brand-text">
                 {stat.value}
               </span>
               <p className="text-sm text-muted-foreground mt-1">

@@ -441,7 +441,7 @@ export function InlineChat({
 
   const handleWhatsApp = () => {
     const message = encodeURIComponent(
-      `Olá! Sou ${userData.name} e vi o ${vehicleName} no Kairós Auto. Gostaria de mais informações!`
+      `Olá! Sou ${userData.name} e vi o ${vehicleName} no Seu Novo Carro. Gostaria de mais informações!`
     );
     const cleanPhone = sellerWhatsapp.replace(/\D/g, '');
     window.open(`https://wa.me/55${cleanPhone}?text=${message}`, '_blank');

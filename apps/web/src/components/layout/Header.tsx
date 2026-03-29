@@ -169,7 +169,7 @@ export function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button className="gradient-kairos text-white shadow-kairos hover:opacity-90" size="sm" asChild>
+            <Button className="gradient-brand text-white shadow-brand hover:opacity-90" size="sm" asChild>
               <Link href="/login">
                 <User className="h-4 w-4 mr-2" />
                 Entrar
@@ -325,7 +325,7 @@ export function Header() {
                       Sair
                     </Button>
                   ) : (
-                    <Button className="gradient-kairos text-white shadow-kairos hover:opacity-90 w-full" asChild>
+                    <Button className="gradient-brand text-white shadow-brand hover:opacity-90 w-full" asChild>
                       <Link href="/login">
                         <User className="h-4 w-4 mr-2" />
                         Entrar / Cadastrar

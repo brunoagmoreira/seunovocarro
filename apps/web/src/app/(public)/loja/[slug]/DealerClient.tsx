@@ -89,7 +89,7 @@ export function DealerClient({ slug }: { slug: string }) {
           <p className="text-muted-foreground mb-6">
             A loja que você está procurando não existe ou foi removida.
           </p>
-          <Button variant="kairos" asChild>
+          <Button variant="brand" asChild>
             <Link href="/veiculos">Ver todos os veículos</Link>
           </Button>
         </div>
@@ -124,9 +124,9 @@ export function DealerClient({ slug }: { slug: string }) {
           animate={{ opacity: 1, y: 0 }}
           className="absolute top-4 right-4"
         >
-          <Badge className="gradient-kairos text-white border-0 px-3 py-1.5">
+          <Badge className="gradient-brand text-white border-0 px-3 py-1.5">
             <Shield className="h-3.5 w-3.5 mr-1.5" />
-            Parceiro Kairós
+            Parceiro Seu Novo Carro
           </Badge>
         </motion.div>
       </div>
@@ -148,7 +148,7 @@ export function DealerClient({ slug }: { slug: string }) {
                       className="w-full h-full object-contain p-2"
                     />
                   ) : (
-                    <div className="w-full h-full gradient-kairos flex items-center justify-center">
+                    <div className="w-full h-full gradient-brand flex items-center justify-center">
                       <span className="text-3xl md:text-4xl font-bold text-white">
                         {dealer.dealer_name.charAt(0)}
                       </span>
@@ -181,7 +181,7 @@ export function DealerClient({ slug }: { slug: string }) {
                           <span className="hidden md:inline">•</span>
                           <span className="flex items-center gap-1">
                             <Calendar className="h-4 w-4" />
-                            Na Kairós desde {new Date(dealer.dealer_since).getFullYear()}
+                            Na Seu Novo Carro desde {new Date(dealer.dealer_since).getFullYear()}
                           </span>
                         </>
                       )}
@@ -196,7 +196,7 @@ export function DealerClient({ slug }: { slug: string }) {
 
                   <div className="flex gap-6 md:gap-8">
                     <div className="text-center">
-                      <span className="block text-2xl md:text-3xl font-bold gradient-kairos-text">
+                      <span className="block text-2xl md:text-3xl font-bold gradient-brand-text">
                         {vehicleCount}
                       </span>
                       <span className="text-xs text-muted-foreground">veículos</span>
@@ -208,9 +208,9 @@ export function DealerClient({ slug }: { slug: string }) {
 
             <div className="flex flex-wrap gap-2 mt-6 pt-6 border-t border-border">
               {dealer.whatsapp && (
-                <Button variant="kairos" size="sm" asChild>
+                <Button variant="brand" size="sm" asChild>
                   <a
-                    href={`https://wa.me/55${dealer.whatsapp.replace(/\D/g, '')}?text=Olá! Vi sua loja na Kairós Auto e gostaria de saber mais.`}
+                    href={`https://wa.me/55${dealer.whatsapp.replace(/\D/g, '')}?text=Olá! Vi sua loja na Seu Novo Carro e gostaria de saber mais.`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -422,12 +422,12 @@ export function DealerClient({ slug }: { slug: string }) {
         <section className="mb-8">
           <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl p-6 md:p-8">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-4 mb-4">
-              <div className="p-3 rounded-xl gradient-kairos">
+              <div className="p-3 rounded-xl gradient-brand">
                 <Shield className="h-6 w-6 text-white" />
               </div>
               <div>
                 <h3 className="font-heading font-semibold text-lg">
-                  Lojista Parceiro Kairós Auto
+                  Lojista Parceiro Seu Novo Carro
                 </h3>
                 <p className="text-muted-foreground text-sm">
                   Verificado e aprovado pela nossa equipe
@@ -488,7 +488,7 @@ function DealerLocalBusinessSchema({ dealer }: { dealer: any }) {
     "@type": "AutoDealer",
     "name": dealer.dealer_name,
     "description": dealer.dealer_description,
-    "url": `https://kairosauto.com.br/loja/${dealer.dealer_slug}`,
+    "url": `https://seunovocarro.com.br/loja/${dealer.dealer_slug}`,
     "logo": dealer.dealer_logo,
     "image": dealer.dealer_banner,
     "telephone": dealer.phone,

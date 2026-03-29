@@ -167,7 +167,7 @@ function VehiclesContent() {
               </div>
             ) : (
               <div className="text-center py-16">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full gradient-kairos-soft flex items-center justify-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full gradient-brand-soft flex items-center justify-center">
                   <ChevronDown className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="font-heading font-semibold text-lg mb-2">

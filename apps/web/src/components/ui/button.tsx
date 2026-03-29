@@ -15,7 +15,7 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 active:scale-[0.98]",
         ghost: "hover:bg-accent hover:text-accent-foreground active:scale-[0.98]",
         link: "text-primary underline-offset-4 hover:underline",
-        kairos: "gradient-kairos text-white shadow-kairos hover:opacity-90 active:scale-[0.98]",
+        kairos: "gradient-brand text-white shadow-brand hover:opacity-90 active:scale-[0.98]",
         whatsapp: "bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90 active:scale-[0.98]",
       },
       size: {

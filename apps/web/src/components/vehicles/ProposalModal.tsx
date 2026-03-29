@@ -167,7 +167,7 @@ export function ProposalModal({ vehicleId, vehicleName, vehiclePrice }: Proposal
 
           <Button 
             type="submit" 
-            variant="kairos" 
+            variant="brand" 
             className="w-full"
             disabled={createProposal.isPending}
           >

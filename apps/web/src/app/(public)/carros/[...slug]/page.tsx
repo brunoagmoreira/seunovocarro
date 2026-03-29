@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: 'Página não encontrada' };
   }
 
-  let title = 'Kairós Auto';
+  let title = 'Seu Novo Carro';
   let description = '';
   let keywords: string[] = [];
 

@@ -1,11 +1,11 @@
 export const FEATURED_FAQS = [
   {
-    question: 'Como funciona a Kairós Auto?',
-    answer: 'A Kairós Auto é uma plataforma de classificados de veículos seminovos e usados. Conectamos compradores e vendedores verificados, garantindo uma experiência segura e transparente.',
+    question: 'Como funciona a Seu Novo Carro?',
+    answer: 'A Seu Novo Carro é uma plataforma de classificados de veículos seminovos e usados. Conectamos compradores e vendedores verificados, garantindo uma experiência segura e transparente.',
   },
   {
     question: 'Preciso pagar para anunciar meu veículo?',
-    answer: 'Não! Anunciar na Kairós Auto é totalmente gratuito. Basta criar sua conta, preencher os dados do veículo e publicar seu anúncio.',
+    answer: 'Não! Anunciar na Seu Novo Carro é totalmente gratuito. Basta criar sua conta, preencher os dados do veículo e publicar seu anúncio.',
   },
   {
     question: 'Como entro em contato com o vendedor?',

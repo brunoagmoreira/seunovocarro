@@ -7,8 +7,8 @@ type Props = {
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: 'Editar Anúncio | Kairós Auto',
-    description: 'Edite o seu anúncio de veículo na Kairós Auto.',
+    title: 'Editar Anúncio | Seu Novo Carro',
+    description: 'Edite o seu anúncio de veículo na Seu Novo Carro.',
   };
 }
 

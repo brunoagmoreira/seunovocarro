@@ -185,7 +185,7 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
     <div className="bg-card rounded-2xl p-6 shadow-card space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg gradient-kairos">
+          <div className="p-2 rounded-lg gradient-brand">
             <Store className="h-5 w-5 text-white" />
           </div>
           <h3 className="font-heading font-semibold">Configurações de Lojista</h3>
@@ -383,7 +383,7 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
 
           <Button
             type="button"
-            variant="kairos"
+            variant="brand"
             className="w-full"
             onClick={handleSave}
             disabled={isLoading || !dealerData.dealer_name}

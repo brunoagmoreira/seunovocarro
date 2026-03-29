@@ -182,7 +182,7 @@ export function ProfileClient() {
               <div className="relative mb-4">
                 <Avatar className="h-24 w-24">
                   <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || 'Avatar'} />
-                  <AvatarFallback className="text-2xl gradient-kairos text-primary-foreground">
+                  <AvatarFallback className="text-2xl gradient-brand text-primary-foreground">
                     {getInitials(profile?.full_name)}
                   </AvatarFallback>
                 </Avatar>
@@ -314,7 +314,7 @@ export function ProfileClient() {
 
             <Button
               type="submit"
-              variant="kairos"
+              variant="brand"
               className="w-full mt-4"
               disabled={isLoading}
             >

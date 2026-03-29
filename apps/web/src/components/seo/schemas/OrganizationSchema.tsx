@@ -2,13 +2,13 @@ export function OrganizationSchema() {
   const schema = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "Kairós Auto",
-    "url": "https://kairosauto.com.br",
-    "logo": "https://kairosauto.com.br/logo.png",
-    "description": "Marketplace de carros usados e seminovos com vendedores verificados",
+    "name": "Seu Novo Carro",
+    "url": "https://seunovocarro.com.br",
+    "logo": "https://seunovocarro.com.br/logo.png",
+    "description": "A melhor plataforma para comprar e vender carros usados e seminovos no Brasil. Qualidade, segurança e o melhor preço.",
     "sameAs": [
-      "https://instagram.com/kairosauto",
-      "https://facebook.com/kairosauto"
+      "https://instagram.com/seunovocarro",
+      "https://facebook.com/seunovocarro"
     ],
     "contactPoint": {
       "@type": "ContactPoint",

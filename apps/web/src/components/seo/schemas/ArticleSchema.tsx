@@ -22,19 +22,19 @@ export function ArticleSchema({
     "@type": "Article",
     "headline": title,
     "description": description,
-    "image": image || "https://kairosauto.com.br/og-image.jpg",
+    "image": image || "https://seunovocarro.com.br/og-image.jpg",
     "datePublished": datePublished,
     "dateModified": dateModified,
     "author": {
       "@type": "Person",
-      "name": authorName || "Kairós Auto"
+      "name": authorName || "Seu Novo Carro"
     },
     "publisher": {
       "@type": "Organization",
-      "name": "Kairós Auto",
+      "name": "Seu Novo Carro",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://kairosauto.com.br/logo.png"
+        "url": "https://seunovocarro.com.br/logo.png"
       }
     },
     "mainEntityOfPage": {

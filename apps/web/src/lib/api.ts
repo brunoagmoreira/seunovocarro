@@ -32,7 +32,7 @@ export async function fetchApi<T>(endpoint: string, options: FetchOptions = {}):
 
   // Tentar injetar o token no Client Side
   if (typeof window !== 'undefined' && requireAuth) {
-    const token = localStorage.getItem('kairos_auth_token');
+    const token = localStorage.getItem('snc_auth_token');
     if (token) {
       headers.set('Authorization', `Bearer ${token}`);
     } else {

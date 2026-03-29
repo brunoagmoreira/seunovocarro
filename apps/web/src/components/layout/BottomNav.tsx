@@ -39,7 +39,7 @@ export function BottomNav() {
               />
               <span className="text-[10px] font-medium">{label}</span>
               {isActive && (
-                <div className="absolute bottom-2 w-1 h-1 rounded-full gradient-kairos" />
+                <div className="absolute bottom-2 w-1 h-1 rounded-full gradient-brand" />
               )}
             </Link>
           );

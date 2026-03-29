@@ -48,7 +48,7 @@ export function HomeBanner() {
     }
 
     return (
-      <div className="relative w-full h-full gradient-kairos flex items-center justify-center px-6">
+      <div className="relative w-full h-full gradient-brand flex items-center justify-center px-6">
         <div className="text-center text-white">
           {currentBanner.title && (
             <h3 className="font-heading text-xl md:text-2xl font-bold mb-2">

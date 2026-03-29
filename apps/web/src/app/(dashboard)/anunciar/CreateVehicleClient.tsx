@@ -73,7 +73,7 @@ export function CreateVehicleClient() {
           <p className="text-muted-foreground mb-6">
             Você precisa estar logado para criar anúncios.
           </p>
-          <Button variant="kairos" asChild>
+          <Button variant="brand" asChild>
             <Link href="/login">Fazer login</Link>
           </Button>
         </div>
@@ -85,14 +85,14 @@ export function CreateVehicleClient() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background pt-16">
         <div className="text-center px-6 max-w-md">
-          <div className="w-24 h-24 mx-auto mb-8 rounded-full gradient-kairos-soft flex items-center justify-center">
+          <div className="w-24 h-24 mx-auto mb-8 rounded-full gradient-brand-soft flex items-center justify-center">
             <span className="text-4xl">🚗</span>
           </div>
           <h1 className="font-heading text-2xl font-bold mb-4">Quer anunciar?</h1>
           <p className="text-muted-foreground mb-6">
             Para anunciar veículos, você precisa atualizar seu cadastro para perfil vendedor/lojista.
           </p>
-          <Button variant="kairos" onClick={() => router.push('/perfil')}>
+          <Button variant="brand" onClick={() => router.push('/perfil')}>
             Atualizar Perfil
           </Button>
         </div>
@@ -104,7 +104,7 @@ export function CreateVehicleClient() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background pt-16">
         <div className="text-center px-6 max-w-md">
-          <div className="w-24 h-24 mx-auto mb-8 rounded-full gradient-kairos-soft flex items-center justify-center">
+          <div className="w-24 h-24 mx-auto mb-8 rounded-full gradient-brand-soft flex items-center justify-center">
             <span className="text-4xl">⏳</span>
           </div>
           <h1 className="font-heading text-2xl font-bold mb-4">Aguardando aprovação</h1>
@@ -537,7 +537,7 @@ export function CreateVehicleClient() {
             </Button>
             <Button
               type="submit"
-              variant="kairos"
+              variant="brand"
               className="flex-1"
               disabled={isLoading}
             >

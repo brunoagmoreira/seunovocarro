@@ -136,7 +136,7 @@ export function LeadsClient() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-card rounded-xl p-4 shadow-card">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg gradient-kairos-soft">
+              <div className="p-2 rounded-lg gradient-brand-soft">
                 <TrendingUp className="h-5 w-5 text-primary" />
               </div>
               <div>
@@ -182,7 +182,7 @@ export function LeadsClient() {
 
         {leads.length === 0 ? (
           <div className="text-center py-16">
-            <div className="w-24 h-24 mx-auto mb-6 rounded-full gradient-kairos-soft flex items-center justify-center">
+            <div className="w-24 h-24 mx-auto mb-6 rounded-full gradient-brand-soft flex items-center justify-center">
               <MessageSquare className="h-10 w-10 text-primary" />
             </div>
             <h2 className="font-heading text-xl font-bold mb-2">Nenhum lead ainda</h2>

@@ -32,7 +32,7 @@ export function ChatsClient() {
             </Button>
           )}
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl gradient-kairos-soft">
+            <div className="p-2 rounded-xl gradient-brand-soft">
               <MessageCircle className="h-5 w-5 text-primary" />
             </div>
             <h1 className="font-heading text-2xl font-bold">

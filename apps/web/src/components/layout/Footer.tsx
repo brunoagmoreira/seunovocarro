@@ -29,7 +29,7 @@ export function Footer() {
               A melhor plataforma para comprar e vender carros usados e seminovos no Brasil.
             </p>
             <p className="text-xs text-muted-foreground">
-              © {currentYear} Kairós Auto. Todos os direitos reservados.
+              © {currentYear} Seu Novo Carro. Todos os direitos reservados.
             </p>
           </div>
 
@@ -73,8 +73,8 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/sobre-kairos" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Sobre a Kairós
+                <Link href="/sobre" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Sobre a Seu Novo Carro
                 </Link>
               </li>
               <li>

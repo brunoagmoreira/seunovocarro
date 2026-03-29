@@ -21,15 +21,15 @@ export function DealersClient() {
           className="mb-8"
         >
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg gradient-kairos">
+            <div className="p-2 rounded-lg gradient-brand">
               <Store className="h-6 w-6 text-white" />
             </div>
             <h1 className="font-heading text-3xl font-bold">
-              Lojas <span className="gradient-kairos-text">Parceiras</span>
+              Lojas <span className="gradient-brand-text">Parceiras</span>
             </h1>
           </div>
           <p className="text-muted-foreground">
-            Lojistas verificados e aprovados pela Kairós Auto
+            Lojistas verificados e aprovados pela Seu Novo Carro
           </p>
         </motion.div>
 
@@ -116,7 +116,7 @@ function DealerCard({ dealer, featured = false }: { dealer: Dealer; featured?: b
           </Badge>
         )}
         {dealer.dealer_verified && (
-          <Badge className="absolute top-2 left-2 gradient-kairos text-white border-0">
+          <Badge className="absolute top-2 left-2 gradient-brand text-white border-0">
             <BadgeCheck className="h-3 w-3 mr-1" />
             Verificado
           </Badge>
@@ -132,7 +132,7 @@ function DealerCard({ dealer, featured = false }: { dealer: Dealer; featured?: b
               className="w-full h-full object-contain p-1" 
             />
           ) : (
-            <div className="w-full h-full gradient-kairos flex items-center justify-center text-white font-bold text-xl">
+            <div className="w-full h-full gradient-brand flex items-center justify-center text-white font-bold text-xl">
               {dealer.dealer_name.charAt(0)}
             </div>
           )}

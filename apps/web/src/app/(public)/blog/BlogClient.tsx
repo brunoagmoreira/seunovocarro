@@ -29,12 +29,12 @@ export function BlogClient() {
           className="text-center mb-8 md:mb-12"
         >
           <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-3 rounded-xl gradient-kairos-soft">
+            <div className="p-3 rounded-xl gradient-brand-soft">
               <BookOpen className="h-8 w-8 text-primary" />
             </div>
           </div>
           <h1 className="font-heading text-3xl md:text-5xl font-bold mb-4">
-            Blog <span className="gradient-kairos-text">Kairós Auto</span>
+            Blog <span className="gradient-brand-text">Seu Novo Carro</span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Dicas, guias e tudo que você precisa saber sobre carros
@@ -113,7 +113,7 @@ export function BlogClient() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center gradient-kairos-soft">
+                      <div className="w-full h-full flex items-center justify-center gradient-brand-soft">
                         <BookOpen className="h-12 w-12 text-primary/50" />
                       </div>
                     )}

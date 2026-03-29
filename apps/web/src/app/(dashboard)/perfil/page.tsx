@@ -3,8 +3,8 @@ import { Suspense } from 'react';
 import { ProfileClient } from './ProfileClient';
 
 export const metadata: Metadata = {
-  title: 'Meu Perfil | Kairós Auto',
-  description: 'Gerencie suas informações de conta da Kairós Auto.',
+  title: 'Meu Perfil | Seu Novo Carro',
+  description: 'Gerencie suas informações de conta da Seu Novo Carro.',
 };
 
 export default function Page() {

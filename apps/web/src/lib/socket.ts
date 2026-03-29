@@ -13,7 +13,7 @@ class SocketService {
 
     // Capture token
     if (typeof window !== 'undefined') {
-      this.token = localStorage.getItem('kairos_auth_token');
+      this.token = localStorage.getItem('snc_auth_token');
     }
 
     this.socket = io(SOCKET_URL, {

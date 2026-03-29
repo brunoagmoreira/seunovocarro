@@ -10,7 +10,7 @@ export interface UTMParams {
   referrer: string | null;
 }
 
-const UTM_STORAGE_KEY = 'kairos_utm_params';
+const UTM_STORAGE_KEY = 'snc_utm_params';
 
 export function useUTM() {
   const searchParams = useSearchParams();

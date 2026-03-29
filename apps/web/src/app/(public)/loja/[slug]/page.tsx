@@ -8,11 +8,11 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   
-  const title = `${slug.replace(/-/g, ' ')} | Veículos | Kairós Auto`;
+  const title = `${slug.replace(/-/g, ' ')} | Veículos | Seu Novo Carro`;
   
   return {
     title,
-    description: `Veja os veículos em estoque de ${slug.replace(/-/g, ' ')} na Kairós Auto.`,
+    description: `Veja os veículos em estoque de ${slug.replace(/-/g, ' ')} na Seu Novo Carro.`,
   };
 }
 

@@ -191,7 +191,7 @@ export function MyVehiclesClient() {
       <div className="container py-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="font-heading text-2xl font-bold">Meus Anúncios</h1>
-          <Button variant="kairos" asChild>
+          <Button variant="brand" asChild>
             <Link href="/anunciar">
               <Plus className="h-4 w-4 mr-2" />
               Novo anúncio
@@ -202,7 +202,7 @@ export function MyVehiclesClient() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
           <div className="bg-card rounded-xl p-4 shadow-card">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg gradient-kairos-soft">
+              <div className="p-2 rounded-lg gradient-brand-soft">
                 <Car className="h-5 w-5 text-primary" />
               </div>
               <div>
@@ -235,7 +235,7 @@ export function MyVehiclesClient() {
           </div>
           <div className="bg-card rounded-xl p-4 shadow-card">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg gradient-kairos-soft">
+              <div className="p-2 rounded-lg gradient-brand-soft">
                 <BadgeCheck className="h-5 w-5 text-primary" />
               </div>
               <div>
@@ -268,7 +268,7 @@ export function MyVehiclesClient() {
 
         {filteredVehicles.length === 0 ? (
           <div className="text-center py-16">
-            <div className="w-24 h-24 mx-auto mb-6 rounded-full gradient-kairos-soft flex items-center justify-center">
+            <div className="w-24 h-24 mx-auto mb-6 rounded-full gradient-brand-soft flex items-center justify-center">
               <span className="text-4xl">🚗</span>
             </div>
             <h2 className="font-heading text-xl font-bold mb-2">
@@ -278,7 +278,7 @@ export function MyVehiclesClient() {
               {activeTab === 'all' ? 'Comece a vender seus veículos agora mesmo!' : 'Seus anúncios aparecerão aqui.'}
             </p>
             {activeTab === 'all' && (
-              <Button variant="kairos" asChild>
+              <Button variant="brand" asChild>
                 <Link href="/anunciar">Criar primeiro anúncio</Link>
               </Button>
             )}
@@ -316,7 +316,7 @@ export function MyVehiclesClient() {
                       </div>
                       <p className="text-sm text-muted-foreground">{vehicle.year}</p>
                       <div className="flex items-center gap-4 mt-1">
-                        <p className="font-semibold gradient-kairos-text">{formatPrice(vehicle.price)}</p>
+                        <p className="font-semibold gradient-brand-text">{formatPrice(vehicle.price)}</p>
                         {vehicleLeads > 0 && (
                           <span className="text-xs text-muted-foreground flex items-center gap-1">
                             <BarChart3 className="h-3 w-3" />

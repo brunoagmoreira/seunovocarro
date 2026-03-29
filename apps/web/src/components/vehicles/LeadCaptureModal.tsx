@@ -77,7 +77,7 @@ export function LeadCaptureModal({
 
       // Redirect to WhatsApp
       const message = encodeURIComponent(
-        `Olá! Sou ${formData.name} e vi o ${vehicleName} no Kairós Auto. Gostaria de mais informações!`
+        `Olá! Sou ${formData.name} e vi o ${vehicleName} no Seu Novo Carro. Gostaria de mais informações!`
       );
       const cleanPhone = sellerWhatsapp.replace(/\D/g, '');
       const whatsappUrl = `https://wa.me/55${cleanPhone}?text=${message}`;
@@ -97,7 +97,7 @@ export function LeadCaptureModal({
       console.error('Error saving lead:', error);
       // Still redirect even if save fails
       const message = encodeURIComponent(
-        `Olá! Vi o ${vehicleName} no Kairós Auto. Gostaria de mais informações!`
+        `Olá! Vi o ${vehicleName} no Seu Novo Carro. Gostaria de mais informações!`
       );
       const cleanPhone = sellerWhatsapp.replace(/\D/g, '');
       const whatsappUrl = `https://wa.me/55${cleanPhone}?text=${message}`;

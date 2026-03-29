@@ -48,7 +48,7 @@ export function BlogPostClient({ slug }: { slug: string }) {
     );
   }
 
-  const shareUrl = `https://kairosauto.com.br/blog/${post.slug}`;
+  const shareUrl = `https://seunovocarro.com.br/blog/${post.slug}`;
   const breadcrumbItems = [
     { label: 'Início', href: '/' },
     { label: 'Blog', href: '/blog' },
@@ -63,7 +63,7 @@ export function BlogPostClient({ slug }: { slug: string }) {
         image={post.featured_image || undefined}
         datePublished={post.published_at || post.created_at}
         dateModified={post.updated_at}
-        authorName={post.author?.full_name || 'Kairós Auto'}
+        authorName={post.author?.full_name || 'Seu Novo Carro'}
         url={shareUrl}
       />
       
@@ -208,7 +208,7 @@ export function BlogPostClient({ slug }: { slug: string }) {
                       className="w-24 h-24 rounded-lg object-cover flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-24 h-24 rounded-lg gradient-kairos-soft flex items-center justify-center flex-shrink-0">
+                    <div className="w-24 h-24 rounded-lg gradient-brand-soft flex items-center justify-center flex-shrink-0">
                       <BookOpen className="h-6 w-6 text-primary/50" />
                     </div>
                   )}
@@ -226,12 +226,12 @@ export function BlogPostClient({ slug }: { slug: string }) {
           </section>
         )}
 
-        <section className="mt-12 p-8 rounded-2xl gradient-kairos text-center">
+        <section className="mt-12 p-8 rounded-2xl gradient-brand text-center">
           <h2 className="font-heading text-2xl md:text-3xl font-bold text-white mb-2">
             Procurando um carro?
           </h2>
           <p className="text-white/80 mb-6">
-            Confira os veículos disponíveis na Kairós Auto
+            Confira os veículos disponíveis na Seu Novo Carro
           </p>
           <Button size="lg" className="bg-white text-primary hover:bg-white/90 shadow-lg" asChild>
             <Link href="/veiculos">Ver veículos</Link>

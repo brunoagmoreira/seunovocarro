@@ -112,7 +112,7 @@ export function ContactMethodModal({
       if (contactMethod === 'whatsapp') {
         // Redirect to WhatsApp
         const message = encodeURIComponent(
-          `Olá! Sou ${formData.name} e vi o ${vehicleName} no Kairós Auto. Gostaria de mais informações!`
+          `Olá! Sou ${formData.name} e vi o ${vehicleName} no Seu Novo Carro. Gostaria de mais informações!`
         );
         const cleanPhone = sellerWhatsapp.replace(/\D/g, '');
         const whatsappUrl = `https://wa.me/55${cleanPhone}?text=${message}`;

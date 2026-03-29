@@ -72,7 +72,7 @@ export function ProtectedRoute({
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center px-6 max-w-md">
-          <div className="w-24 h-24 mx-auto mb-8 rounded-full gradient-kairos-soft flex items-center justify-center">
+          <div className="w-24 h-24 mx-auto mb-8 rounded-full gradient-brand-soft flex items-center justify-center">
             <span className="text-4xl">⏳</span>
           </div>
           <h1 className="font-heading text-2xl font-bold mb-4">Aguardando aprovação</h1>

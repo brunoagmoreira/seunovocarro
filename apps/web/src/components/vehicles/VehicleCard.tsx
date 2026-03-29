@@ -115,7 +115,7 @@ export const VehicleCard = memo(function VehicleCard({ vehicle, className }: Veh
 
         {/* Price + Installments */}
         <div className="mb-2">
-          <span className="font-heading font-bold text-xl gradient-kairos-text">
+          <span className="font-heading font-bold text-xl gradient-brand-text">
             {formatPrice(vehicle.price)}
           </span>
           <p className="text-xs text-muted-foreground">

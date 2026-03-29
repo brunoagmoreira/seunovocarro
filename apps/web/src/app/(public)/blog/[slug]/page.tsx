@@ -9,11 +9,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   
   // Convert basic slug into title proxy for SSR static initial loads.
-  const title = `${slug.replace(/-/g, ' ')} | Blog Kairós Auto`;
+  const title = `${slug.replace(/-/g, ' ')} | Blog Seu Novo Carro`;
   
   return {
     title,
-    description: `Leia o artigo sobre ${slug.replace(/-/g, ' ')} no Blog da Kairós Auto.`,
+    description: `Leia o artigo sobre ${slug.replace(/-/g, ' ')} no Blog da Seu Novo Carro.`,
   };
 }
 

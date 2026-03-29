@@ -3,7 +3,7 @@ import { VehiclesClient } from './VehiclesClient';
 
 export const metadata: Metadata = {
   title: "Veículos Disponíveis",
-  description: "Encontre os melhores carros seminovos e usados na Kairós Auto com garantias e histórico limpo.",
+  description: "Encontre os melhores carros seminovos e usados na Seu Novo Carro com garantias e histórico limpo.",
 };
 
 import { Suspense } from 'react';

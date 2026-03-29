@@ -2,10 +2,10 @@ export function LocalBusinessSchema() {
   const schema = {
     "@context": "https://schema.org",
     "@type": "AutoDealer",
-    "name": "Kairós Auto",
+    "name": "Seu Novo Carro",
     "description": "Marketplace de carros usados e seminovos",
-    "url": "https://kairosauto.com.br",
-    "logo": "https://kairosauto.com.br/logo.png",
+    "url": "https://seunovocarro.com.br",
+    "logo": "https://seunovocarro.com.br/logo.png",
     "priceRange": "$$",
     "address": {
       "@type": "PostalAddress",
