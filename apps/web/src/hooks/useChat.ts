@@ -32,6 +32,16 @@ export function useSellerConversations() {
   });
 }
 
+export function useBuyerConversations() {
+  return useQuery({
+    queryKey: ['chat', 'buyer_conversations'],
+    queryFn: async () => {
+      return await fetchApi<Conversation[]>('/chat/conversations/buyer', { requireAuth: true });
+    },
+    staleTime: 30000,
+  });
+}
+
 export function useMessages(conversationId: string | undefined) {
   const queryClient = useQueryClient();
 
@@ -89,3 +99,55 @@ export async function markMessagesAsRead(conversationId: string) {
     requireAuth: true,
   });
 }
+
+export function useConversationMessages(conversationId: string | undefined) {
+  return useMessages(conversationId);
+}
+
+export function useSendMessage() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ conversationId, content, senderType }: { conversationId: string; content: string; senderType: 'lead' | 'seller' }) => {
+      return await sendMessage(conversationId, content, senderType);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['chat', 'messages', variables.conversationId] });
+      queryClient.invalidateQueries({ queryKey: ['chat', 'seller_conversations'] });
+    },
+  });
+}
+
+export function useMarkAsRead() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (conversationId: string) => {
+      return await markMessagesAsRead(conversationId);
+    },
+    onSuccess: (_, conversationId) => {
+      queryClient.invalidateQueries({ queryKey: ['chat', 'messages', conversationId] });
+      queryClient.invalidateQueries({ queryKey: ['chat', 'seller_conversations'] });
+    },
+  });
+}
+
+export const useChatSubscription = (id?: string | null, cb?: (payload: any) => void) => {
+  useEffect(() => {
+    if (!id || !cb) return;
+
+    const socket = socketService.connect();
+    socket.emit('joinConversation', id);
+
+    const handleMessage = (payload: any) => {
+      cb(payload);
+    };
+
+    socket.on('newMessage', handleMessage);
+
+    return () => {
+      socket.off('newMessage', handleMessage);
+      socket.emit('leaveConversation', id);
+    };
+  }, [id, cb]);
+};

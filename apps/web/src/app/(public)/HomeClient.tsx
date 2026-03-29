@@ -30,7 +30,7 @@ export function HomeClient() {
   
   const { data: featuredVehicles, isLoading } = useFeaturedVehicles();
   const { data: vehicleCount = 0 } = useVehicleCount();
-  const { data: recentPosts, isLoading: isLoadingPosts } = useBlogPosts({ limit: 3 });
+  const { data: recentPosts, isLoading: isLoadingPosts } = useBlogPosts();
   const { data: featuredDealers, isLoading: isLoadingDealers } = useFeaturedDealers();
   
   // Capture UTM params on page load

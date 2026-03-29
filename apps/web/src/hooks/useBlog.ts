@@ -8,10 +8,17 @@ export interface BlogPost {
   content: string;
   excerpt: string;
   cover_image: string | null;
+  featured_image: string | null;
+  featured_image_alt: string | null;
   published_at: string;
+  created_at: string;
+  updated_at: string;
+  reading_time_minutes: number;
+  views_count: number;
   category: {
     name: string;
     slug: string;
+    color?: string;
   };
   author: {
     full_name: string;
@@ -78,3 +85,5 @@ export function useBlogCategories() {
     },
   });
 }
+
+export const useRelatedPosts = (slug: string) => ({ data: [] as BlogPost[], isLoading: false });

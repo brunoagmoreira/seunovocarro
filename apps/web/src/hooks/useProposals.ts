@@ -1,26 +1,35 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchApi } from '@/lib/api';
 
 export interface ProposalData {
-  vehicleId: string;
-  name: string;
-  email: string;
-  phone: string;
+  vehicle_id: string;
+  buyer_name: string;
+  buyer_email?: string;
+  buyer_phone: string;
+  amount: number;
   message?: string;
-  source?: string;
 }
 
-export async function submitProposal(data: ProposalData) {
-  return await fetchApi<{ success: boolean; leadId: string }>('/leads', {
-    method: 'POST',
-    body: JSON.stringify({
-      vehicle_id: data.vehicleId,
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      source: data.source || 'website',
-      message: data.message,
-    }),
+export function useCreateProposal() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (data: ProposalData) => {
+      return await fetchApi<{ success: boolean; proposalId: string }>('/proposals', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['proposals'] });
+    },
   });
 }
 
-// In future, you might query user's leads via fetchApi if useProposals provided a query for received proposals
+export async function submitProposal(data: any) {
+  // Legacy function for backward compatibility if needed elsewhere
+  return await fetchApi<{ success: boolean; leadId: string }>('/leads', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}

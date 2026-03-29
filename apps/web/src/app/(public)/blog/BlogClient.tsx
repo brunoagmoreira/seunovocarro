@@ -14,10 +14,10 @@ export function BlogClient() {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   
-  const { data: posts, isLoading } = useBlogPosts({ 
-    category: selectedCategory,
-    search: search || undefined
-  });
+  const { data: posts, isLoading } = useBlogPosts(
+    selectedCategory || undefined,
+    search || undefined
+  );
   const { data: categories } = useBlogCategories();
 
   return (

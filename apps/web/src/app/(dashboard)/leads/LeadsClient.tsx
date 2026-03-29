@@ -50,7 +50,7 @@ export function LeadsClient() {
       return;
     }
 
-    const vehicleIds = userVehicles.map(v => v.id);
+    const vehicleIds = userVehicles.map((v: any) => v.id);
 
     // Then get leads for those vehicles
     const { data: leadsData, error } = await (supabase as any)
@@ -68,7 +68,7 @@ export function LeadsClient() {
     // Map leads with vehicle info
     const leadsWithVehicles = (leadsData as any[])?.map((lead: any) => ({
       ...lead,
-      vehicle: userVehicles.find(v => v.id === lead.vehicle_id) || null
+      vehicle: userVehicles.find((v: any) => v.id === lead.vehicle_id) || null
     })) || [];
 
     setLeads(leadsWithVehicles);

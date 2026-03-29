@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { getStoredUTM } from '@/hooks/useUTM';
@@ -39,6 +39,7 @@ export function ContactOptionsModal({
 }: ContactOptionsModalProps) {
   const { user, profile } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const { toast } = useToast();
   const [isLoadingWhatsApp, setIsLoadingWhatsApp] = useState(false);
 
@@ -111,15 +112,14 @@ export function ContactOptionsModal({
       createLeadAndRedirect();
     } else {
       // If not logged in, redirect to register with return info
-      router.push('/cadastro', { 
-        state: { 
-          returnTo: window.pathname, 
-          action: 'whatsapp',
-          vehicleId,
-          vehicleName,
-          sellerWhatsapp
-        } 
+      const params = new URLSearchParams({
+        returnTo: pathname,
+        action: 'whatsapp',
+        vehicleId,
+        vehicleName,
+        sellerWhatsapp,
       });
+      router.push(`/cadastro?${params.toString()}`);
       onClose();
     }
   };
@@ -127,7 +127,11 @@ export function ContactOptionsModal({
   const handleChatClick = () => {
     if (!user) {
       // Redirect to register
-      router.push('/cadastro', { state: { returnTo: window.pathname, action: 'chat' } });
+      const params = new URLSearchParams({
+        returnTo: pathname,
+        action: 'chat',
+      });
+      router.push(`/cadastro?${params.toString()}`);
       onClose();
       return;
     }
@@ -209,7 +213,7 @@ export function ContactOptionsModal({
               Para entrar em contato, você precisa ter uma conta.{' '}
               <button 
                 onClick={() => { 
-                  router.push('/cadastro', { state: { returnTo: window.pathname } }); 
+                  router.push(`/cadastro?returnTo=${encodeURIComponent(pathname)}`); 
                   onClose(); 
                 }}
                 className="text-primary hover:underline font-medium"
@@ -219,7 +223,7 @@ export function ContactOptionsModal({
               {' '}ou{' '}
               <button 
                 onClick={() => { 
-                  router.push('/login', { state: { returnTo: window.pathname } }); 
+                  router.push(`/login?returnTo=${encodeURIComponent(pathname)}`); 
                   onClose(); 
                 }}
                 className="text-primary hover:underline font-medium"

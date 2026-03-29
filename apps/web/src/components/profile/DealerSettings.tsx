@@ -1,5 +1,7 @@
-import { useState, useRef } from 'react';
-import { Store, Camera, Loader2, Globe, Instagram, Facebook, MapPin, Copy, Check, ExternalLink } from 'lucide-react';
+"use client";
+
+import { useState, useRef, useEffect } from 'react';
+import { Store, Camera, Loader2, Globe,   MapPin, Copy, Check, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,9 +29,13 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [copied, setCopied] = useState(false);
   
-  const storeUrl = profile?.dealer_slug 
-    ? `${window.location.origin}/loja/${profile.dealer_slug}`
-    : null;
+  const [storeUrl, setStoreUrl] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (profile?.dealer_slug && typeof window !== 'undefined') {
+      setStoreUrl(`${window.location.origin}/loja/${profile.dealer_slug}`);
+    }
+  }, [profile?.dealer_slug]);
   
   const copyStoreLink = () => {
     if (storeUrl) {
@@ -335,9 +341,9 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="dealer_instagram">Instagram</Label>
+              <Label htmlFor="dealer_instagram"></Label>
               <div className="relative">
-                <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="dealer_instagram"
                   className="pl-10"
@@ -348,15 +354,15 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="dealer_facebook">Facebook</Label>
+              <Label htmlFor="dealer_facebook"></Label>
               <div className="relative">
-                <Facebook className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="dealer_facebook"
                   className="pl-10"
                   value={dealerData.dealer_facebook}
                   onChange={(e) => setDealerData({ ...dealerData, dealer_facebook: e.target.value })}
-                  placeholder="URL do Facebook"
+                  placeholder="URL do "
                 />
               </div>
             </div>

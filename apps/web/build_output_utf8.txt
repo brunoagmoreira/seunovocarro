@@ -1,0 +1,69 @@
+﻿
+> @seunovocarro/web@0.1.0 build
+> next build
+
+node.exe : ÔÜá Warning: Next.js inferred your workspace root, but it may not be correct.
+No linha:1 caractere:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ÔÜá Warning: Ne...not be correct.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ We detected multiple lockfiles and selected the directory of C:\Users\adm\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * C:\Users\adm\Downloads\meu-novo-carro-main\seunovocarro\package-lock.json
+
+Ôû▓ Next.js 16.2.1 (Turbopack)
+
+  Creating an optimized production build ...
+Error: Cannot apply unknown utility class `border-slate-200`. Are you using CSS modules or similar and missing `@reference`? 
+https://tailwindcss.com/docs/functions-and-directives#reference-directive
+    [2m[at onInvalidCandidate (C:\Users\adm\Downloads\meu-novo-carro-main\seunovocarro\node_modules\tailwindcss\dist\lib.js:21:1314)][0m
+    [2m[at Ee (C:\Users\adm\Downloads\meu-novo-carro-main\seunovocarro\node_modules\tailwindcss\dist\lib.js:16:37066)][0m
+    [2m[at C:\Users\adm\Downloads\meu-novo-carro-main\seunovocarro\node_modules\tailwindcss\dist\lib.js:21:355][0m
+    [2m[at _r (C:\Users\adm\Downloads\meu-novo-carro-main\seunovocarro\node_modules\tailwindcss\dist\lib.js:3:1733)][0m
+    [2m[at I (C:\Users\adm\Downloads\meu-novo-carro-main\seunovocarro\node_modules\tailwindcss\dist\lib.js:3:1377)][0m
+    [2m[at Te (C:\Users\adm\Downloads\meu-novo-carro-main\seunovocarro\node_modules\tailwindcss\dist\lib.js:21:172)][0m
+    [2m[at mn (C:\Users\adm\Downloads\meu-novo-carro-main\seunovocarro\node_modules\tailwindcss\dist\lib.js:38:294)][0m
+    [2m[at process.processTicksAndRejections (node:internal/process/task_queues:105:5)][0m
+    [2m[at async gn (C:\Users\adm\Downloads\meu-novo-carro-main\seunovocarro\node_modules\tailwindcss\dist\lib.js:38:631)][0m
+    [2m[at async Xr (C:\Users\adm\Downloads\meu-novo-carro-main\seunovocarro\node_modules\@tailwindcss\node\dist\index.js:10:3416)][0m
+
+> Build error occurred
+Error: Turbopack build failed with 1 errors:
+./Downloads/meu-novo-carro-main/seunovocarro/apps/web/src/app/globals.css
+Error evaluating Node.js code
+CssSyntaxError: tailwindcss: C:\Users\adm\Downloads\meu-novo-carro-main\seunovocarro\apps\web\src\app\globals.css:1:1: Cannot apply unknown utility class `border-slate-200`. Are you using CSS 
+modules or similar and missing `@reference`? https://tailwindcss.com/docs/functions-and-directives#reference-directive
+    at Input.error (Downloads/meu-novo-carro-main/seunovocarro/node_modules/postcss/lib/input.js:135:16) 
+[C:\Users\adm\Downloads\meu-novo-carro-main\seunovocarro\apps\web\.next\build\chunks\0xdv_0dg1i3i._.js:4651:22]
+    at error (Downloads/meu-novo-carro-main/seunovocarro/node_modules/postcss/lib/node.js:146:32) 
+[C:\Users\adm\Downloads\meu-novo-carro-main\seunovocarro\apps\web\.next\build\chunks\0xdv_0dg1i3i._.js:928:38]
+    [at Object.Once (C:\Users\adm\Downloads\meu-novo-carro-main\seunovocarro\node_modules\@tailwindcss\postcss\dist\index.js:10:6913)]
+    [at process.processTicksAndRejections (node:internal/process/task_queues:105:5)]
+    at async LazyResult.runAsync (Downloads/meu-novo-carro-main/seunovocarro/node_modules/postcss/lib/lazy-result.js:293:11) 
+[C:\Users\adm\Downloads\meu-novo-carro-main\seunovocarro\apps\web\.next\build\chunks\0xdv_0dg1i3i._.js:6214:21]
+    at async transform (turbopack:///[turbopack-node]/transforms/postcss.ts:70:34) 
+[C:\Users\adm\Downloads\meu-novo-carro-main\seunovocarro\apps\web\.next\build\chunks\[root-of-the-server]__0.7o7ph._.js:146:36]
+    at async run (turbopack:///[turbopack-node]/child_process/evaluate.ts:89:23) 
+[C:\Users\adm\Downloads\meu-novo-carro-main\seunovocarro\apps\web\.next\build\chunks\[root-of-the-server]__0--ze7s._.js:443:31]
+
+Import trace:
+  Client Component Browser:
+    ./Downloads/meu-novo-carro-main/seunovocarro/apps/web/src/app/globals.css [Client Component Browser]
+    ./Downloads/meu-novo-carro-main/seunovocarro/apps/web/src/app/layout.tsx [Server Component]
+
+
+    at async transform (turbopack:///[turbopack-node]/transforms/postcss.ts:70:34) 
+[C:\Users\adm\Downloads\meu-novo-carro-main\seunovocarro\apps\web\.next\build\chunks\[root-of-the-server]__0.7o7ph._.js:146:36])
+    at async run (turbopack:///[turbopack-node]/child_process/evaluate.ts:89:23) 
+[C:\Users\adm\Downloads\meu-novo-carro-main\seunovocarro\apps\web\.next\build\chunks\[root-of-the-server]__0--ze7s._.js:443:31])
+npm error Lifecycle script `build` failed with error:
+npm error code 1
+npm error path C:\Users\adm\Downloads\meu-novo-carro-main\seunovocarro\apps\web
+npm error workspace @seunovocarro/web@0.1.0
+npm error location C:\Users\adm\Downloads\meu-novo-carro-main\seunovocarro\apps\web
+npm error command failed
+npm error command C:\Windows\system32\cmd.exe /d /s /c next build

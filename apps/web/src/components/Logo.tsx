@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import logoIcon from '@/assets/logo-icon.png';
 
 interface LogoProps {
@@ -17,7 +18,7 @@ export function Logo({ variant = 'full', size = 'md', className = '' }: LogoProp
 
   if (variant === 'icon') {
     return (
-      <img 
+      <Image 
         src={logoIcon} 
         alt="Kairós Auto" 
         width={icon} 
@@ -29,7 +30,7 @@ export function Logo({ variant = 'full', size = 'md', className = '' }: LogoProp
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <img 
+      <Image 
         src={logoIcon} 
         alt="Kairós Auto" 
         width={icon} 

@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { 
-  MapPin, Phone, Clock, Instagram, Facebook, Globe, 
+  MapPin, Phone, Clock,   Globe, 
   Shield, BadgeCheck, Calendar, Car, MessageCircle, Store,
   Filter, X
 } from 'lucide-react';
@@ -234,14 +234,14 @@ export function DealerClient({ slug }: { slug: string }) {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <Instagram className="h-4 w-4" />
+                    <Globe className="h-4 w-4" />
                   </a>
                 </Button>
               )}
               {dealer.dealer_facebook && (
                 <Button variant="ghost" size="icon" asChild>
                   <a href={dealer.dealer_facebook} target="_blank" rel="noopener noreferrer">
-                    <Facebook className="h-4 w-4" />
+                    <Globe className="h-4 w-4" />
                   </a>
                 </Button>
               )}

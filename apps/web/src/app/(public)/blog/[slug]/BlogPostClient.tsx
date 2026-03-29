@@ -12,7 +12,7 @@ import ReactMarkdown from 'react-markdown';
 
 export function BlogPostClient({ slug }: { slug: string }) {
   const { data: post, isLoading } = useBlogPost(slug);
-  const { data: relatedPosts } = useRelatedPosts(post?.category_id || undefined, post?.id);
+  const { data: relatedPosts } = useRelatedPosts(slug);
 
   if (isLoading && !post) {
     return (
@@ -156,7 +156,7 @@ export function BlogPostClient({ slug }: { slug: string }) {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Facebook
+                
               </a>
             </Button>
             <Button variant="outline" size="sm" asChild>

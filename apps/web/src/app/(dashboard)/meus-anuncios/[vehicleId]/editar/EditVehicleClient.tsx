@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, ImagePlus, X, GripVertical, Youtube, Star } from 'lucide-react';
+import { ArrowLeft, Loader2, ImagePlus, X, GripVertical, Star, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -455,7 +455,7 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
                 className="flex-1"
               />
               <Button type="button" variant="outline" onClick={addYoutubeVideo}>
-                <Youtube className="h-4 w-4 mr-2" />
+                <Globe className="h-4 w-4 mr-2" />
                 Adicionar
               </Button>
             </div>

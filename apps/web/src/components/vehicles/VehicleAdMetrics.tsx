@@ -47,7 +47,7 @@ export function VehicleAdMetrics({ vehicleId }: VehicleAdMetricsProps) {
           </div>
           <h3 className="text-xl font-bold mb-2">Turbine suas vendas!</h3>
           <p className="text-muted-foreground mb-6 max-w-md">
-            Anuncie este veículo no Instagram e Facebook a partir de <strong className="text-primary">R$ 247/mês</strong>
+            Anuncie este veículo no  e  a partir de <strong className="text-primary">R$ 247/mês</strong>
           </p>
           <Button className="bg-primary hover:bg-primary/90" asChild>
             <Link href="/impulsionar">

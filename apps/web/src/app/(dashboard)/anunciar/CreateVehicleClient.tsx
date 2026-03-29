@@ -26,13 +26,14 @@ import { useCities } from '@/hooks/useCities';
 export function CreateVehicleClient() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user, profile, isApproved } = useAuth();
+  const { user, profile, isApproved, userRole } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   
-  // Note: userRole was removed from useAuth in the JWT refactor (now inferred from profile.role)
-  const isDealer = profile?.role === 'dealer' || profile?.role === 'admin';
+  // Note: userRole was removed from useAuth in the JWT refactor (now inferred from profile)
+  // Actually, userRole IS present in useAuth!
+  const isDealer = userRole === 'editor' || userRole === 'admin';
   
   const [formData, setFormData] = useState({
     brand: '',

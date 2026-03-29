@@ -80,7 +80,7 @@ export function MetricsClient() {
       return;
     }
 
-    const vehicleIds = vehicles.map(v => v.id);
+    const vehicleIds = vehicles.map((v: any) => v.id);
     const periodDays = parseInt(period);
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - periodDays);
@@ -336,7 +336,7 @@ export function MetricsClient() {
                                     return (
                                       <div className="bg-popover border border-border rounded-lg p-2 shadow-lg">
                                         <p className="text-xs text-muted-foreground">
-                                          {format(parseISO(label), "dd 'de' MMMM", { locale: ptBR })}
+                                          {format(parseISO(String(label)), "dd 'de' MMMM", { locale: ptBR })}
                                         </p>
                                         <p className="text-sm font-medium">
                                           {payload[0].value} visualizações

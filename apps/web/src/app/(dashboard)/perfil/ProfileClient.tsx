@@ -26,10 +26,7 @@ import { DealerSettings } from '@/components/profile/DealerSettings';
 export function ProfileClient() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user, profile, signOut, updateProfile } = useAuth();
-  
-  // Resolve user role mapping
-  const userRole = profile?.role || 'user';
+  const { user, profile, userRole, signOut, updateProfile } = useAuth();
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);

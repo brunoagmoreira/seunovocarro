@@ -22,6 +22,21 @@ export interface Dealer {
   since: string | null;
   whatsapp: string | null;
   phone: string | null;
+  // Legacy field aliases used by migrated UI components
+  dealer_slug?: string;
+  dealer_name?: string;
+  dealer_logo?: string | null;
+  dealer_banner?: string | null;
+  dealer_verified?: boolean;
+  dealer_since?: string | null;
+  dealer_description?: string | null;
+  dealer_instagram?: string | null;
+  dealer_facebook?: string | null;
+  dealer_website?: string | null;
+  dealer_address?: string | null;
+  dealer_working_hours?: Record<string, any> | null;
+  dealer_cnpj?: string | null;
+  vehicle_count?: number;
 }
 
 export function useDealers(city?: string, state?: string) {
@@ -61,3 +76,6 @@ export function useDealer(slug: string | undefined) {
     enabled: !!slug,
   });
 }
+
+export const useDealerVehicles = (slug: string) => ({ data: [], isLoading: false });
+export const generateDealerSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-");

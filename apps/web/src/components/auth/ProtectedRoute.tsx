@@ -1,4 +1,7 @@
-import { usePathname } from 'next/navigation';
+"use client";
+
+import { useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
@@ -14,7 +17,26 @@ export function ProtectedRoute({
   requireApproval = false 
 }: ProtectedRouteProps) {
   const { user, userRole, isLoading, isApproved } = useAuth();
+  const router = useRouter();
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.replace(`/login?from=${encodeURIComponent(pathname)}`);
+    }
+  }, [isLoading, user, router, pathname]);
+
+  useEffect(() => {
+    if (!isLoading && user && requiredRole) {
+      const roleHierarchy: Record<string, number> = { user: 1, editor: 2, admin: 3 };
+      const userLevel = roleHierarchy[userRole || 'user'];
+      const requiredLevel = roleHierarchy[requiredRole];
+
+      if (userLevel < requiredLevel) {
+        router.replace('/');
+      }
+    }
+  }, [isLoading, user, userRole, requiredRole, router]);
 
   if (isLoading) {
     return (
@@ -25,16 +47,24 @@ export function ProtectedRoute({
   }
 
   if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   if (requiredRole) {
-    const roleHierarchy = { user: 1, editor: 2, admin: 3 };
+    const roleHierarchy: Record<string, number> = { user: 1, editor: 2, admin: 3 };
     const userLevel = roleHierarchy[userRole || 'user'];
     const requiredLevel = roleHierarchy[requiredRole];
 
     if (userLevel < requiredLevel) {
-      return <Navigate to="/" replace />;
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
     }
   }
 

@@ -47,7 +47,7 @@ export async function applyWatermark(
         // Load watermark logo
         const logo = new Image();
         logo.crossOrigin = 'anonymous';
-        logo.src = logoSrc;
+        logo.src = typeof logoSrc === 'string' ? logoSrc : (logoSrc as any).src;
 
         logo.onload = () => {
           const logoWidth = img.width * scale;

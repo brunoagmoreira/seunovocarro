@@ -1,8 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
 
 @layer base {
   :root {
@@ -88,7 +87,7 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
 
   html {
@@ -170,7 +169,8 @@
 }
 
 .prose h2 {
-  @apply text-2xl md:text-3xl border-b border-border pb-3;
+  @apply text-2xl md:text-3xl border-b pb-3;
+  border-color: hsl(var(--border));
 }
 
 .prose h3 {
@@ -234,7 +234,8 @@
 }
 
 .prose hr {
-  @apply my-8 border-border;
+  @apply my-8 border-t;
+  border-color: hsl(var(--border));
 }
 
 .prose table {
@@ -242,7 +243,8 @@
 }
 
 .prose th, .prose td {
-  @apply border border-border px-4 py-2 text-left;
+  @apply border px-4 py-2 text-left;
+  border-color: hsl(var(--border));
 }
 
 .prose th {

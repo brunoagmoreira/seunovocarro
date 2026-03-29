@@ -40,7 +40,7 @@ function BrandPageClient({ brand }: { brand: string }) {
   const { data: vehiclesData, isLoading } = useVehicles({ 
     brand: brandNormalized 
   });
-  const vehicles = vehiclesData?.data || [];
+  const vehicles = vehiclesData || [];
 
   const brandContent = BRAND_CONTENT[brandNormalized];
   const vehicleCount = vehicles.length || 0;
@@ -202,7 +202,7 @@ function LocationPageClient({ state, city }: { state: string; city: string }) {
     state: stateNormalized,
     city: cityNormalized ? citySearchTransform(cityNormalized) : undefined
   });
-  const vehicles = vehiclesData?.data || [];
+  const vehicles = vehiclesData || [];
 
   function citySearchTransform(slug: string) {
     return slug.split('-').join(' ');
@@ -369,7 +369,7 @@ function BrandLocationPageClient({ brand, state, city }: { brand: string; state:
     state: stateNormalized,
     city: citySearchTransform(cityNormalized)
   });
-  const vehicles = vehiclesData?.data || [];
+  const vehicles = vehiclesData || [];
 
   const vehicleCount = vehicles.length || 0;
 

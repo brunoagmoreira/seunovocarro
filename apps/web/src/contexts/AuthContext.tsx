@@ -30,7 +30,7 @@ interface AuthContextType {
   isEditor: boolean;
   isApproved: boolean;
   token: string | null;
-  signUp: (email: string, password: string, metadata?: Partial<Profile>) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, metadata?: Record<string, any>) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updateProfile: (data: Partial<Profile>) => Promise<{ error: Error | null }>;
@@ -113,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string, metadata?: Partial<Profile>) => {
+  const signUp = async (email: string, password: string, metadata?: Record<string, any>) => {
     try {
       const res = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
