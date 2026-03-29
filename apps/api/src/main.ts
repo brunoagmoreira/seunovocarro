@@ -6,7 +6,12 @@ async function bootstrap() {
 
   // Habilitar CORS para o frontend (Next.js em localhost:3000)
   app.enableCors({
-    origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    origin: [
+      'https://seunovocarro.com.br',
+      'https://www.seunovocarro.com.br',
+      'http://localhost:3000',
+      process.env.FRONTEND_URL,
+    ].filter(Boolean) as string[],
     credentials: true,
   });
 
