@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Edit, Trash2, Eye, EyeOff, ExternalLink } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, EyeOff, ExternalLink, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -60,9 +60,9 @@ export default function AdminBlogPage() {
   return (
     <div className="container py-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="font-heading text-3xl font-bold">Blog</h1>
-          <p className="text-muted-foreground">Gerencie os artigos do blog</p>
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild><Link href="/admin"><ArrowLeft className="h-5 w-5" /></Link></Button>
+          <div><h1 className="font-heading text-3xl font-bold">Blog</h1><p className="text-muted-foreground">Gerencie os artigos do blog</p></div>
         </div>
         <Button asChild><Link href="/admin/blog/novo"><Plus className="mr-2 h-4 w-4" />Novo Artigo</Link></Button>
       </div>

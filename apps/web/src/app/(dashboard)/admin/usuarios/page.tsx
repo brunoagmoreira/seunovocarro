@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Check, X, UserCog, Shield, User, Search, Download } from 'lucide-react';
+import { Check, X, UserCog, Shield, User, Search, Download, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -110,6 +111,7 @@ export default function AdminUsersPage() {
       <div className="container py-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" asChild><Link href="/admin"><ArrowLeft className="h-5 w-5" /></Link></Button>
             <h1 className="font-heading text-2xl font-bold">Gerenciar Usuários</h1>
             <Badge variant="secondary">{filteredUsers.length} de {users.length}</Badge>
           </div>

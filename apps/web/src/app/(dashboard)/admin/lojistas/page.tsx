@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Store, Search, BadgeCheck, Star, MapPin, Phone, Car, ExternalLink } from 'lucide-react';
+import { Store, Search, BadgeCheck, Star, MapPin, Phone, Car, ExternalLink, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -52,6 +52,7 @@ export default function AdminDealersPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <div className="flex items-center gap-3 mb-2">
+              <Button variant="ghost" size="icon" asChild><Link href="/admin"><ArrowLeft className="h-5 w-5" /></Link></Button>
               <div className="p-2 rounded-lg bg-[#268052]"><Store className="h-6 w-6 text-white" /></div>
               <h1 className="font-heading text-2xl md:text-3xl font-bold">Gerenciar Lojistas</h1>
             </div>

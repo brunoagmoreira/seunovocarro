@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { MessageSquare, Phone, Mail, Calendar, Search, X, Download } from 'lucide-react';
+import { MessageSquare, Phone, Mail, Calendar, Search, X, Download, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -91,6 +92,7 @@ export default function AdminLeadsPage() {
       <div className="container py-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" asChild><Link href="/admin"><ArrowLeft className="h-5 w-5" /></Link></Button>
             <h1 className="font-heading text-2xl font-bold">Leads</h1>
             <Badge variant="secondary">{filteredLeads.length} de {leads.length}</Badge>
           </div>
