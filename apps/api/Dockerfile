@@ -11,7 +11,7 @@ COPY package.json package-lock.json turbo.json ./
 # Copiar as definições de todos os pacotes e apps
 COPY apps/api/package.json ./apps/api/package.json
 COPY apps/web/package.json ./apps/web/package.json
-COPY packages/shared/package.json ./packages/shared/package.json
+COPY packages/shared-types/package.json ./packages/shared-types/package.json
 
 # Instalar dependências (mais seguro no root para monorepos)
 RUN npm ci
