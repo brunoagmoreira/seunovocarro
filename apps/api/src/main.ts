@@ -13,7 +13,7 @@ async function bootstrap() {
       'https://www.seunovocarro.com.br',
       'http://localhost:3000',
       process.env.FRONTEND_URL,
-    ].filter(Boolean) as string[],
+    ].filter(Boolean).map(url => (url as string).replace(/\/$/, '')) as string[],
     credentials: true,
   });
 
