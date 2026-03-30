@@ -21,6 +21,13 @@ async function bootstrap() {
   // Ex: GET /api/vehicles, POST /api/auth/login
   app.setGlobalPrefix('api');
 
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) {
+    console.error('\n❌ ERRO FATAL: DATABASE_URL não encontrada no ambiente!\n');
+  } else {
+    console.log('✅ DATABASE_URL encontrada, conectando...');
+  }
+
   const port = process.env.PORT ?? 3001;
   await app.listen(port, '0.0.0.0');
   console.log(`\n************************************\n🚀 API Seu Novo Carro ONLINE\n🚀 Ouvindo em: http://0.0.0.0:${port}/api\n************************************\n`);
