@@ -1,8 +1,5 @@
-FROM node:20-alpine AS alpine
-
-FROM alpine AS base
-RUN apk update
-RUN apk add --no-cache libc6-compat openssl
+FROM node:20-alpine AS base
+RUN apk update && apk add --no-cache libc6-compat openssl
 
 # 1. Prune
 FROM base AS builder
@@ -20,18 +17,17 @@ RUN npm ci
 
 # 3. Build
 COPY --from=builder /app/out/full/ ./
-RUN cd apps/api && npx prisma generate
-RUN npx turbo run build --filter=@seunovocarro/api --no-cache
+RUN npx prisma generate --schema=apps/api/prisma/schema.prisma
+RUN npx turbo build --filter=@seunovocarro/api --no-cache
 
 # 4. Runner
-FROM alpine AS runner
+FROM base AS runner
 WORKDIR /app
 
-# Non-root user setup
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nestjs
+# Ensure we have a user
+RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nestjs
 
-# Copy EVERYTHING from installer to maintain monorepo structure and links
+# Copy the entire build output to maintain all monorepo paths
 COPY --from=installer --chown=nestjs:nodejs /app /app
 
 USER nestjs
@@ -39,6 +35,6 @@ EXPOSE 3001
 ENV PORT 3001
 ENV NODE_ENV production
 
-# Start from the api project root
+# Force the entrypoint to the exact location where Nest builds to
 WORKDIR /app/apps/api
 CMD ["node", "dist/main.js"]
