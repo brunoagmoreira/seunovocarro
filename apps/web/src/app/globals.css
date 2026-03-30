@@ -296,3 +296,19 @@
 .animate-pulse-brand {
   animation: pulse-brand 2s ease-in-out infinite;
 }
+
+/* Fix: Prevent header shift when Radix UI dialogs/selects 
+   add padding-right to body for scroll lock compensation */
+html {
+  overflow-y: scroll;
+}
+
+body[data-scroll-locked] {
+  padding-right: 0 !important;
+  margin-right: 0 !important;
+}
+
+header[class*="fixed"] {
+  width: 100% !important;
+}
+
