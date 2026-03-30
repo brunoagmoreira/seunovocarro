@@ -20,9 +20,8 @@ RUN npm ci
 COPY --from=builder /app/out/full/ ./
 RUN cd apps/api && npx prisma generate
 
-# 3. Build — ARG CACHEBUST forces rebuild past this point
-ARG CACHEBUST=1
-RUN npx turbo run build --filter=@seunovocarro/api...
+# 3. Build — Forced build without cache to ensure dist folder creation
+RUN npx turbo run build --filter=@seunovocarro/api --no-cache
 
 # 4. Runner
 FROM base AS runner
