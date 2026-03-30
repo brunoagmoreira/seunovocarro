@@ -29,7 +29,7 @@ export function HeroBanner() {
             id: 'default',
             title: 'Carros verificados, perto de você.',
             subtitle: 'Veículos inspecionados de lojas confiáveis da região de Belo Horizonte. Sem surpresa, sem enrolação.',
-            image_url: '/banner-car-fallback.png', // Fallback se não tiver no banco
+            image_url: '', // Fallback vazio para mostrar placeholder
             link_url: '/veiculos',
             order: 0
           }]);
