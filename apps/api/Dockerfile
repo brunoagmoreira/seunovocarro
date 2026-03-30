@@ -1,6 +1,8 @@
-# Cache buster: 2026-03-30-v2
-FROM node:20-bookworm-slim AS base
-RUN apt-get update && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+FROM node:20-alpine AS alpine
+
+FROM alpine AS base
+RUN apk update
+RUN apk add --no-cache libc6-compat openssl
 
 # 1. Prune
 FROM base AS builder
@@ -16,28 +18,28 @@ COPY --from=builder /app/out/json/ .
 COPY --from=builder /app/out/package-lock.json ./package-lock.json
 RUN npm ci
 
-# Generate prisma client inside the api folder
+# 3. Build — Forced build without cache to ensure dist folder creation
 COPY --from=builder /app/out/full/ ./
 RUN cd apps/api && npx prisma generate
-
-# 3. Build — Using direct npm build to ensure dist is produced locally
-RUN cd apps/api && npm run build
+RUN npx turbo run build --filter=@seunovocarro/api --no-cache
 
 # 4. Runner
-FROM base AS runner
+FROM alpine AS runner
 WORKDIR /app
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nestjs
 USER nestjs
 
-# Copy pruned node_modules and built resources
+# Copy essential files
 COPY --from=installer /app/node_modules ./node_modules
 COPY --from=installer /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=installer /app/apps/api/dist ./apps/api/dist
 COPY --from=installer /app/apps/api/package.json ./apps/api/package.json
-# Need generated schema definition for runtime querying
 COPY --from=installer /app/apps/api/prisma ./apps/api/prisma
 
 EXPOSE 3001
-CMD [ "node", "apps/api/dist/main.js" ]
+ENV PORT 3001
+
+# Start the app from the root directory for proper path resolution
+CMD ["node", "apps/api/dist/main.js"]
