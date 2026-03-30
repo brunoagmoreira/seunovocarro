@@ -31,8 +31,8 @@ RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nestjs
 COPY --from=installer --chown=nestjs:nodejs /app /app
 
 USER nestjs
-EXPOSE 3001
-ENV PORT 3001
+EXPOSE 80
+ENV PORT 80
 ENV NODE_ENV production
 
 # Force the entrypoint to the exact location where Nest builds to
