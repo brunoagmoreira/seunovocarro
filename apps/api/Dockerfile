@@ -1,3 +1,4 @@
+# Cache buster: 2026-03-30-v2
 FROM node:20-bookworm-slim AS base
 RUN apt-get update && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
@@ -19,7 +20,8 @@ RUN npm ci
 COPY --from=builder /app/out/full/ ./
 RUN cd apps/api && npx prisma generate
 
-# 3. Build
+# 3. Build — ARG CACHEBUST forces rebuild past this point
+ARG CACHEBUST=1
 RUN npx turbo run build --filter=@seunovocarro/api...
 
 # 4. Runner
