@@ -30,4 +30,18 @@ export class UsersService {
       data,
     });
   }
+
+  async updateById(id: string, data: {
+    full_name?: string;
+    phone?: string;
+    whatsapp?: string;
+    avatar_url?: string;
+    city?: string;
+    state?: string;
+  }): Promise<User> {
+    return this.prisma.user.update({
+      where: { id },
+      data,
+    });
+  }
 }

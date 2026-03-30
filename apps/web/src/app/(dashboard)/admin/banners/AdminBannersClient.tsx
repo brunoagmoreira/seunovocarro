@@ -189,7 +189,7 @@ export function AdminBannersClient() {
             </div>
 
             <div className="pt-4 flex gap-2">
-              <Button type="submit" className="flex-1 bg-kairos-primary hover:bg-kairos-primary/90">
+              <Button type="submit" className="flex-1 bg-[#268052] hover:bg-[#1e6642] text-white">
                 {isEditing ? 'Atualizar' : 'Salvar Banner'}
               </Button>
               {isEditing && (
