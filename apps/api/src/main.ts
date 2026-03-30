@@ -1,6 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
+const BUILD_VERSION = '2026-03-30T13:47:00';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
