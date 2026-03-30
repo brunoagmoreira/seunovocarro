@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import ReactMarkdown from 'react-markdown';
+
 import { toast } from 'sonner';
 
 const generateSlug = (title: string) => title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -75,7 +75,7 @@ export default function BlogEditorPage() {
             <Tabs defaultValue="write" className="w-full">
               <TabsList className="mb-2"><TabsTrigger value="write" className="gap-2"><Pencil className="h-4 w-4" />Escrever</TabsTrigger><TabsTrigger value="preview" className="gap-2"><Eye className="h-4 w-4" />Visualizar</TabsTrigger></TabsList>
               <TabsContent value="write"><Textarea placeholder="Escreva em Markdown..." value={formData.content} onChange={(e) => handleContentChange(e.target.value)} rows={20} className="font-mono text-sm" /></TabsContent>
-              <TabsContent value="preview"><div className="min-h-[480px] rounded-lg border bg-card p-6 overflow-auto">{formData.content ? <article className="prose prose-neutral dark:prose-invert max-w-none"><ReactMarkdown>{formData.content}</ReactMarkdown></article> : <p className="text-muted-foreground text-center py-8">Nenhum conteúdo</p>}</div></TabsContent>
+              <TabsContent value="preview"><div className="min-h-[480px] rounded-lg border bg-card p-6 overflow-auto">{formData.content ? <article className="prose prose-neutral dark:prose-invert max-w-none whitespace-pre-wrap">{formData.content}</article> : <p className="text-muted-foreground text-center py-8">Nenhum conteúdo</p>}</div></TabsContent>
             </Tabs>
             <p className="text-xs text-muted-foreground">Leitura estimada: {formData.reading_time_minutes} min</p>
           </div>
