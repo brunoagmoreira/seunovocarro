@@ -1,17 +1,120 @@
-import { Store, ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
+"use client";
 
-export default function LojistasAdminPage() {
+import { useState } from 'react';
+import Link from 'next/link';
+import { Store, Search, BadgeCheck, Star, MapPin, Phone, Car, ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Switch } from '@/components/ui/switch';
+import { toast } from 'sonner';
+
+interface Dealer {
+  id: string; dealer_name: string; dealer_slug: string; dealer_logo: string | null;
+  city: string | null; state: string | null; phone: string | null;
+  dealer_verified: boolean; dealer_featured: boolean; vehicle_count: number;
+}
+
+const mockDealers: Dealer[] = [
+  { id: '1', dealer_name: 'Carlos Silva Motors', dealer_slug: 'carlos-silva-motors', dealer_logo: null, city: 'Belo Horizonte', state: 'MG', phone: '(31) 98888-1234', dealer_verified: true, dealer_featured: true, vehicle_count: 24 },
+  { id: '2', dealer_name: 'Ana Souza Veículos', dealer_slug: 'ana-souza-veiculos', dealer_logo: null, city: 'São Paulo', state: 'SP', phone: '(11) 97777-5678', dealer_verified: true, dealer_featured: false, vehicle_count: 18 },
+  { id: '3', dealer_name: 'Marina Premium Cars', dealer_slug: 'marina-premium-cars', dealer_logo: null, city: 'Curitiba', state: 'PR', phone: '(41) 96666-9012', dealer_verified: false, dealer_featured: false, vehicle_count: 12 },
+  { id: '4', dealer_name: 'Pedro Autos BH', dealer_slug: 'pedro-autos-bh', dealer_logo: null, city: 'Belo Horizonte', state: 'MG', phone: '(31) 95555-3456', dealer_verified: true, dealer_featured: false, vehicle_count: 8 },
+  { id: '5', dealer_name: 'Elite Motors DF', dealer_slug: 'elite-motors-df', dealer_logo: null, city: 'Brasília', state: 'DF', phone: '(61) 94444-7890', dealer_verified: false, dealer_featured: false, vehicle_count: 5 },
+];
+
+export default function AdminDealersPage() {
+  const [search, setSearch] = useState('');
+  const [dealers, setDealers] = useState<Dealer[]>(mockDealers);
+
+  const filteredDealers = dealers.filter(d =>
+    d.dealer_name?.toLowerCase().includes(search.toLowerCase()) ||
+    d.city?.toLowerCase().includes(search.toLowerCase()) ||
+    d.state?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleToggleVerified = (id: string) => {
+    setDealers(prev => prev.map(d => d.id === id ? { ...d, dealer_verified: !d.dealer_verified } : d));
+    const dealer = dealers.find(d => d.id === id);
+    toast.success(dealer?.dealer_verified ? 'Verificação removida' : 'Lojista verificado');
+  };
+
+  const handleToggleFeatured = (id: string) => {
+    setDealers(prev => prev.map(d => d.id === id ? { ...d, dealer_featured: !d.dealer_featured } : d));
+    const dealer = dealers.find(d => d.id === id);
+    toast.success(dealer?.dealer_featured ? 'Destaque removido' : 'Lojista em destaque');
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-4 animate-fade-in">
-      <div className="w-24 h-24 bg-[#FFD91A]/20 rounded-full flex items-center justify-center mb-6 border-4 border-white shadow-xl">
-        <Store className="w-10 h-10 text-[#FFD91A]" />
+    <div className="min-h-screen pb-24 md:pb-8">
+      <div className="container py-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 rounded-lg bg-[#268052]"><Store className="h-6 w-6 text-white" /></div>
+              <h1 className="font-heading text-2xl md:text-3xl font-bold">Gerenciar Lojistas</h1>
+            </div>
+            <p className="text-muted-foreground">Verifique e destaque lojistas parceiros</p>
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Buscar por nome, cidade ou estado..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-card rounded-xl p-4 shadow-card"><Store className="h-5 w-5 text-primary mb-2" /><p className="text-2xl font-bold">{dealers.length}</p><p className="text-xs text-muted-foreground">Total de Lojistas</p></div>
+          <div className="bg-card rounded-xl p-4 shadow-card"><BadgeCheck className="h-5 w-5 text-green-500 mb-2" /><p className="text-2xl font-bold">{dealers.filter(d => d.dealer_verified).length}</p><p className="text-xs text-muted-foreground">Verificados</p></div>
+          <div className="bg-card rounded-xl p-4 shadow-card"><Star className="h-5 w-5 text-yellow-500 mb-2" /><p className="text-2xl font-bold">{dealers.filter(d => d.dealer_featured).length}</p><p className="text-xs text-muted-foreground">Em Destaque</p></div>
+          <div className="bg-card rounded-xl p-4 shadow-card"><Car className="h-5 w-5 text-blue-500 mb-2" /><p className="text-2xl font-bold">{dealers.reduce((acc, d) => acc + d.vehicle_count, 0)}</p><p className="text-xs text-muted-foreground">Total de Veículos</p></div>
+        </div>
+
+        <div className="bg-card rounded-xl shadow-card overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Lojista</TableHead>
+                <TableHead className="hidden md:table-cell">Localização</TableHead>
+                <TableHead className="hidden md:table-cell">Contato</TableHead>
+                <TableHead className="text-center">Veículos</TableHead>
+                <TableHead className="text-center">Verificado</TableHead>
+                <TableHead className="text-center">Destaque</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredDealers.length > 0 ? filteredDealers.map((dealer) => (
+                <TableRow key={dealer.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-[#268052] flex items-center justify-center text-white font-bold">{dealer.dealer_name?.charAt(0)}</div>
+                      <div><p className="font-medium line-clamp-1">{dealer.dealer_name}</p><p className="text-xs text-muted-foreground">{dealer.dealer_slug}</p></div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {dealer.city && dealer.state ? (<span className="flex items-center gap-1 text-sm text-muted-foreground"><MapPin className="h-3 w-3" />{dealer.city}, {dealer.state}</span>) : <span className="text-muted-foreground">-</span>}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {dealer.phone ? (<span className="flex items-center gap-1 text-sm text-muted-foreground"><Phone className="h-3 w-3" />{dealer.phone}</span>) : <span className="text-muted-foreground">-</span>}
+                  </TableCell>
+                  <TableCell className="text-center"><Badge variant="secondary">{dealer.vehicle_count}</Badge></TableCell>
+                  <TableCell className="text-center"><Switch checked={dealer.dealer_verified} onCheckedChange={() => handleToggleVerified(dealer.id)} /></TableCell>
+                  <TableCell className="text-center"><Switch checked={dealer.dealer_featured} onCheckedChange={() => handleToggleFeatured(dealer.id)} /></TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" asChild><Link href={`/loja/${dealer.dealer_slug}`} target="_blank"><ExternalLink className="h-4 w-4" /></Link></Button>
+                  </TableCell>
+                </TableRow>
+              )) : (
+                <TableRow><TableCell colSpan={7} className="text-center py-12"><Store className="h-12 w-12 mx-auto text-muted-foreground mb-4" /><p className="text-muted-foreground">{search ? 'Nenhum lojista encontrado' : 'Nenhum lojista cadastrado'}</p></TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
-      <h1 className="text-3xl font-black text-gray-800 font-heading mb-4">Gestão de Lojistas</h1>
-      <p className="text-gray-500 max-w-md mb-8">O controle total sobre Lojistas, comissões, faturas e auditoria está no nosso próximo pacote de atualizações.</p>
-      <Link href="/admin" className="inline-flex items-center text-[#268052] font-semibold hover:underline">
-        <ArrowLeft className="w-4 h-4 mr-2" /> Voltar ao Painel Central
-      </Link>
     </div>
   );
 }
