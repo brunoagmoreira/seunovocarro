@@ -1,8 +1,5 @@
-FROM node:20-alpine AS alpine
-
-FROM alpine AS base
-RUN apk update
-RUN apk add --no-cache libc6-compat openssl
+FROM node:20-bookworm-slim AS base
+RUN apt-get update && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # 1. Prune
 FROM base AS builder
@@ -26,7 +23,7 @@ RUN cd apps/api && npx prisma generate
 RUN npx turbo run build --filter=@seunovocarro/api...
 
 # 4. Runner
-FROM alpine AS runner
+FROM base AS runner
 WORKDIR /app
 
 RUN addgroup --system --gid 1001 nodejs
