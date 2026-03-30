@@ -18,10 +18,12 @@ COPY --from=builder /app/out/json/ .
 COPY --from=builder /app/out/package-lock.json ./package-lock.json
 RUN npm ci
 
-# 3. Build — Forced build without cache to ensure dist folder creation
+# 3. Build — Using direct turbo build and showing diagnostics
 COPY --from=builder /app/out/full/ ./
 RUN cd apps/api && npx prisma generate
 RUN npx turbo run build --filter=@seunovocarro/api --no-cache
+# Diagnostics: this will show up in your build logs
+RUN ls -R apps/api/dist
 
 # 4. Runner
 FROM alpine AS runner
@@ -31,15 +33,18 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nestjs
 USER nestjs
 
-# Copy essential files
-COPY --from=installer /app/node_modules ./node_modules
-COPY --from=installer /app/apps/api/node_modules ./apps/api/node_modules
-COPY --from=installer /app/apps/api/dist ./apps/api/dist
-COPY --from=installer /app/apps/api/package.json ./apps/api/package.json
-COPY --from=installer /app/apps/api/prisma ./apps/api/prisma
+# Copy essential files with absolute paths to be safe
+COPY --from=installer /app/node_modules /app/node_modules
+COPY --from=installer /app/apps/api/node_modules /app/apps/api/node_modules
+COPY --from=installer /app/apps/api/dist /app/apps/api/dist
+COPY --from=installer /app/apps/api/package.json /app/apps/api/package.json
+COPY --from=installer /app/apps/api/prisma /app/apps/api/prisma
 
 EXPOSE 3001
 ENV PORT 3001
+ENV NODE_ENV production
 
-# Start the app from the root directory for proper path resolution
-CMD ["node", "apps/api/dist/main.js"]
+# Start from the api folder to avoid any path resolution issues
+WORKDIR /app/apps/api
+CMD ["node", "dist/main.js"]
+
