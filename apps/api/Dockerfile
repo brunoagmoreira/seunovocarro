@@ -20,8 +20,8 @@ RUN npm ci
 COPY --from=builder /app/out/full/ ./
 RUN cd apps/api && npx prisma generate
 
-# 3. Build — Forced build without cache to ensure dist folder creation
-RUN npx turbo run build --filter=@seunovocarro/api --no-cache
+# 3. Build — Using direct npm build to ensure dist is produced locally
+RUN cd apps/api && npm run build
 
 # 4. Runner
 FROM base AS runner
