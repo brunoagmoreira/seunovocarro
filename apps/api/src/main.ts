@@ -23,6 +23,6 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 3001;
   await app.listen(port, '0.0.0.0');
-  console.log(`🚀 API rodando em http://0.0.0.0:${port}/api`);
+  console.log(`\n************************************\n🚀 API Seu Novo Carro ONLINE\n🚀 Ouvindo em: http://0.0.0.0:${port}/api\n************************************\n`);
 }
 bootstrap();

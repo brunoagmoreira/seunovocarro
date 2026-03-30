@@ -1,40 +1,52 @@
-FROM node:20-alpine AS base
-RUN apk update && apk add --no-cache libc6-compat openssl
+# Definitivo: Usando Debian Slim para máxima compatibilidade com Prisma e monorepo
+FROM node:20-bookworm-slim AS builder
 
 WORKDIR /app
 
-# Em vez de prune (que está falhando), vamos usar o projeto completo para garantir caminhos
-COPY package.json package-lock.json ./
-COPY turbo.json ./
-COPY apps/api/package.json ./apps/api/package.json
-COPY apps/api/prisma ./apps/api/prisma
+# Instalação global do turbo
+RUN npm i -g turbo
 
-# Instalar dependências de todo o monorepo (mais seguro para paths)
+# Copiar os arquivos de configuração do monorepo
+COPY package.json package-lock.json turbo.json ./
+# Copiar as definições de todos os pacotes e apps
+COPY apps/api/package.json ./apps/api/package.json
+COPY apps/web/package.json ./apps/web/package.json
+COPY packages/shared/package.json ./packages/shared/package.json
+
+# Instalar dependências (mais seguro no root para monorepos)
 RUN npm ci
 
-# Copiar o código fonte completo da API e pacotes necessários
-COPY apps/api ./apps/api
-COPY packages ./packages
+# Copiar o restante do código fonte
+COPY . .
 
-# Build da API
+# Gerar o cliente Prisma explicitamente
 RUN npx prisma generate --schema=apps/api/prisma/schema.prisma
+
+# Build da API (usando o script do root que já está configurado corretamente)
 RUN npm run build:api -- --no-cache
 
-# Runner
-FROM node:20-alpine AS runner
+# Estágio Final
+FROM node:20-bookworm-slim AS runner
 WORKDIR /app
-RUN apk add --no-cache openssl
 
-RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nestjs
+# Instalar SSL e CA Certificates (necessário para Prisma/DB externa)
+RUN apt-get update && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+
+# Configuração de usuário não-root
+RUN groupadd --system --gid 1001 nodejs && useradd --system --uid 1001 nestjs
 USER nestjs
 
-# Copiar tudo que foi construído
-COPY --from=base --chown=nestjs:nodejs /app /app
+# Copiar TODO o diretório de build para não haver erro de "módulo não encontrado"
+# O monorepo precisa do node_modules do root e da pasta apps/api/dist
+COPY --from=builder --chown=nestjs:nodejs /app /app
 
-EXPOSE 80
-ENV PORT 80
+# Variáveis de Ambiente de produção
 ENV NODE_ENV production
+ENV PORT 80
 
-# Iniciar a API diretamente da pasta dela
+# Expor a porta 80 (padrão de sucesso do seu servidor)
+EXPOSE 80
+
+# Iniciar a API diretamente da pasta apps/api
 WORKDIR /app/apps/api
 CMD ["node", "dist/main.js"]
