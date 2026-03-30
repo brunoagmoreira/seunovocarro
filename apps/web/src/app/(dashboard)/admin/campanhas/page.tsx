@@ -43,11 +43,11 @@ export default function AdminCampaignsPage() {
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
   const getStatusBadge = (s: string) => {
-    const map: Record<string, JSX.Element> = { active: <Badge className="bg-green-500">Ativo</Badge>, completed: <Badge variant="secondary">Concluído</Badge>, paused: <Badge variant="outline">Pausado</Badge>, pending: <Badge variant="outline" className="border-amber-500 text-amber-600">Pendente</Badge>, cancelled: <Badge variant="destructive">Cancelado</Badge> };
+    const map: Record<string, React.ReactNode> = { active: <Badge className="bg-green-500">Ativo</Badge>, completed: <Badge variant="secondary">Concluído</Badge>, paused: <Badge variant="outline">Pausado</Badge>, pending: <Badge variant="outline" className="border-amber-500 text-amber-600">Pendente</Badge>, cancelled: <Badge variant="destructive">Cancelado</Badge> };
     return map[s] || <Badge variant="outline">{s}</Badge>;
   };
   const getPaymentBadge = (s: string) => {
-    const map: Record<string, JSX.Element> = { paid: <Badge className="bg-green-500">Pago</Badge>, pending: <Badge variant="outline" className="border-amber-500 text-amber-600">Pendente</Badge>, refunded: <Badge variant="destructive">Reembolsado</Badge> };
+    const map: Record<string, React.ReactNode> = { paid: <Badge className="bg-green-500">Pago</Badge>, pending: <Badge variant="outline" className="border-amber-500 text-amber-600">Pendente</Badge>, refunded: <Badge variant="destructive">Reembolsado</Badge> };
     return map[s] || <Badge variant="outline">{s}</Badge>;
   };
 
