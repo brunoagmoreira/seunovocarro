@@ -20,6 +20,27 @@ export class VehiclesService {
     });
   }
 
+  async findAllAdmin() {
+    return this.prisma.vehicle.findMany({
+      include: {
+        media: { orderBy: { order: 'asc' } },
+        seller: {
+          select: { id: true, full_name: true, city: true, state: true },
+        },
+      },
+      orderBy: { created_at: 'desc' },
+    });
+  }
+
+  async updateStatus(id: string, status: 'approved' | 'pending' | 'draft' | 'sold' | 'expired') {
+    const vehicle = await this.prisma.vehicle.findUnique({ where: { id } });
+    if (!vehicle) throw new NotFoundException('Veículo não encontrado');
+    return this.prisma.vehicle.update({
+      where: { id },
+      data: { status },
+    });
+  }
+
   async findBySlug(slug: string) {
     const vehicle = await this.prisma.vehicle.findUnique({
       where: { slug },

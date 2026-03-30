@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Check, X, Eye, Clock, CheckCircle, XCircle, FileText, Search, Download, BarChart3, ArrowLeft } from 'lucide-react';
+import { Check, X, Eye, Clock, CheckCircle, XCircle, FileText, Search, Download, BarChart3, ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -10,8 +10,16 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { fetchApi } from '@/lib/api';
 
-interface VehicleWithDetails {
+interface VehicleMedia {
+  id: string;
+  url: string;
+  type: string;
+  order: number;
+}
+
+interface VehicleFromAPI {
   id: string;
   brand: string;
   model: string;
@@ -23,47 +31,65 @@ interface VehicleWithDetails {
   city: string;
   state: string;
   display_id: string | null;
-  thumbnail: string;
-  sellerName: string | null;
+  user_id: string;
+  media: VehicleMedia[];
+  seller?: {
+    id: string;
+    full_name: string | null;
+    city: string | null;
+    state: string | null;
+  } | null;
 }
 
 const statusConfig: Record<string, { label: string; icon: any; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
   draft: { label: 'Rascunho', icon: FileText, variant: 'secondary' },
   pending: { label: 'Em análise', icon: Clock, variant: 'outline' },
   approved: { label: 'Publicado', icon: CheckCircle, variant: 'default' },
-  rejected: { label: 'Rejeitado', icon: XCircle, variant: 'destructive' },
+  sold: { label: 'Vendido', icon: CheckCircle, variant: 'secondary' },
+  expired: { label: 'Expirado', icon: XCircle, variant: 'destructive' },
 };
 
 const ALL_VALUE = '__all__';
 
 export default function AdminVehiclesPage() {
-  const [vehicles, setVehicles] = useState<VehicleWithDetails[]>([]);
+  const [vehicles, setVehicles] = useState<VehicleFromAPI[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterBrand, setFilterBrand] = useState<string>(ALL_VALUE);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    setTimeout(() => {
-      setVehicles([
-        { id: '1', brand: 'Honda', model: 'Civic Touring', year: 2023, price: 189900, status: 'approved', slug: 'honda-civic-touring-2023', created_at: new Date().toISOString(), city: 'Belo Horizonte', state: 'MG', display_id: 'SNC-001', thumbnail: '/placeholder.svg', sellerName: 'Carlos Silva Motors' },
-        { id: '2', brand: 'Toyota', model: 'Corolla Altis', year: 2024, price: 175000, status: 'pending', slug: 'toyota-corolla-altis-2024', created_at: new Date().toISOString(), city: 'São Paulo', state: 'SP', display_id: 'SNC-002', thumbnail: '/placeholder.svg', sellerName: 'Ana Souza Veículos' },
-        { id: '3', brand: 'Volkswagen', model: 'Polo Highline', year: 2024, price: 98500, status: 'pending', slug: 'vw-polo-highline-2024', created_at: new Date().toISOString(), city: 'Curitiba', state: 'PR', display_id: 'SNC-003', thumbnail: '/placeholder.svg', sellerName: 'Marina Premium Cars' },
-        { id: '4', brand: 'Jeep', model: 'Compass Limited', year: 2023, price: 165000, status: 'approved', slug: 'jeep-compass-limited-2023', created_at: new Date().toISOString(), city: 'Rio de Janeiro', state: 'RJ', display_id: 'SNC-004', thumbnail: '/placeholder.svg', sellerName: 'Carlos Silva Motors' },
-        { id: '5', brand: 'BMW', model: '320i M Sport', year: 2022, price: 285000, status: 'rejected', slug: 'bmw-320i-msport-2022', created_at: new Date().toISOString(), city: 'Brasília', state: 'DF', display_id: 'SNC-005', thumbnail: '/placeholder.svg', sellerName: 'Pedro Autos' },
-        { id: '6', brand: 'Hyundai', model: 'Creta Platinum', year: 2024, price: 142000, status: 'draft', slug: 'hyundai-creta-platinum-2024', created_at: new Date().toISOString(), city: 'Salvador', state: 'BA', display_id: 'SNC-006', thumbnail: '/placeholder.svg', sellerName: 'Ana Souza Veículos' },
-        { id: '7', brand: 'Chevrolet', model: 'Tracker Premier', year: 2024, price: 135900, status: 'approved', slug: 'chevrolet-tracker-premier-2024', created_at: new Date().toISOString(), city: 'Porto Alegre', state: 'RS', display_id: 'SNC-007', thumbnail: '/placeholder.svg', sellerName: 'Marina Premium Cars' },
-        { id: '8', brand: 'Mercedes-Benz', model: 'C200 Avantgarde', year: 2023, price: 320000, status: 'pending', slug: 'mercedes-c200-2023', created_at: new Date().toISOString(), city: 'São Paulo', state: 'SP', display_id: 'SNC-008', thumbnail: '/placeholder.svg', sellerName: 'Carlos Silva Motors' },
-      ]);
+  const loadVehicles = async () => {
+    try {
+      const data = await fetchApi<VehicleFromAPI[]>('/vehicles/admin/all', { requireAuth: true });
+      setVehicles(data);
+    } catch (error: any) {
+      console.error('Erro ao carregar veículos:', error);
+      toast.error('Erro ao carregar veículos', { description: error.message });
+    } finally {
       setIsLoading(false);
-    }, 800);
-  }, []);
+    }
+  };
 
-  const updateVehicleStatus = (vehicleId: string, newStatus: 'approved' | 'rejected') => {
-    setVehicles(prev => prev.map(v => v.id === vehicleId ? { ...v, status: newStatus } : v));
-    toast.success(newStatus === 'approved' ? 'Anúncio aprovado!' : 'Anúncio rejeitado', {
-      description: newStatus === 'approved' ? 'O anúncio agora está público.' : 'O anúncio foi rejeitado.',
-    });
+  useEffect(() => { loadVehicles(); }, []);
+
+  const updateVehicleStatus = async (vehicleId: string, newStatus: 'approved' | 'pending' | 'draft') => {
+    setUpdatingId(vehicleId);
+    try {
+      await fetchApi(`/vehicles/admin/${vehicleId}/status`, {
+        method: 'PATCH',
+        body: { status: newStatus },
+        requireAuth: true,
+      });
+      setVehicles(prev => prev.map(v => v.id === vehicleId ? { ...v, status: newStatus } : v));
+      toast.success(newStatus === 'approved' ? 'Anúncio aprovado!' : 'Status atualizado', {
+        description: newStatus === 'approved' ? 'O anúncio agora está público.' : `Status alterado para ${statusConfig[newStatus]?.label || newStatus}.`,
+      });
+    } catch (error: any) {
+      toast.error('Erro ao atualizar status', { description: error.message });
+    } finally {
+      setUpdatingId(null);
+    }
   };
 
   const formatPrice = (price: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(price);
@@ -75,13 +101,23 @@ export default function AdminVehiclesPage() {
     if (filterBrand !== ALL_VALUE && vehicle.brand !== filterBrand) return false;
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
-      if (!vehicle.brand.toLowerCase().includes(search) && !vehicle.model.toLowerCase().includes(search) && !vehicle.sellerName?.toLowerCase().includes(search) && !vehicle.city?.toLowerCase().includes(search) && !vehicle.display_id?.toLowerCase().includes(search)) return false;
+      const sellerName = vehicle.seller?.full_name || '';
+      if (!vehicle.brand.toLowerCase().includes(search) && !vehicle.model.toLowerCase().includes(search) && !sellerName.toLowerCase().includes(search) && !vehicle.city?.toLowerCase().includes(search) && !vehicle.display_id?.toLowerCase().includes(search)) return false;
     }
     return true;
   });
 
+  const pendingCount = vehicles.filter(v => v.status === 'pending').length;
+
   if (isLoading) {
-    return (<div className="container py-8"><div className="animate-pulse space-y-4">{[1, 2, 3].map((i) => (<div key={i} className="h-24 bg-muted rounded-xl" />))}</div></div>);
+    return (
+      <div className="container py-8">
+        <div className="flex items-center justify-center py-24 gap-3">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <span className="text-muted-foreground">Carregando veículos do banco...</span>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -92,6 +128,9 @@ export default function AdminVehiclesPage() {
             <Button variant="ghost" size="icon" asChild><Link href="/admin"><ArrowLeft className="h-5 w-5" /></Link></Button>
             <h1 className="font-heading text-2xl font-bold">Gerenciar Veículos</h1>
             <Badge variant="secondary">{filteredVehicles.length} de {vehicles.length}</Badge>
+            {pendingCount > 0 && (
+              <Badge variant="destructive" className="animate-pulse">{pendingCount} pendente{pendingCount > 1 ? 's' : ''}</Badge>
+            )}
           </div>
           <Button variant="outline" size="sm" onClick={() => toast.success('Exportado!', { description: `${filteredVehicles.length} veículos exportados.` })}>
             <Download className="h-4 w-4 mr-2" /> Exportar
@@ -101,7 +140,7 @@ export default function AdminVehiclesPage() {
         <div className="flex flex-wrap gap-3 mb-6">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar por ID, marca, modelo, vendedor..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+            <Input placeholder="Buscar por marca, modelo, vendedor, cidade..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
           </div>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-40"><SelectValue placeholder="Status" /></SelectTrigger>
@@ -109,8 +148,8 @@ export default function AdminVehiclesPage() {
               <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="pending">Pendentes</SelectItem>
               <SelectItem value="approved">Aprovados</SelectItem>
-              <SelectItem value="rejected">Rejeitados</SelectItem>
               <SelectItem value="draft">Rascunhos</SelectItem>
+              <SelectItem value="sold">Vendidos</SelectItem>
             </SelectContent>
           </Select>
           <Select value={filterBrand} onValueChange={setFilterBrand}>
@@ -132,11 +171,17 @@ export default function AdminVehiclesPage() {
             {filteredVehicles.map((vehicle) => {
               const status = statusConfig[vehicle.status] || statusConfig.draft;
               const StatusIcon = status.icon;
+              const thumbnail = vehicle.media?.[0]?.url;
+              const isUpdating = updatingId === vehicle.id;
               return (
-                <div key={vehicle.id} className="bg-card rounded-2xl shadow-card overflow-hidden">
+                <div key={vehicle.id} className={`bg-card rounded-2xl shadow-card overflow-hidden ${vehicle.status === 'pending' ? 'ring-2 ring-amber-400/50' : ''}`}>
                   <div className="flex">
-                    <div className="w-32 h-28 sm:w-40 sm:h-32 shrink-0 bg-muted flex items-center justify-center">
-                      <BarChart3 className="h-8 w-8 text-muted-foreground/30" />
+                    <div className="w-32 h-28 sm:w-40 sm:h-32 shrink-0 bg-muted flex items-center justify-center overflow-hidden">
+                      {thumbnail ? (
+                        <img src={thumbnail} alt={`${vehicle.brand} ${vehicle.model}`} className="w-full h-full object-cover" />
+                      ) : (
+                        <BarChart3 className="h-8 w-8 text-muted-foreground/30" />
+                      )}
                     </div>
                     <div className="flex-1 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
@@ -149,7 +194,9 @@ export default function AdminVehiclesPage() {
                             <StatusIcon className="h-3 w-3 mr-1" />{status.label}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground">Por: {vehicle.sellerName || 'Desconhecido'} • {vehicle.city}, {vehicle.state}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Por: {vehicle.seller?.full_name || 'Desconhecido'} • {vehicle.seller?.city || vehicle.city}, {vehicle.seller?.state || vehicle.state}
+                        </p>
                         <p className="font-semibold text-[#268052]">{formatPrice(vehicle.price)}</p>
                       </div>
                       <div className="flex items-center gap-2">
@@ -158,16 +205,19 @@ export default function AdminVehiclesPage() {
                         </Button>
                         {vehicle.status === 'pending' && (
                           <>
-                            <Button variant="outline" size="sm" onClick={() => updateVehicleStatus(vehicle.id, 'approved')} className="text-green-600 hover:text-green-700">
-                              <Check className="h-4 w-4 mr-1" /> Aprovar
+                            <Button variant="outline" size="sm" onClick={() => updateVehicleStatus(vehicle.id, 'approved')} className="text-green-600 hover:text-green-700" disabled={isUpdating}>
+                              {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Check className="h-4 w-4 mr-1" /> Aprovar</>}
                             </Button>
-                            <Button variant="outline" size="sm" onClick={() => updateVehicleStatus(vehicle.id, 'rejected')} className="text-destructive hover:text-destructive">
+                            <Button variant="outline" size="sm" onClick={() => updateVehicleStatus(vehicle.id, 'draft')} className="text-destructive hover:text-destructive" disabled={isUpdating}>
                               <X className="h-4 w-4 mr-1" /> Rejeitar
                             </Button>
                           </>
                         )}
-                        {vehicle.status === 'rejected' && (
-                          <Button variant="ghost" size="sm" onClick={() => updateVehicleStatus(vehicle.id, 'approved')}>Aprovar</Button>
+                        {vehicle.status === 'draft' && (
+                          <Button variant="ghost" size="sm" onClick={() => updateVehicleStatus(vehicle.id, 'approved')} disabled={isUpdating}>Aprovar</Button>
+                        )}
+                        {vehicle.status === 'approved' && (
+                          <Button variant="ghost" size="sm" onClick={() => updateVehicleStatus(vehicle.id, 'pending')} disabled={isUpdating} className="text-amber-600">Pausar</Button>
                         )}
                       </div>
                     </div>

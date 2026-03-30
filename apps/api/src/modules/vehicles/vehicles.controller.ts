@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, ForbiddenException } from '@nestjs/common';
 import { VehiclesService } from './vehicles.service';
 import { CreateVehicleDto, UpdateVehicleDto } from './dto/vehicles.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -25,6 +25,28 @@ export class VehiclesController {
   getMetrics(@CurrentUser() user: User, @Query('period') period?: string) {
     const days = period ? parseInt(period) : 30;
     return this.vehiclesService.getMetrics(user.id, days);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('admin/all')
+  findAllAdmin(@CurrentUser() user: User) {
+    if (user.role !== 'admin') {
+      throw new ForbiddenException('Acesso restrito a administradores');
+    }
+    return this.vehiclesService.findAllAdmin();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('admin/:id/status')
+  updateVehicleStatus(
+    @Param('id') id: string,
+    @Body() body: { status: string },
+    @CurrentUser() user: User,
+  ) {
+    if (user.role !== 'admin') {
+      throw new ForbiddenException('Acesso restrito a administradores');
+    }
+    return this.vehiclesService.updateStatus(id, body.status as any);
   }
 
 
