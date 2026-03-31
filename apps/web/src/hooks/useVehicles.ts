@@ -14,6 +14,16 @@ export function useVehicleCount() {
   });
 }
 
+// Helper para mapear propriedades do backend (media) para Frontend (images, videos)
+const mapVehicleResponse = (v: any): Vehicle => {
+  if (!v) return v;
+  return {
+    ...v,
+    images: Array.isArray(v.media) ? v.media.filter((m: any) => m.type === 'image') : (v.images || []),
+    videos: Array.isArray(v.media) ? v.media.filter((m: any) => m.type === 'video') : (v.videos || []),
+  };
+};
+
 export function useVehicles(filters?: VehicleFilters, sortBy: SortOption = 'recent') {
   return useQuery({
     queryKey: ['vehicles', filters, sortBy],
@@ -27,8 +37,8 @@ export function useVehicles(filters?: VehicleFilters, sortBy: SortOption = 'rece
       };
 
       // O NestJS backend deverá receber esses query params e retornar os arrays mapeados de veículos
-      const data = await fetchApi<Vehicle[]>('/vehicles', { params });
-      return data;
+      const data = await fetchApi<any[]>('/vehicles', { params });
+      return data.map(mapVehicleResponse);
     },
   });
 }
@@ -41,8 +51,8 @@ export function useFeaturedVehicles() {
     refetchInterval: 120000, 
     queryFn: async () => {
       // O endpoint /vehicles/featured resolve randomização e limite para n=4 internamente
-      const data = await fetchApi<Vehicle[]>('/vehicles/featured');
-      return data;
+      const data = await fetchApi<any[]>('/vehicles/featured');
+      return data.map(mapVehicleResponse);
     },
   });
 }
@@ -54,8 +64,8 @@ export function useVehicleBySlug(slug: string | undefined, allowAnyStatus = fals
       if (!slug) return null;
       try {
         const params = { anyStatus: allowAnyStatus };
-        const data = await fetchApi<Vehicle>(`/vehicles/${slug}`, { params });
-        return data;
+        const data = await fetchApi<any>(`/vehicles/${slug}`, { params });
+        return mapVehicleResponse(data);
       } catch (error: any) {
         if (error.message.includes('404')) return null;
         throw error;
@@ -71,8 +81,8 @@ export function useSellerVehicles(sellerId?: string, excludeVehicleId?: string) 
     queryFn: async () => {
       if (!sellerId) return [];
       const params = excludeVehicleId ? { exclude: excludeVehicleId } : undefined;
-      const data = await fetchApi<Vehicle[]>(`/vehicles/seller/${sellerId}`, { params });
-      return data;
+      const data = await fetchApi<any[]>(`/vehicles/seller/${sellerId}`, { params });
+      return data.map(mapVehicleResponse);
     },
     enabled: !!sellerId,
   });

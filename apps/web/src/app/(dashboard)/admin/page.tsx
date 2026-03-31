@@ -93,51 +93,25 @@ export default function AdminDashboard() {
     
     setTimeout(() => {
       setStats({
-        totalVehicles: 342,
-        pendingVehicles: 12,
-        totalUsers: 85,
-        pendingEditors: 3,
-        totalLeads: 1240,
-        totalViews: 45000,
-        newUsersToday: 6,
-        leadsToday: 42,
-        viewsToday: 1530,
-        conversionRate: 2.75,
+        totalVehicles: 0,
+        pendingVehicles: 0,
+        totalUsers: 0,
+        pendingEditors: 0,
+        totalLeads: 0,
+        totalViews: 0,
+        newUsersToday: 0,
+        leadsToday: 0,
+        viewsToday: 0,
+        conversionRate: 0,
       });
 
-      setChartData([
-        { date: '23/03', views: 240, leads: 12, signups: 2 },
-        { date: '24/03', views: 300, leads: 15, signups: 3 },
-        { date: '25/03', views: 420, leads: 22, signups: 1 },
-        { date: '26/03', views: 380, leads: 18, signups: 4 },
-        { date: '27/03', views: 510, leads: 28, signups: 5 },
-        { date: '28/03', views: 460, leads: 25, signups: 2 },
-        { date: '29/03', views: 590, leads: 34, signups: 6 },
-      ]);
-
-      setSourceData([
-        { source: 'WhatsApp', count: 480 },
-        { source: 'Formulário', count: 320 },
-        { source: 'Chat', count: 210 },
-        { source: 'Instagram', count: 85 },
-      ]);
-
-      setCampaignData([
-        { campaign: 'Promo_Semana_Consumidor', leads: 420 },
-        { campaign: 'Ads_Retargeting_BH', leads: 315 },
-        { campaign: 'Orgânico/Direto', leads: 280 },
-        { campaign: 'Influenciador_X', leads: 150 },
-      ]);
-
-      setPendingItems([
-        { id: '1', title: 'Honda Civic Touring 2022', subtitle: 'Novo anúncio', created_at: new Date().toISOString(), type: 'vehicle' },
-        { id: '2', title: 'Toyota Corolla Altis', subtitle: 'Novo anúncio', created_at: new Date().toISOString(), type: 'vehicle' },
-        { id: '3', title: 'Bruno Silva Motors', subtitle: 'Belo Horizonte, MG', created_at: new Date().toISOString(), type: 'editor' },
-        { id: '4', title: 'Vw Polo Highline 2024', subtitle: 'Edição de preço', created_at: new Date().toISOString(), type: 'vehicle' },
-      ]);
+      setChartData([]);
+      setSourceData([]);
+      setCampaignData([]);
+      setPendingItems([]);
 
       setIsLoading(false);
-    }, 800);
+    }, 400);
   };
 
   const statCards = [
