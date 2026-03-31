@@ -26,5 +26,5 @@ ENV NODE_ENV production
 ENV PORT 3001
 EXPOSE 3001
 
-# CAMINHO CORRIGIDO: Em monorepos NestJS, o arquivo principal fica na raiz /dist
-CMD ["node", "dist/apps/api/main.js"]
+# CAMINHO CORRIGIDO: O typescript gerou a pasta src dentro do dist
+CMD ["node", "apps/api/dist/src/main.js"]
