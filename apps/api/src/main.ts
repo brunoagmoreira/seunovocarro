@@ -1,35 +1,57 @@
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
-const BUILD_VERSION = '2026-03-30T13:47:00';
-
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-
-  // Habilitar CORS para o frontend (Next.js em localhost:3000)
-  app.enableCors({
-    origin: [
-      'https://seunovocarro.com.br',
-      'https://www.seunovocarro.com.br',
-      'http://localhost:3000',
-      process.env.FRONTEND_URL,
-    ].filter(Boolean).map(url => (url as string).replace(/\/$/, '')) as string[],
-    credentials: true,
-  });
-
-  // Prefixo global: todas as rotas começam com /api
-  // Ex: GET /api/vehicles, POST /api/auth/login
-  app.setGlobalPrefix('api');
-
+  console.log('\n--- 🚀 INICIANDO BOOTSTRAP DA API ---');
+  
+  // 1. Diagnóstico de Ambiente
   const dbUrl = process.env.DATABASE_URL;
   if (!dbUrl) {
-    console.error('\n❌ ERRO FATAL: DATABASE_URL não encontrada no ambiente!\n');
+    console.error('❌ ERRO CRÍTICO: DATABASE_URL não encontrada!');
   } else {
-    console.log('✅ DATABASE_URL encontrada, conectando...');
+    console.log('✅ DATABASE_URL presente.');
   }
 
-  const port = process.env.PORT ?? 3001;
-  await app.listen(port, '0.0.0.0');
-  console.log(`\n************************************\n🚀 API Seu Novo Carro ONLINE\n🚀 Ouvindo em: http://0.0.0.0:${port}/api\n************************************\n`);
+  try {
+    const app = await NestFactory.create(AppModule);
+
+    // Configurações globais
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.setGlobalPrefix('api');
+
+    // CORS Robusto
+    app.enableCors({
+      origin: [
+        'https://seunovocarro.com.br',
+        'https://www.seunovocarro.com.br',
+        'http://localhost:3000',
+        process.env.FRONTEND_URL,
+      ].filter(Boolean).map(url => (url as string).replace(/\/$/, '')) as string[],
+      credentials: true,
+    });
+
+    const port = process.env.PORT ?? 80;
+    await app.listen(port, '0.0.0.0');
+    
+    console.log(`\n************************************`);
+    console.log(`🚀 API Seu Novo Carro ONLINE`);
+    console.log(`🚀 Ouvindo em: http://0.0.0.0:${port}/api`);
+    console.log(`************************************\n`);
+
+  } catch (error) {
+    console.error('❌ FALHA CRÍTICA NA INICIALIZAÇÃO:', error);
+    process.exit(1);
+  }
 }
+
+// Captura de erros globais para evitar morte silenciosa
+process.on('uncaughtException', (err) => {
+  console.error('💥 UNCAUGHT EXCEPTION:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('💥 UNHANDLED REJECTION:', reason);
+});
+
 bootstrap();
