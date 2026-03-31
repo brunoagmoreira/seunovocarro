@@ -19,8 +19,31 @@ const mapVehicleResponse = (v: any): Vehicle => {
   if (!v) return v;
   return {
     ...v,
+    createdAt: v.created_at || v.createdAt || new Date().toISOString(),
+    displayId: v.display_id || v.displayId,
+    plateEnding: v.plate_ending || v.plateEnding,
+    price: Number(v.price) || 0,
+    mileage: Number(v.mileage) || 0,
+    year: Number(v.year) || 0,
     images: Array.isArray(v.media) ? v.media.filter((m: any) => m.type === 'image') : (v.images || []),
     videos: Array.isArray(v.media) ? v.media.filter((m: any) => m.type === 'video') : (v.videos || []),
+    seller: v.seller ? {
+      id: v.seller.id || 'unknown',
+      name: v.seller.full_name || v.seller.name || 'Vendedor',
+      city: v.seller.city || v.city || '',
+      state: v.seller.state || v.state || '',
+      avatarUrl: v.seller.avatar_url || v.seller.avatarUrl || '/placeholder.svg',
+      phone: v.seller.phone || v.phone || '',
+      whatsapp: v.seller.whatsapp || v.whatsapp || '',
+    } : {
+      id: v.user_id || 'unknown',
+      name: 'Vendedor',
+      city: v.city || '',
+      state: v.state || '',
+      avatarUrl: '/placeholder.svg',
+      phone: v.phone || '',
+      whatsapp: v.whatsapp || '',
+    }
   };
 };
 
