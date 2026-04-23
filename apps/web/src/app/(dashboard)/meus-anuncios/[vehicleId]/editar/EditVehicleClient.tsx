@@ -95,7 +95,11 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
       } catch {
         // Backward-compatible fallback if endpoint is not available yet on some deploy node
         const mineList = await fetchApi<any[]>('/vehicles/mine', { requireAuth: true });
-        ownerVehicle = mineList.find((v) => v.id === vehicleId);
+        ownerVehicle = mineList.find((v) =>
+          String(v.id) === String(vehicleId)
+          || String(v.slug || '') === String(vehicleId)
+          || String(v.ad_code || '') === String(vehicleId),
+        );
       }
 
       if (!ownerVehicle) throw new Error('Not found');

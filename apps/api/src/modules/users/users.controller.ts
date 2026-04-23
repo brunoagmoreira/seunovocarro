@@ -42,6 +42,12 @@ export class UsersController {
       dealer_logo?: string;
       dealer_banner?: string;
       dealer_since?: string;
+      dealer_xml_enabled?: boolean;
+      dealer_xml_source_url?: string;
+      dealer_xml_item_path?: string;
+      dealer_xml_image_path?: string;
+      dealer_xml_frequency_minutes?: number;
+      dealer_xml_field_map?: Record<string, string>;
     },
   ) {
     return this.usersService.updateProfileAndDealer(user.id, body);

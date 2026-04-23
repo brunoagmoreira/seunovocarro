@@ -10,8 +10,8 @@ export function HomeFaqSection() {
   return (
     <section className="py-12 md:py-16 bg-muted/30">
       <div className="container">
-        <div className="flex items-center justify-between mb-6 md:mb-8">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col items-center text-center mb-6 md:mb-8 gap-4">
+          <div className="flex items-center gap-3 justify-center">
             <div className="p-2 rounded-lg bg-primary/10">
               <HelpCircle className="h-6 w-6 text-primary" />
             </div>
@@ -24,7 +24,7 @@ export function HomeFaqSection() {
               </p>
             </div>
           </div>
-          <Button variant="ghost" asChild className="hidden md:flex">
+          <Button variant="ghost" asChild className="hidden md:inline-flex">
             <Link href="/perguntas-frequentes">
               Ver todas
               <ArrowRight className="h-4 w-4 ml-2" />
@@ -32,7 +32,7 @@ export function HomeFaqSection() {
           </Button>
         </div>
 
-        <div className="max-w-3xl">
+        <div className="max-w-3xl mx-auto">
           <Accordion type="single" collapsible className="space-y-3">
             {FEATURED_FAQS.map((faq, index) => (
               <AccordionItem

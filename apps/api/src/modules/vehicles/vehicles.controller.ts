@@ -66,6 +66,31 @@ export class VehiclesController {
     return this.vehiclesService.updateStatus(id, body.status as any);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Post('xml-import/config')
+  configureXmlImport(
+    @CurrentUser() user: User,
+    @Body() body: {
+      enabled?: boolean;
+      source_url?: string;
+      item_path?: string;
+      image_path?: string;
+      update_frequency_minutes?: number;
+      field_map?: Record<string, string>;
+    },
+  ) {
+    return this.vehiclesService.configureXmlImport(user, body);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('xml-import/sync-now')
+  syncXmlNow(
+    @CurrentUser() user: User,
+    @Body() body?: { xml_content?: string },
+  ) {
+    return this.vehiclesService.syncXmlImportNow(user, body?.xml_content);
+  }
+
 
   @Get(':slug')
   findBySlug(@Param('slug') slug: string) {

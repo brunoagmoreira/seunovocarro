@@ -15,6 +15,7 @@ export interface Profile {
   whatsapp: string | null;
   city: string | null;
   state: string | null;
+  [key: string]: any;
 }
 
 export type UserRole = 'user' | 'editor' | 'admin';
@@ -94,16 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUserRole(data.role as UserRole);
       setUserStatus(data.status as UserStatus);
       
-      // Mapear dados do usuário para o 'profile' simulando o objeto antigo
-      setProfile({
-        id: data.id,
-        full_name: data.full_name,
-        avatar_url: data.avatar_url,
-        phone: data.phone,
-        whatsapp: data.whatsapp,
-        city: data.city,
-        state: data.state
-      });
+      setProfile(data);
       
     } catch (err) {
       console.warn('Falha na autenticação via JWT:', err);

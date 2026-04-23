@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { Store, Camera, Loader2, Globe,   MapPin, Copy, Check, ExternalLink } from 'lucide-react';
+import { Store, Camera, Loader2, Globe,   MapPin, Copy, Check, ExternalLink, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,6 +28,7 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isSyncingXml, setIsSyncingXml] = useState(false);
   
   const [storeUrl, setStoreUrl] = useState<string | null>(null);
   
@@ -55,6 +56,22 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
     dealer_instagram: profile?.dealer_instagram || '',
     dealer_facebook: profile?.dealer_facebook || '',
     dealer_website: profile?.dealer_website || '',
+    dealer_xml_enabled: profile?.dealer_xml_enabled || false,
+    dealer_xml_source_url: profile?.dealer_xml_source_url || '',
+    dealer_xml_item_path: profile?.dealer_xml_item_path || 'vehicles.vehicle',
+    dealer_xml_image_path: profile?.dealer_xml_image_path || '',
+    dealer_xml_frequency_minutes: profile?.dealer_xml_frequency_minutes || 60,
+    dealer_xml_field_map: profile?.dealer_xml_field_map || {
+      external_id: 'id',
+      brand: 'brand',
+      model: 'model',
+      year: 'year',
+      price: 'price',
+      mileage: 'mileage',
+      city: 'city',
+      state: 'state',
+      image_urls: 'images.image',
+    },
   });
 
   useEffect(() => {
@@ -67,6 +84,22 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
       dealer_instagram: profile?.dealer_instagram || '',
       dealer_facebook: profile?.dealer_facebook || '',
       dealer_website: profile?.dealer_website || '',
+      dealer_xml_enabled: profile?.dealer_xml_enabled || false,
+      dealer_xml_source_url: profile?.dealer_xml_source_url || '',
+      dealer_xml_item_path: profile?.dealer_xml_item_path || 'vehicles.vehicle',
+      dealer_xml_image_path: profile?.dealer_xml_image_path || '',
+      dealer_xml_frequency_minutes: profile?.dealer_xml_frequency_minutes || 60,
+      dealer_xml_field_map: profile?.dealer_xml_field_map || {
+        external_id: 'id',
+        brand: 'brand',
+        model: 'model',
+        year: 'year',
+        price: 'price',
+        mileage: 'mileage',
+        city: 'city',
+        state: 'state',
+        image_urls: 'images.image',
+      },
     });
   }, [
     profile?.is_dealer,
@@ -77,7 +110,23 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
     profile?.dealer_instagram,
     profile?.dealer_facebook,
     profile?.dealer_website,
+    profile?.dealer_xml_enabled,
+    profile?.dealer_xml_source_url,
+    profile?.dealer_xml_item_path,
+    profile?.dealer_xml_image_path,
+    profile?.dealer_xml_frequency_minutes,
+    profile?.dealer_xml_field_map,
   ]);
+
+  const updateXmlFieldMap = (field: string, value: string) => {
+    setDealerData((prev) => ({
+      ...prev,
+      dealer_xml_field_map: {
+        ...(prev.dealer_xml_field_map || {}),
+        [field]: value,
+      },
+    }));
+  };
 
   // Only show for editors/sellers
   if (userRole === 'user') {
@@ -170,6 +219,12 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
         dealer_instagram: dealerData.dealer_instagram || null,
         dealer_facebook: dealerData.dealer_facebook || null,
         dealer_website: dealerData.dealer_website || null,
+        dealer_xml_enabled: dealerData.dealer_xml_enabled,
+        dealer_xml_source_url: dealerData.dealer_xml_source_url || null,
+        dealer_xml_item_path: dealerData.dealer_xml_item_path || 'vehicles.vehicle',
+        dealer_xml_image_path: dealerData.dealer_xml_image_path || null,
+        dealer_xml_frequency_minutes: Number(dealerData.dealer_xml_frequency_minutes) || 60,
+        dealer_xml_field_map: dealerData.dealer_xml_field_map || {},
       };
 
       if (dealerData.is_dealer && !profile?.dealer_since) {
@@ -192,6 +247,51 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleXmlSyncNow = async () => {
+    if (!dealerData.dealer_xml_source_url) {
+      toast({
+        title: "Informe a URL do XML",
+        description: "Configure a URL do ERP antes de sincronizar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSyncingXml(true);
+    try {
+      await fetchApi('/vehicles/xml-import/config', {
+        method: 'POST',
+        requireAuth: true,
+        body: {
+          enabled: dealerData.dealer_xml_enabled,
+          source_url: dealerData.dealer_xml_source_url,
+          item_path: dealerData.dealer_xml_item_path,
+          image_path: dealerData.dealer_xml_image_path,
+          update_frequency_minutes: Number(dealerData.dealer_xml_frequency_minutes) || 60,
+          field_map: dealerData.dealer_xml_field_map || {},
+        },
+      });
+
+      const result = await fetchApi<{ imported: number; inactivated: number; skipped: number }>('/vehicles/xml-import/sync-now', {
+        method: 'POST',
+        requireAuth: true,
+      });
+
+      toast({
+        title: "Sincronização concluída",
+        description: `Importados: ${result.imported} • Inativados: ${result.inactivated} • Ignorados: ${result.skipped}`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao sincronizar XML",
+        description: error.message || "Verifique a configuração do XML.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSyncingXml(false);
     }
   };
 
@@ -393,6 +493,86 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
                 />
               </div>
             </div>
+          </div>
+
+          <div className="rounded-xl border border-border p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium">Integração ERP via XML</h4>
+                <p className="text-xs text-muted-foreground">
+                  Sincroniza automaticamente novos veículos e inativa os removidos no XML.
+                </p>
+              </div>
+              <Switch
+                checked={dealerData.dealer_xml_enabled}
+                onCheckedChange={(v) => setDealerData({ ...dealerData, dealer_xml_enabled: v })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>URL do XML</Label>
+              <Input
+                value={dealerData.dealer_xml_source_url}
+                onChange={(e) => setDealerData({ ...dealerData, dealer_xml_source_url: e.target.value })}
+                placeholder="https://erp.exemplo.com/estoque.xml"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="space-y-2">
+                <Label>Caminho dos veículos</Label>
+                <Input
+                  value={dealerData.dealer_xml_item_path}
+                  onChange={(e) => setDealerData({ ...dealerData, dealer_xml_item_path: e.target.value })}
+                  placeholder="vehicles.vehicle"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Caminho das imagens</Label>
+                <Input
+                  value={dealerData.dealer_xml_image_path}
+                  onChange={(e) => setDealerData({ ...dealerData, dealer_xml_image_path: e.target.value })}
+                  placeholder="images.image"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Frequência (minutos)</Label>
+                <Input
+                  type="number"
+                  min={10}
+                  value={dealerData.dealer_xml_frequency_minutes}
+                  onChange={(e) => setDealerData({ ...dealerData, dealer_xml_frequency_minutes: Number(e.target.value) || 60 })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {[
+                { key: 'external_id', label: 'ID externo' },
+                { key: 'brand', label: 'Marca' },
+                { key: 'model', label: 'Modelo' },
+                { key: 'year', label: 'Ano' },
+                { key: 'price', label: 'Preço' },
+                { key: 'mileage', label: 'KM' },
+                { key: 'city', label: 'Cidade' },
+                { key: 'state', label: 'UF' },
+                { key: 'image_urls', label: 'Imagens' },
+              ].map((field) => (
+                <div key={field.key} className="space-y-2">
+                  <Label>{field.label}</Label>
+                  <Input
+                    value={dealerData.dealer_xml_field_map?.[field.key] || ''}
+                    onChange={(e) => updateXmlFieldMap(field.key, e.target.value)}
+                    placeholder={field.key}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <Button type="button" variant="outline" onClick={handleXmlSyncNow} disabled={isSyncingXml}>
+              {isSyncingXml ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+              Sincronizar XML agora
+            </Button>
           </div>
 
           <Button

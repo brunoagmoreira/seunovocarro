@@ -15,12 +15,14 @@ import { MediaModule } from './modules/media/media.module';
 import { AdsModule } from './modules/ads/ads.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { BlogModule } from './modules/blog/blog.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 import { BannersModule } from './modules/banners/banners.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
     UsersModule,
