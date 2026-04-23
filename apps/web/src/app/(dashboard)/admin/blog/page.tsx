@@ -18,13 +18,7 @@ interface BlogPost {
   category: { name: string; color: string } | null;
 }
 
-const mockPosts: BlogPost[] = [
-  { id: '1', title: 'Como escolher seu primeiro carro seminovo', slug: 'como-escolher-primeiro-carro-seminovo', status: 'published', views_count: 1245, published_at: '2026-03-15T10:00:00Z', created_at: '2026-03-14T08:00:00Z', featured_image: null, category: { name: 'Dicas', color: '#22c55e' } },
-  { id: '2', title: '10 dicas para financiar um veículo com sucesso', slug: '10-dicas-financiar-veiculo', status: 'published', views_count: 890, published_at: '2026-03-10T10:00:00Z', created_at: '2026-03-09T08:00:00Z', featured_image: null, category: { name: 'Financiamento', color: '#3b82f6' } },
-  { id: '3', title: 'SUVs mais vendidos de 2026: ranking completo', slug: 'suvs-mais-vendidos-2026', status: 'draft', views_count: 0, published_at: null, created_at: '2026-03-20T08:00:00Z', featured_image: null, category: { name: 'Rankings', color: '#a855f7' } },
-  { id: '4', title: 'Manutenção preventiva: o guia definitivo', slug: 'manutencao-preventiva-guia', status: 'published', views_count: 2100, published_at: '2026-02-28T10:00:00Z', created_at: '2026-02-27T08:00:00Z', featured_image: null, category: { name: 'Manutenção', color: '#f59e0b' } },
-  { id: '5', title: 'Carros elétricos vs híbridos: qual escolher?', slug: 'carros-eletricos-vs-hibridos', status: 'archived', views_count: 560, published_at: '2026-01-15T10:00:00Z', created_at: '2026-01-14T08:00:00Z', featured_image: null, category: { name: 'Tecnologia', color: '#06b6d4' } },
-];
+const mockPosts: BlogPost[] = [];
 
 export default function AdminBlogPage() {
   const [search, setSearch] = useState('');

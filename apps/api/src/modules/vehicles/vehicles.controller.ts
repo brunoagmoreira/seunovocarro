@@ -9,6 +9,17 @@ import type { User } from '@prisma/client';
 export class VehiclesController {
   constructor(private readonly vehiclesService: VehiclesService) {}
 
+  @Get('count')
+  count() {
+    return this.vehiclesService.getCount();
+  }
+
+  @Get('featured')
+  featured(@Query('limit') limit?: string) {
+    const parsedLimit = limit ? parseInt(limit, 10) : 4;
+    return this.vehiclesService.findFeatured(Number.isNaN(parsedLimit) ? 4 : parsedLimit);
+  }
+
   @Get()
   findAll(@Query() query: any) {
     return this.vehiclesService.findAll(query);

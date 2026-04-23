@@ -87,9 +87,16 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
 
   const fetchVehicle = async () => {
     try {
-      const ownerVehicle = await fetchApi<any>(`/vehicles/mine/${vehicleId}`, {
-        requireAuth: true
-      });
+      let ownerVehicle: any;
+      try {
+        ownerVehicle = await fetchApi<any>(`/vehicles/mine/${vehicleId}`, {
+          requireAuth: true
+        });
+      } catch {
+        // Backward-compatible fallback if endpoint is not available yet on some deploy node
+        const mineList = await fetchApi<any[]>('/vehicles/mine', { requireAuth: true });
+        ownerVehicle = mineList.find((v) => v.id === vehicleId);
+      }
 
       if (!ownerVehicle) throw new Error('Not found');
 

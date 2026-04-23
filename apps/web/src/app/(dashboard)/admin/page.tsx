@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Users, Car, MessageSquare, Eye, Clock, ArrowRight, Settings, TrendingUp, UserPlus, Calendar, BarChart3, Target } from 'lucide-react';
+import { Users, Car, MessageSquare, Eye, Clock, ArrowRight, Settings, TrendingUp, UserPlus, Calendar, BarChart3, Target, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -23,6 +23,7 @@ import {
   BarChart,
   Bar,
 } from 'recharts';
+import { fetchApi } from '@/lib/api';
 
 interface DashboardStats {
   totalVehicles: number;
@@ -62,6 +63,32 @@ interface CampaignData {
   leads: number;
 }
 
+interface AdminDashboardResponse {
+  users: number;
+  dealers: number;
+  vehicles: number;
+  leads: number;
+}
+
+interface AdminVehicle {
+  id: string;
+  brand: string;
+  model: string;
+  year: number;
+  status: 'draft' | 'pending' | 'approved' | 'sold' | 'expired';
+  created_at: string;
+  seller?: {
+    full_name?: string | null;
+  };
+}
+
+interface PendingSeller {
+  id: string;
+  full_name: string | null;
+  email: string;
+  created_at: string;
+}
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalVehicles: 0,
@@ -83,21 +110,49 @@ export default function AdminDashboard() {
   const [period, setPeriod] = useState('7');
 
   useEffect(() => {
-    fetchDashboardData();
+    void fetchDashboardData();
   }, [period]);
 
   const fetchDashboardData = async () => {
-    // Para manter o visual intacto da Lovable sem quebrar a Build do Next.js
-    // Substituimos as chamadas do supabase antigo por Mock Data estético perfeito.
-    // Numa fase futura do roadmap, ligaremos essas variáveis aos GET da nossa API Nest.
-    
-    setTimeout(() => {
+    try {
+      setIsLoading(true);
+
+      const [dashboard, vehicles] = await Promise.all([
+        fetchApi<AdminDashboardResponse>('/admin/dashboard', { requireAuth: true }),
+        fetchApi<AdminVehicle[]>('/vehicles/admin/all', { requireAuth: true }),
+      ]);
+
+      let pendingSellers: PendingSeller[] = [];
+      try {
+        pendingSellers = await fetchApi<PendingSeller[]>('/admin/approvals/pending-sellers', { requireAuth: true });
+      } catch {
+        // Non-super admin users may not access seller approvals
+        pendingSellers = [];
+      }
+
+      const pendingVehicles = vehicles.filter((vehicle) => vehicle.status === 'pending');
+      const pendingVehicleItems: PendingItem[] = pendingVehicles.slice(0, 8).map((vehicle) => ({
+        id: vehicle.id,
+        title: `${vehicle.brand} ${vehicle.model}`,
+        subtitle: `${vehicle.year} • ${vehicle.seller?.full_name || 'Vendedor não informado'}`,
+        created_at: vehicle.created_at,
+        type: 'vehicle',
+      }));
+
+      const pendingSellerItems: PendingItem[] = pendingSellers.slice(0, 8).map((seller) => ({
+        id: seller.id,
+        title: seller.full_name || 'Vendedor sem nome',
+        subtitle: seller.email,
+        created_at: seller.created_at,
+        type: 'editor',
+      }));
+
       setStats({
-        totalVehicles: 0,
-        pendingVehicles: 0,
-        totalUsers: 0,
-        pendingEditors: 0,
-        totalLeads: 0,
+        totalVehicles: dashboard.vehicles,
+        pendingVehicles: pendingVehicles.length,
+        totalUsers: dashboard.users,
+        pendingEditors: pendingSellers.length,
+        totalLeads: dashboard.leads,
         totalViews: 0,
         newUsersToday: 0,
         leadsToday: 0,
@@ -108,10 +163,12 @@ export default function AdminDashboard() {
       setChartData([]);
       setSourceData([]);
       setCampaignData([]);
+      setPendingItems([...pendingVehicleItems, ...pendingSellerItems]);
+    } catch {
       setPendingItems([]);
-
+    } finally {
       setIsLoading(false);
-    }, 400);
+    }
   };
 
   const statCards = [
@@ -148,7 +205,14 @@ export default function AdminDashboard() {
     <div className="min-h-screen pb-24 md:pb-8">
       <div className="container py-6">
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
-          <h1 className="font-heading text-2xl font-bold">Dashboard Admin</h1>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/">
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+            </Button>
+            <h1 className="font-heading text-2xl font-bold">Dashboard Admin</h1>
+          </div>
           <Select value={period} onValueChange={setPeriod}>
             <SelectTrigger className="w-[180px]">
               <Calendar className="h-4 w-4 mr-2" />
@@ -330,27 +394,31 @@ export default function AdminDashboard() {
         <div className="bg-card rounded-2xl p-6 shadow-card">
           <h2 className="font-heading font-semibold mb-4">Pendentes de Aprovação</h2>
           <div className="space-y-3">
-            {pendingItems.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between p-3 rounded-xl bg-muted/50"
-              >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium">{item.title}</p>
-                    <Badge variant={item.type === 'vehicle' ? 'default' : 'secondary'}>
-                      {item.type === 'vehicle' ? 'Veículo' : 'Editor'}
-                    </Badge>
+            {pendingItems.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhum item pendente no momento.</p>
+            ) : (
+              pendingItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between p-3 rounded-xl bg-muted/50"
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{item.title}</p>
+                      <Badge variant={item.type === 'vehicle' ? 'default' : 'secondary'}>
+                        {item.type === 'vehicle' ? 'Veículo' : 'Editor'}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{item.subtitle}</p>
                   </div>
-                  <p className="text-sm text-muted-foreground">{item.subtitle}</p>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href={item.type === 'vehicle' ? '/admin/veiculos' : '/admin/usuarios'}>
+                      Revisar
+                    </Link>
+                  </Button>
                 </div>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href={item.type === 'vehicle' ? '/admin/veiculos' : '/admin/usuarios'}>
-                    Revisar
-                  </Link>
-                </Button>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>

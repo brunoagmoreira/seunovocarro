@@ -7,6 +7,37 @@ import { User, Vehicle, MediaType } from '@prisma/client';
 export class VehiclesService {
   constructor(private prisma: PrismaService) {}
 
+  async getCount() {
+    const count = await this.prisma.vehicle.count({
+      where: { status: 'approved' },
+    });
+    return { count };
+  }
+
+  async findFeatured(limit = 4) {
+    return this.prisma.vehicle.findMany({
+      where: { status: 'approved' },
+      include: {
+        seller: {
+          select: {
+            id: true,
+            full_name: true,
+            avatar_url: true,
+            city: true,
+            state: true,
+            phone: true,
+            whatsapp: true,
+          },
+        },
+        media: {
+          orderBy: { order: 'asc' },
+        },
+      },
+      orderBy: { created_at: 'desc' },
+      take: limit,
+    });
+  }
+
   async findAll(query: any) {
     // TODO: implement filters (brand, price, year, etc)
     return this.prisma.vehicle.findMany({
