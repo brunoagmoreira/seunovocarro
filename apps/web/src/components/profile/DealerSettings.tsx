@@ -187,8 +187,12 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
 
     const url = await handleImageUpload(file, 'logo', setIsUploadingLogo);
     if (url) {
-      await updateProfile({ dealer_logo: url } as any);
-      toast({ title: "Logo atualizado!" });
+      const { error } = await updateProfile({ dealer_logo: url } as any);
+      if (error) {
+        toast({ title: "Erro ao salvar logo", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Logo atualizado!" });
+      }
     }
   };
 
@@ -198,8 +202,12 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
 
     const url = await handleImageUpload(file, 'banner', setIsUploadingBanner);
     if (url) {
-      await updateProfile({ dealer_banner: url } as any);
-      toast({ title: "Banner atualizado!" });
+      const { error } = await updateProfile({ dealer_banner: url } as any);
+      if (error) {
+        toast({ title: "Erro ao salvar banner", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Banner atualizado!" });
+      }
     }
   };
 
@@ -233,14 +241,22 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
         updateData.dealer_since = new Date().toISOString();
       }
 
-      await updateProfile(updateData);
+      const { error } = await updateProfile(updateData);
 
-      toast({
-        title: "Configurações de loja salvas!",
-        description: dealerData.is_dealer && slug
-          ? `Sua loja está disponível em /loja/${slug}`
-          : undefined
-      });
+      if (error) {
+        toast({
+          title: "Erro ao salvar",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Configurações de loja salvas!",
+          description: dealerData.is_dealer && slug
+            ? `Sua loja está disponível em /loja/${slug}`
+            : undefined,
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Erro ao salvar",
@@ -308,7 +324,30 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
         </div>
         <Switch
           checked={dealerData.is_dealer}
-          onCheckedChange={(v) => setDealerData({ ...dealerData, is_dealer: v })}
+          disabled={isLoading}
+          onCheckedChange={async (v) => {
+            if (v) {
+              setDealerData((prev) => ({ ...prev, is_dealer: true }));
+              return;
+            }
+            setDealerData((prev) => ({ ...prev, is_dealer: false }));
+            setIsLoading(true);
+            const { error } = await updateProfile({ is_dealer: false });
+            setIsLoading(false);
+            if (error) {
+              toast({
+                title: "Não foi possível desativar",
+                description: error.message,
+                variant: "destructive",
+              });
+              setDealerData((prev) => ({ ...prev, is_dealer: true }));
+            } else {
+              toast({
+                title: "Modo lojista desativado",
+                description: "Sua página de loja pública foi encerrada.",
+              });
+            }
+          }}
         />
       </div>
 

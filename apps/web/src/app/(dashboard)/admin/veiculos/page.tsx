@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Check, X, Eye, Clock, CheckCircle, XCircle, FileText, Search, Download, BarChart3, ArrowLeft, Loader2 } from 'lucide-react';
+import { Check, X, Eye, Clock, CheckCircle, XCircle, FileText, Search, Download, BarChart3, ArrowLeft, Loader2, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { fetchApi } from '@/lib/api';
 
@@ -32,6 +33,7 @@ interface VehicleFromAPI {
   state: string;
   display_id: string | null;
   user_id: string;
+  featured?: boolean;
   media: VehicleMedia[];
   seller?: {
     id: string;
@@ -58,6 +60,7 @@ export default function AdminVehiclesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterBrand, setFilterBrand] = useState<string>(ALL_VALUE);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [featuredUpdatingId, setFeaturedUpdatingId] = useState<string | null>(null);
 
   const loadVehicles = async () => {
     try {
@@ -89,6 +92,29 @@ export default function AdminVehiclesPage() {
       toast.error('Erro ao atualizar status', { description: error.message });
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const setVehicleFeatured = async (vehicleId: string, featured: boolean) => {
+    setFeaturedUpdatingId(vehicleId);
+    try {
+      await fetchApi(`/vehicles/admin/${vehicleId}/featured`, {
+        method: 'PATCH',
+        body: { featured },
+        requireAuth: true,
+      });
+      setVehicles((prev) =>
+        prev.map((v) => (v.id === vehicleId ? { ...v, featured } : v)),
+      );
+      toast.success(featured ? 'Veículo em destaque na home' : 'Destaque removido', {
+        description: featured
+          ? 'Ele aparece prioritariamente na vitrine (até o limite de slots).'
+          : 'A ordem da vitrine volta a seguir apenas a data de publicação.',
+      });
+    } catch (error: any) {
+      toast.error('Não foi possível atualizar o destaque', { description: error.message });
+    } finally {
+      setFeaturedUpdatingId(null);
     }
   };
 
@@ -193,13 +219,40 @@ export default function AdminVehiclesPage() {
                           <Badge variant={status.variant} className="text-xs">
                             <StatusIcon className="h-3 w-3 mr-1" />{status.label}
                           </Badge>
+                          {vehicle.featured && vehicle.status === 'approved' && (
+                            <Badge variant="outline" className="text-xs border-amber-400/60 text-amber-800 bg-amber-50">
+                              <Star className="h-3 w-3 mr-1 fill-amber-400 text-amber-500" />
+                              Destaque
+                            </Badge>
+                          )}
                         </div>
                         <p className="text-sm text-muted-foreground">
                           Por: {vehicle.seller?.full_name || 'Desconhecido'} • {vehicle.seller?.city || vehicle.city}, {vehicle.seller?.state || vehicle.state}
                         </p>
                         <p className="font-semibold text-[#268052]">{formatPrice(vehicle.price)}</p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                        <div
+                          className="flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 bg-muted/30"
+                          title={
+                            vehicle.status !== 'approved'
+                              ? 'Apenas anúncios publicados podem ir em destaque na home.'
+                              : 'Prioriza este veículo na vitrine da página inicial.'
+                          }
+                        >
+                          <Star
+                            className={`h-4 w-4 shrink-0 ${vehicle.featured ? 'fill-amber-400 text-amber-500' : 'text-muted-foreground'}`}
+                          />
+                          <span className="text-xs text-muted-foreground hidden sm:inline">Destaque</span>
+                          <Switch
+                            checked={Boolean(vehicle.featured)}
+                            disabled={
+                              featuredUpdatingId === vehicle.id ||
+                              vehicle.status !== 'approved'
+                            }
+                            onCheckedChange={(on) => setVehicleFeatured(vehicle.id, on)}
+                          />
+                        </div>
                         <Button variant="ghost" size="icon" asChild>
                           <Link href={`/veiculo/${vehicle.slug}?preview=true`} target="_blank"><Eye className="h-4 w-4" /></Link>
                         </Button>

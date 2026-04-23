@@ -1,6 +1,7 @@
 import { io, Socket } from 'socket.io-client';
+import { getPublicApiUrl } from './api';
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'https://api.seunovocarro.com.br';
+const SOCKET_URL = getPublicApiUrl().replace(/\/api\/?$/i, '');
 
 export const getSocket = (token?: string | null): Socket => {
   return io(SOCKET_URL, {

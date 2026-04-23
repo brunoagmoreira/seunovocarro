@@ -430,7 +430,7 @@ export class VehiclesService {
           orderBy: { order: 'asc' },
         },
       },
-      orderBy: { created_at: 'desc' },
+      orderBy: [{ featured: 'desc' }, { created_at: 'desc' }],
       take: limit,
     });
     return this.applyContactRouting(vehicles as any);
@@ -465,9 +465,33 @@ export class VehiclesService {
   async updateStatus(id: string, status: 'approved' | 'pending' | 'draft' | 'sold' | 'expired') {
     const vehicle = await this.prisma.vehicle.findUnique({ where: { id } });
     if (!vehicle) throw new NotFoundException('Veículo não encontrado');
+    const data: { status: typeof status; featured?: boolean } = { status };
+    if (status !== 'approved') {
+      data.featured = false;
+    }
     return this.prisma.vehicle.update({
       where: { id },
-      data: { status },
+      data,
+    });
+  }
+
+  async setFeaturedByAdmin(id: string, featured: boolean) {
+    const vehicle = await this.prisma.vehicle.findUnique({ where: { id } });
+    if (!vehicle) throw new NotFoundException('Veículo não encontrado');
+    if (featured && vehicle.status !== 'approved') {
+      throw new BadRequestException(
+        'Só é possível destacar anúncios publicados (aprovados). Aprove o veículo antes.',
+      );
+    }
+    return this.prisma.vehicle.update({
+      where: { id },
+      data: { featured },
+      include: {
+        media: { orderBy: { order: 'asc' } },
+        seller: {
+          select: { id: true, full_name: true, city: true, state: true },
+        },
+      },
     });
   }
 

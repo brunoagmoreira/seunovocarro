@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, ForbiddenException } from '@nestjs/common';
 import { VehiclesService } from './vehicles.service';
-import { CreateVehicleDto, UpdateVehicleDto } from './dto/vehicles.dto';
+import { CreateVehicleDto, UpdateVehicleDto, SetVehicleFeaturedDto } from './dto/vehicles.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { User } from '@prisma/client';
@@ -64,6 +64,19 @@ export class VehiclesController {
       throw new ForbiddenException('Acesso restrito a administradores');
     }
     return this.vehiclesService.updateStatus(id, body.status as any);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('admin/:id/featured')
+  setVehicleFeatured(
+    @Param('id') id: string,
+    @Body() body: SetVehicleFeaturedDto,
+    @CurrentUser() user: User,
+  ) {
+    if (user.role !== 'admin') {
+      throw new ForbiddenException('Acesso restrito a administradores');
+    }
+    return this.vehiclesService.setFeaturedByAdmin(id, body.featured);
   }
 
   @UseGuards(JwtAuthGuard)

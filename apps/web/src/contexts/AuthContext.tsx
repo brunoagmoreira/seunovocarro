@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { getPublicApiUrl } from '@/lib/api';
 
 export interface User {
   id: string;
@@ -55,6 +56,8 @@ const defaultAuthContext: AuthContextType = {
 
 const AuthContext = createContext<AuthContextType>(defaultAuthContext);
 
+const API_URL = getPublicApiUrl();
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -62,8 +65,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userStatus, setUserStatus] = useState<UserStatus>('active');
   const [isLoading, setIsLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
-
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.seunovocarro.com.br/api';
 
   useEffect(() => {
     // 1. Initial Load: Check token

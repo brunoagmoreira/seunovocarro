@@ -1,5 +1,5 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { IsString, IsNumber, IsEnum, IsOptional, Min, Max } from 'class-validator';
+import { IsString, IsNumber, IsEnum, IsOptional, Min, Max, IsBoolean } from 'class-validator';
 import { Transmission, FuelType, VehicleStatus } from '@prisma/client';
 
 export class CreateVehicleDto {
@@ -76,4 +76,9 @@ export class UpdateVehicleDto extends PartialType(CreateVehicleDto) {
   @IsEnum(VehicleStatus)
   @IsOptional()
   status?: VehicleStatus;
+}
+
+export class SetVehicleFeaturedDto {
+  @IsBoolean()
+  featured!: boolean;
 }

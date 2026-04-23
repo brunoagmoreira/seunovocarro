@@ -1,4 +1,17 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.seunovocarro.com.br/api';
+/**
+ * Base URL do Nest (prefixo global `api`). Garante `/api` no fim mesmo se
+ * NEXT_PUBLIC_API_URL vier só com o host (ex.: docker-compose sem sufixo).
+ */
+export function getPublicApiUrl(): string {
+  const raw = (process.env.NEXT_PUBLIC_API_URL || 'https://api.seunovocarro.com.br/api').trim();
+  const base = raw.replace(/\/+$/, '');
+  if (/\/api$/i.test(base)) {
+    return base;
+  }
+  return `${base}/api`;
+}
+
+const API_URL = getPublicApiUrl();
 
 interface FetchOptions extends Omit<RequestInit, 'body'> {
   requireAuth?: boolean;

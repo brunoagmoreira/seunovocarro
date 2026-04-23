@@ -178,6 +178,8 @@ model Vehicle {
   display_id    String?
   ad_code       String?
   view_count    Int           @default(0)
+  /// Priorizado na vitrine (home /vehicles/featured); demais slots completam por data.
+  featured      Boolean       @default(false)
   created_at    DateTime      @default(now())
   updated_at    DateTime      @updatedAt
 
@@ -198,6 +200,7 @@ model Vehicle {
   @@index([slug])
   @@index([price])
   @@index([created_at])
+  @@index([status, featured])
   @@map("vehicles")
 }
 

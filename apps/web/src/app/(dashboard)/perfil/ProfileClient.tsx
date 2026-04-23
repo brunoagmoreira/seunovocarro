@@ -83,7 +83,15 @@ export function ProfileClient() {
         requireAuth: true,
       });
 
-      await updateProfile({ avatar_url: response.url });
+      const { error: avatarErr } = await updateProfile({ avatar_url: response.url });
+      if (avatarErr) {
+        toast({
+          title: "Erro ao salvar foto",
+          description: avatarErr.message,
+          variant: "destructive",
+        });
+        return;
+      }
 
       toast({
         title: "Foto atualizada!",

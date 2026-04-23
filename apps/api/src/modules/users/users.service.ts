@@ -143,67 +143,71 @@ export class UsersService {
       || data.dealer_xml_frequency_minutes !== undefined
       || data.dealer_xml_field_map !== undefined;
 
-    if (shouldSyncDealer && data.is_dealer !== false) {
-      const existingDealer = await this.prisma.dealer.findUnique({
-        where: { user_id: userId },
-      });
+    if (shouldSyncDealer) {
+      if (data.is_dealer === false) {
+        await this.prisma.dealer.deleteMany({ where: { user_id: userId } });
+      } else {
+        const existingDealer = await this.prisma.dealer.findUnique({
+          where: { user_id: userId },
+        });
 
-      const name =
-        data.dealer_name
-        || existingDealer?.name
-        || updatedUser.full_name
-        || 'Minha Loja';
-      const slug =
-        data.dealer_slug
-        || existingDealer?.slug
-        || `${userId.slice(0, 8)}-loja`;
+        const name =
+          data.dealer_name
+          || existingDealer?.name
+          || updatedUser.full_name
+          || 'Minha Loja';
+        const slug =
+          data.dealer_slug
+          || existingDealer?.slug
+          || `${userId.slice(0, 8)}-loja`;
 
-      const existingXmlImport = (existingDealer?.working_hours as any)?.xml_import || {};
-      const workingHours = {
-        ...((existingDealer?.working_hours as any) || {}),
-        xml_import: {
-          ...existingXmlImport,
-          enabled: data.dealer_xml_enabled ?? existingXmlImport.enabled ?? false,
-          source_url: data.dealer_xml_source_url ?? existingXmlImport.source_url ?? '',
-          item_path: data.dealer_xml_item_path ?? existingXmlImport.item_path ?? 'vehicles.vehicle',
-          image_path: data.dealer_xml_image_path ?? existingXmlImport.image_path ?? '',
-          update_frequency_minutes: data.dealer_xml_frequency_minutes ?? existingXmlImport.update_frequency_minutes ?? 60,
-          field_map: data.dealer_xml_field_map ?? existingXmlImport.field_map ?? {},
-        },
-      };
+        const existingXmlImport = (existingDealer?.working_hours as any)?.xml_import || {};
+        const workingHours = {
+          ...((existingDealer?.working_hours as any) || {}),
+          xml_import: {
+            ...existingXmlImport,
+            enabled: data.dealer_xml_enabled ?? existingXmlImport.enabled ?? false,
+            source_url: data.dealer_xml_source_url ?? existingXmlImport.source_url ?? '',
+            item_path: data.dealer_xml_item_path ?? existingXmlImport.item_path ?? 'vehicles.vehicle',
+            image_path: data.dealer_xml_image_path ?? existingXmlImport.image_path ?? '',
+            update_frequency_minutes: data.dealer_xml_frequency_minutes ?? existingXmlImport.update_frequency_minutes ?? 60,
+            field_map: data.dealer_xml_field_map ?? existingXmlImport.field_map ?? {},
+          },
+        };
 
-      await this.prisma.dealer.upsert({
-        where: { user_id: userId },
-        create: {
-          user_id: userId,
-          name,
-          slug,
-          description: data.dealer_description ?? null,
-          address: data.dealer_address ?? null,
-          cnpj: data.dealer_cnpj ?? null,
-          instagram: data.dealer_instagram ?? null,
-          facebook: data.dealer_facebook ?? null,
-          website: data.dealer_website ?? null,
-          logo_url: data.dealer_logo ?? null,
-          banner_url: data.dealer_banner ?? null,
-          since: data.dealer_since ? new Date(data.dealer_since) : null,
-          working_hours: workingHours as any,
-        },
-        update: {
-          name,
-          slug,
-          description: data.dealer_description ?? undefined,
-          address: data.dealer_address ?? undefined,
-          cnpj: data.dealer_cnpj ?? undefined,
-          instagram: data.dealer_instagram ?? undefined,
-          facebook: data.dealer_facebook ?? undefined,
-          website: data.dealer_website ?? undefined,
-          logo_url: data.dealer_logo ?? undefined,
-          banner_url: data.dealer_banner ?? undefined,
-          since: data.dealer_since ? new Date(data.dealer_since) : undefined,
-          working_hours: workingHours as any,
-        },
-      });
+        await this.prisma.dealer.upsert({
+          where: { user_id: userId },
+          create: {
+            user_id: userId,
+            name,
+            slug,
+            description: data.dealer_description ?? null,
+            address: data.dealer_address ?? null,
+            cnpj: data.dealer_cnpj ?? null,
+            instagram: data.dealer_instagram ?? null,
+            facebook: data.dealer_facebook ?? null,
+            website: data.dealer_website ?? null,
+            logo_url: data.dealer_logo ?? null,
+            banner_url: data.dealer_banner ?? null,
+            since: data.dealer_since ? new Date(data.dealer_since) : null,
+            working_hours: workingHours as any,
+          },
+          update: {
+            name,
+            slug,
+            description: data.dealer_description ?? undefined,
+            address: data.dealer_address ?? undefined,
+            cnpj: data.dealer_cnpj ?? undefined,
+            instagram: data.dealer_instagram ?? undefined,
+            facebook: data.dealer_facebook ?? undefined,
+            website: data.dealer_website ?? undefined,
+            logo_url: data.dealer_logo ?? undefined,
+            banner_url: data.dealer_banner ?? undefined,
+            since: data.dealer_since ? new Date(data.dealer_since) : undefined,
+            working_hours: workingHours as any,
+          },
+        });
+      }
     }
 
     return this.getProfileById(userId);

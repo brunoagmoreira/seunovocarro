@@ -108,6 +108,8 @@ export interface Vehicle {
   display_id: string | null;
   ad_code: string | null;
   view_count: number;
+  /** Quando true, priorizado na vitrine da home (entre aprovados). */
+  featured?: boolean;
   created_at: string;
   updated_at: string;
   // Relations (populated by API)
