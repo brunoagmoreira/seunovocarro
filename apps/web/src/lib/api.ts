@@ -11,6 +11,23 @@ export function getPublicApiUrl(): string {
   return `${base}/api`;
 }
 
+/** Mensagem mais clara quando o browser bloqueia rede/CORS ou a API está inacessível. */
+export function formatApiNetworkError(err: unknown, attemptedUrl: string): Error {
+  const msg = err instanceof Error ? err.message : String(err);
+  const lower = msg.toLowerCase();
+  if (
+    lower.includes('failed to fetch') ||
+    lower.includes('networkerror') ||
+    lower.includes('load failed') ||
+    lower.includes('network request failed')
+  ) {
+    return new Error(
+      `Sem resposta da API (${attemptedUrl}). Confirme que a API está no ar, que NEXT_PUBLIC_API_URL aponta para o Nest (ex.: https://api.seunovocarro.com.br/api) e, no mesmo domínio, que o proxy /api está configurado. Abra F12 → Network para inspecionar o pedido.`,
+    );
+  }
+  return err instanceof Error ? err : new Error(msg);
+}
+
 const API_URL = getPublicApiUrl();
 
 interface FetchOptions extends Omit<RequestInit, 'body'> {

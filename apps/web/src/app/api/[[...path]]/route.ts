@@ -68,6 +68,9 @@ async function proxy(request: NextRequest, ctx: { params: Promise<{ path?: strin
   const headers = new Headers(request.headers);
   headers.delete('host');
   headers.delete('connection');
+  // Evita corpo gzip/stream incompatível com repasse; o Node refaz encoding.
+  headers.delete('accept-encoding');
+  headers.delete('content-length');
 
   const init: RequestInit = {
     method: request.method,

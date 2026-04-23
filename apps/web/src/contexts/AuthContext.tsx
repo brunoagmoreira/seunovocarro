@@ -8,7 +8,7 @@ import {
   useState,
   ReactNode,
 } from 'react';
-import { getPublicApiUrl } from '@/lib/api';
+import { formatApiNetworkError, getPublicApiUrl } from '@/lib/api';
 
 export interface User {
   id: string;
@@ -88,11 +88,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const fetchMe = async (authToken: string) => {
+    const url = `${API_URL}/users/profile`;
     try {
-      const res = await fetch(`${API_URL}/users/profile`, {
+      const res = await fetch(url, {
         headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
+          Authorization: `Bearer ${authToken}`,
+        },
       });
 
       if (!res.ok) {
@@ -109,6 +110,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
     } catch (err) {
       console.warn('Falha na autenticação via JWT:', err);
+      if (err instanceof TypeError || (err instanceof Error && err.message.toLowerCase().includes('fetch'))) {
+        console.warn('URL do perfil:', url);
+      }
       signOut();
     } finally {
       setIsLoading(false);
@@ -116,16 +120,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, metadata?: Record<string, any>) => {
+    const url = `${API_URL}/auth/register`;
     try {
-      const res = await fetch(`${API_URL}/auth/register`, {
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, ...metadata }),
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || 'Falha ao registrar');
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error((errorData as { message?: string }).message || 'Falha ao registrar');
       }
 
       const data = await res.json();
@@ -138,20 +143,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       return { error: null };
     } catch (error: any) {
-      return { error: error as Error };
+      return { error: formatApiNetworkError(error, url) };
     }
   };
 
   const signIn = async (email: string, password: string) => {
+    const url = `${API_URL}/auth/login`;
     try {
-      const res = await fetch(`${API_URL}/auth/login`, {
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
 
       if (!res.ok) {
-        throw new Error('Email ou senha incorretos');
+        const errJson = await res.json().catch(() => ({}));
+        const msg =
+          (errJson as { message?: string }).message ||
+          (res.status === 401 ? 'E-mail ou senha incorretos' : `Erro ${res.status} ao entrar`);
+        throw new Error(msg);
       }
 
       const data = await res.json();
@@ -164,13 +174,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       return { error: null };
     } catch (error: any) {
-      return { error: error as Error };
+      return { error: formatApiNetworkError(error, url) };
     }
   };
 
   const signInWithGoogle = useCallback(async (idToken: string) => {
+    const url = `${API_URL}/auth/google`;
     try {
-      const res = await fetch(`${API_URL}/auth/google`, {
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken }),
@@ -180,7 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         let message = 'Não foi possível entrar com Google';
         try {
           const err = await res.json();
-          message = err.message || message;
+          message = (err as { message?: string }).message || message;
         } catch {
           /* ignore */
         }
@@ -197,7 +208,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return { error: null };
     } catch (error: any) {
-      return { error: error as Error };
+      return { error: formatApiNetworkError(error, url) };
     }
   }, []);
 
@@ -213,8 +224,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateProfile = async (data: Partial<Profile>) => {
     if (!token) return { error: new Error('Not authenticated') };
 
+    const url = `${API_URL}/users/profile`;
     try {
-      const res = await fetch(`${API_URL}/users/profile`, {
+      const res = await fetch(url, {
         method: 'PATCH',
         headers: { 
           'Content-Type': 'application/json',
@@ -230,7 +242,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return { error: null };
     } catch (error: any) {
-      return { error: error as Error };
+      return { error: formatApiNetworkError(error, url) };
     }
   };
 

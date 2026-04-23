@@ -21,15 +21,36 @@ async function bootstrap() {
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
     app.setGlobalPrefix('api');
 
-    // CORS Robusto
+    const extraOrigins = (process.env.CORS_ORIGINS || '')
+      .split(',')
+      .map((s) => s.trim().replace(/\/$/, ''))
+      .filter(Boolean);
+
+    const corsOrigins = [
+      'https://seunovocarro.com.br',
+      'https://www.seunovocarro.com.br',
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      process.env.FRONTEND_URL,
+      ...extraOrigins,
+    ]
+      .filter(Boolean)
+      .map((url) => (url as string).replace(/\/$/, '')) as string[];
+
+    // CORS: incluir headers usados pelo browser em POST/PATCH (preflight OPTIONS).
     app.enableCors({
-      origin: [
-        'https://seunovocarro.com.br',
-        'https://www.seunovocarro.com.br',
-        'http://localhost:3000',
-        process.env.FRONTEND_URL,
-      ].filter(Boolean).map(url => (url as string).replace(/\/$/, '')) as string[],
+      origin: corsOrigins,
       credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
+      allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'Accept',
+        'Accept-Language',
+        'X-Requested-With',
+        'X-SNC-Admin-Vehicle-Key',
+      ],
+      exposedHeaders: ['Content-Length', 'Content-Type'],
     });
 
     const enableSwagger =
