@@ -109,6 +109,15 @@ function RegisterForm() {
       return;
     }
 
+    if (!formData.state || !formData.city) {
+      toast({
+        title: "Localização obrigatória",
+        description: "Selecione estado e cidade para continuar.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     const isDealer = sellerType === 'dealer';

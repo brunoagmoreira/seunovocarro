@@ -61,10 +61,10 @@ export class AuthService {
     const user = await this.usersService.create({
       email: registerDto.email,
       password_hash,
-      full_name: registerDto.full_name,
-      phone: registerDto.phone,
-      city: registerDto.city,
-      state: registerDto.state,
+      full_name: registerDto.full_name?.trim(),
+      phone: registerDto.phone?.trim(),
+      city: registerDto.city?.trim(),
+      state: registerDto.state?.trim().toUpperCase(),
       role,
       status,
     });
