@@ -50,6 +50,8 @@ services:
       - NODE_ENV=production
       # URL que o navegador usa para chamar a API (ideal: subdomínio api…).
       - NEXT_PUBLIC_API_URL=https://api.seunovocarro.com.br/api
+      # Opcional: força o botão Google no login se GET /site-settings/public falhar (deve ser o mesmo ID salvo na API).
+      # - NEXT_PUBLIC_GOOGLE_CLIENT_ID=
       # Se NEXT_PUBLIC_API_URL for o MESMO host do site (ex.: https://seunovocarro.com.br/api),
       # o Next encaminha /api/* via route handler (ou middleware + API_INTERNAL_URL).
       # - API_INTERNAL_URL=http://api:3001

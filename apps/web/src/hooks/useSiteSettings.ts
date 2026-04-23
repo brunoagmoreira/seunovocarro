@@ -19,13 +19,10 @@ export interface AdminSiteSettings extends PublicSiteSettings {
 export function useSiteSettings() {
   return useQuery({
     queryKey: ['site-settings', 'public'],
-    queryFn: async (): Promise<PublicSiteSettings | null> => {
-      try {
-        return await fetchApi<PublicSiteSettings>('/site-settings/public');
-      } catch {
-        return null;
-      }
-    },
+    queryFn: () => fetchApi<PublicSiteSettings>('/site-settings/public'),
+    retry: 2,
+    retryDelay: (i) => Math.min(1000 * 2 ** i, 4000),
+    staleTime: 60_000,
   });
 }
 

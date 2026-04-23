@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUTM } from '@/hooks/useUTM';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
+import { getGoogleSignInClientId } from '@/lib/api';
 
 declare global {
   interface Window {
@@ -36,7 +37,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const { signIn, signInWithGoogle } = useAuth();
-  const { data: publicSettings, isFetched: settingsFetched } = useSiteSettings();
+  const { data: publicSettings } = useSiteSettings();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -49,8 +50,8 @@ function LoginForm() {
   useUTM();
 
   const returnTo = searchParams.get('returnTo') || '/';
-  const googleClientId = publicSettings?.google_oauth_client_id?.trim() ?? '';
-  const showGoogle = settingsFetched && Boolean(googleClientId);
+  const googleClientId = getGoogleSignInClientId(publicSettings?.google_oauth_client_id);
+  const showGoogle = Boolean(googleClientId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

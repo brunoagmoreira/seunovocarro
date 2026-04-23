@@ -12,6 +12,13 @@ export function getPublicApiUrl(): string {
 }
 
 /** Mensagem mais clara quando o browser bloqueia rede/CORS ou a API está inacessível. */
+/** Client ID OAuth Web para o botão Google (API admin tem prioridade; env cobre falha do fetch público). */
+export function getGoogleSignInClientId(fromApi?: string | null): string {
+  const api = (fromApi ?? '').trim();
+  if (api) return api;
+  return (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '').trim();
+}
+
 export function formatApiNetworkError(err: unknown, attemptedUrl: string): Error {
   const msg = err instanceof Error ? err.message : String(err);
   const lower = msg.toLowerCase();
