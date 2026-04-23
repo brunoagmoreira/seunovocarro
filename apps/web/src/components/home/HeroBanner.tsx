@@ -2,64 +2,107 @@ import { useState, useEffect } from 'react';
 import { fetchApi } from '@/lib/api';
 import Link from 'next/link';
 import { ShieldCheck, Zap, Clock, ChevronRight, ChevronLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
-interface Banner {
+interface FeaturedVehicleResponse {
   id: string;
-  title: string | null;
-  subtitle: string | null;
-  image_url: string | null;
-  link_url: string | null;
-  order: number;
+  slug?: string;
+  brand?: string;
+  model?: string;
+  version?: string;
+  year?: number | string;
+  price?: number | string;
+  media?: Array<{
+    url?: string;
+    type?: string;
+    order?: number;
+  }>;
+}
+
+interface HeroSlide {
+  id: string;
+  title: string;
+  subtitle: string;
+  imageUrl: string | null;
+  linkUrl: string;
+  priceLabel: string;
+}
+
+const defaultSlide: HeroSlide = {
+  id: 'default',
+  title: 'Carros verificados, perto de você.',
+  subtitle: 'Veículos inspecionados de lojas confiáveis da região de Belo Horizonte. Sem surpresa, sem enrolação.',
+  imageUrl: '',
+  linkUrl: '/veiculos',
+  priceLabel: '',
+};
+
+function formatPrice(value?: number | string) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric <= 0) return '';
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    maximumFractionDigits: 0,
+  }).format(numeric);
+}
+
+function mapFeaturedToSlide(vehicle: FeaturedVehicleResponse): HeroSlide {
+  const title = [vehicle.brand, vehicle.model, vehicle.version].filter(Boolean).join(' ').trim();
+  const year = vehicle.year ? String(vehicle.year) : '';
+  const image = vehicle.media?.find((item) => item.type === 'image' && item.url)?.url
+    || vehicle.media?.find((item) => item.url)?.url
+    || null;
+
+  return {
+    id: vehicle.id,
+    title: title || 'Veículo em destaque',
+    subtitle: year ? `Ano ${year}` : 'Veículo em destaque na plataforma',
+    imageUrl: image,
+    linkUrl: vehicle.slug ? `/veiculo/${vehicle.slug}` : '/veiculos',
+    priceLabel: formatPrice(vehicle.price),
+  };
 }
 
 export function HeroBanner() {
-  const [banners, setBanners] = useState<Banner[]>([
-    {
-      id: 'default',
-      title: 'Carros verificados, perto de você.',
-      subtitle: 'Veículos inspecionados de lojas confiáveis da região de Belo Horizonte. Sem surpresa, sem enrolação.',
-      image_url: '',
-      link_url: '/veiculos',
-      order: 0,
-    },
-  ]);
+  const [slides, setSlides] = useState<HeroSlide[]>([defaultSlide]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
-    const loadBanners = async () => {
+    const loadFeaturedVehicles = async () => {
       try {
-        const data = await fetchApi<Banner[]>('/banners/active');
+        const data = await fetchApi<FeaturedVehicleResponse[]>('/vehicles/featured', {
+          params: { limit: 12 },
+        });
         if (data && data.length > 0) {
-          setBanners(data);
+          setSlides(data.map(mapFeaturedToSlide));
         }
-      } catch (error) {
-        console.error('Failed to load banners');
+      } catch {
+        console.error('Failed to load featured vehicles for hero');
       }
     };
-    loadBanners();
+    void loadFeaturedVehicles();
   }, []);
 
   // Auto Rotation
   useEffect(() => {
-    if (banners.length <= 1) return;
+    if (slides.length <= 1) return;
     
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev === banners.length - 1 ? 0 : prev + 1));
+      setCurrentIndex((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
     }, 5000); // Roda a cada 5 segundos
 
     return () => clearInterval(interval);
-  }, [banners.length]);
+  }, [slides.length]);
 
   const nextSlide = () => {
-    setCurrentIndex((prev) => (prev === banners.length - 1 ? 0 : prev + 1));
+    setCurrentIndex((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
   };
 
   const prevSlide = () => {
-    setCurrentIndex((prev) => (prev === 0 ? banners.length - 1 : prev - 1));
+    setCurrentIndex((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
   };
 
-  const currentBanner = banners[currentIndex];
+  const currentSlide = slides[currentIndex] || defaultSlide;
 
   return (
     <section className="relative bg-gradient-to-br from-[#268052] to-[#346739] overflow-hidden pt-12 pb-16 md:py-24">
@@ -77,17 +120,17 @@ export function HeroBanner() {
             </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-black text-white leading-[1.1]">
-              {currentBanner.title || 'Carros verificados, perto de você.'}
+              {currentSlide.title}
             </h1>
 
             <p className="text-white/80 text-lg md:text-xl font-light leading-relaxed max-w-lg">
-              {currentBanner.subtitle || 'Veículos inspecionados de lojas confiáveis. Sem surpresa, sem enrolação.'}
+              {currentSlide.subtitle}
             </p>
 
             <div className="pt-2">
-              <Link href={currentBanner.link_url || '/veiculos'}>
+              <Link href={currentSlide.linkUrl}>
                 <button className="bg-[#FFD91A] hover:bg-[#ffe34d] text-black font-bold py-4 px-8 rounded-full shadow-[0_8px_20px_-6px_rgba(255,217,26,0.5)] transition-all transform hover:scale-105 active:scale-95 text-lg">
-                  Ver ofertas disponíveis
+                  Ver veículo
                 </button>
               </Link>
             </div>
@@ -117,20 +160,28 @@ export function HeroBanner() {
 
           {/* Lado Direito - Carro Verificado */}
           <div className="w-full lg:w-1/2 relative z-10 flex justify-center lg:justify-end min-h-[300px] md:min-h-[400px]">
-            {currentBanner.image_url ? (
+            {currentSlide.imageUrl ? (
               <div className="relative w-full max-w-2xl animate-fade-in">
+                <Link href={currentSlide.linkUrl} className="block">
                 {/* O Badge de Verificação sobreposto ao carro */}
                 <div className="absolute -top-4 -right-4 md:top-4 md:right-8 z-30 bg-[#FFD91A] w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center shadow-xl border-4 border-white transform rotate-12 hover:rotate-0 transition-transform">
                   <ShieldCheck className="w-8 h-8 md:w-10 md:h-10 text-black" />
                 </div>
                 <img 
-                  src={currentBanner.image_url} 
-                  alt="Veículo Verificado" 
+                  src={currentSlide.imageUrl} 
+                  alt={currentSlide.title}
                   loading="eager"
                   fetchPriority="high"
                   decoding="async"
-                  className="w-full h-auto object-contain drop-shadow-2xl scale-110" 
+                  className="w-full h-auto object-contain drop-shadow-2xl scale-110"
                 />
+                </Link>
+                <div className="absolute left-4 bottom-4 rounded-xl bg-black/55 backdrop-blur-sm px-4 py-3 text-white border border-white/20 max-w-[calc(100%-2rem)]">
+                  <p className="font-semibold text-sm md:text-base truncate">{currentSlide.title}</p>
+                  {currentSlide.priceLabel && (
+                    <p className="text-[#FFD91A] text-base md:text-lg font-bold">{currentSlide.priceLabel}</p>
+                  )}
+                </div>
               </div>
             ) : (
               // Empty State visual elegante
@@ -143,13 +194,13 @@ export function HeroBanner() {
         </div>
 
         {/* Carousel Controls */}
-        {banners.length > 1 && (
+        {slides.length > 1 && (
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 z-40 bg-black/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
             <button onClick={prevSlide} className="text-white/70 hover:text-white transition-colors">
               <ChevronLeft className="w-6 h-6" />
             </button>
             <div className="flex gap-2">
-              {banners.map((_, idx) => (
+              {slides.map((_, idx) => (
                 <button 
                   key={idx}
                   onClick={() => setCurrentIndex(idx)}

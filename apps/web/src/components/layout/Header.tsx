@@ -16,6 +16,7 @@ import { NotificationBell } from './NotificationBell';
 
 export function Header() {
   const { user, profile, isAdmin, isEditor, signOut } = useAuth();
+  const canAccessSellerArea = isEditor && !isAdmin;
 
   const getInitials = (name: string | null) => {
     if (!name) return 'U';
@@ -43,7 +44,7 @@ export function Header() {
           >
             Blog
           </Link>
-          {isEditor && (
+          {canAccessSellerArea && (
             <Link 
               href="/anunciar" 
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -109,7 +110,7 @@ export function Header() {
                     Favoritos
                   </Link>
                 </DropdownMenuItem>
-                {isEditor && (
+                {canAccessSellerArea && (
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
@@ -254,7 +255,7 @@ export function Header() {
                       </Link>
                     </SheetClose>
                   )}
-                  {isEditor && (
+                  {canAccessSellerArea && (
                     <>
                       <SheetClose asChild>
                         <Link 

@@ -16,13 +16,7 @@ interface Dealer {
   dealer_verified: boolean; dealer_featured: boolean; vehicle_count: number;
 }
 
-const mockDealers: Dealer[] = [
-  { id: '1', dealer_name: 'Carlos Silva Motors', dealer_slug: 'carlos-silva-motors', dealer_logo: null, city: 'Belo Horizonte', state: 'MG', phone: '(31) 98888-1234', dealer_verified: true, dealer_featured: true, vehicle_count: 24 },
-  { id: '2', dealer_name: 'Ana Souza Veículos', dealer_slug: 'ana-souza-veiculos', dealer_logo: null, city: 'São Paulo', state: 'SP', phone: '(11) 97777-5678', dealer_verified: true, dealer_featured: false, vehicle_count: 18 },
-  { id: '3', dealer_name: 'Marina Premium Cars', dealer_slug: 'marina-premium-cars', dealer_logo: null, city: 'Curitiba', state: 'PR', phone: '(41) 96666-9012', dealer_verified: false, dealer_featured: false, vehicle_count: 12 },
-  { id: '4', dealer_name: 'Pedro Autos BH', dealer_slug: 'pedro-autos-bh', dealer_logo: null, city: 'Belo Horizonte', state: 'MG', phone: '(31) 95555-3456', dealer_verified: true, dealer_featured: false, vehicle_count: 8 },
-  { id: '5', dealer_name: 'Elite Motors DF', dealer_slug: 'elite-motors-df', dealer_logo: null, city: 'Brasília', state: 'DF', phone: '(61) 94444-7890', dealer_verified: false, dealer_featured: false, vehicle_count: 5 },
-];
+const mockDealers: Dealer[] = [];
 
 export default function AdminDealersPage() {
   const [search, setSearch] = useState('');

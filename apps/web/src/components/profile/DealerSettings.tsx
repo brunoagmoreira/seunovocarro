@@ -57,6 +57,28 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
     dealer_website: profile?.dealer_website || '',
   });
 
+  useEffect(() => {
+    setDealerData({
+      is_dealer: profile?.is_dealer || false,
+      dealer_name: profile?.dealer_name || '',
+      dealer_description: profile?.dealer_description || '',
+      dealer_address: profile?.dealer_address || '',
+      dealer_cnpj: profile?.dealer_cnpj || '',
+      dealer_instagram: profile?.dealer_instagram || '',
+      dealer_facebook: profile?.dealer_facebook || '',
+      dealer_website: profile?.dealer_website || '',
+    });
+  }, [
+    profile?.is_dealer,
+    profile?.dealer_name,
+    profile?.dealer_description,
+    profile?.dealer_address,
+    profile?.dealer_cnpj,
+    profile?.dealer_instagram,
+    profile?.dealer_facebook,
+    profile?.dealer_website,
+  ]);
+
   // Only show for editors/sellers
   if (userRole === 'user') {
     return null;

@@ -45,11 +45,20 @@ export class AdminService {
         id: true,
         email: true,
         full_name: true,
+        phone: true,
+        city: true,
+        state: true,
         role: true,
         status: true,
         created_at: true,
-        dealer: { select: { name: true } }
-      }
+        dealer: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
     });
   }
 

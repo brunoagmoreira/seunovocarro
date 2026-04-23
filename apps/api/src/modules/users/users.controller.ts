@@ -11,9 +11,10 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  getProfile(@CurrentUser() user: User) {
+  async getProfile(@CurrentUser() user: User) {
+    const profile = await this.usersService.getProfileById(user.id);
     return {
-      ...user,
+      ...profile,
       is_super_admin: isSuperAdminEmail(user.email),
     };
   }
@@ -29,16 +30,20 @@ export class UsersController {
       avatar_url?: string;
       city?: string;
       state?: string;
+      is_dealer?: boolean;
+      dealer_name?: string;
+      dealer_slug?: string;
+      dealer_description?: string;
+      dealer_address?: string;
+      dealer_cnpj?: string;
+      dealer_instagram?: string;
+      dealer_facebook?: string;
+      dealer_website?: string;
+      dealer_logo?: string;
+      dealer_banner?: string;
+      dealer_since?: string;
     },
   ) {
-    const { full_name, phone, whatsapp, avatar_url, city, state } = body;
-    return this.usersService.updateById(user.id, {
-      full_name,
-      phone,
-      whatsapp,
-      avatar_url,
-      city,
-      state,
-    });
+    return this.usersService.updateProfileAndDealer(user.id, body);
   }
 }
