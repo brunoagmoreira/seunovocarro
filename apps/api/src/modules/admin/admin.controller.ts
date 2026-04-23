@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -15,7 +15,9 @@ export class AdminController {
     return this.adminService.getAdminSiteSettings(user);
   }
 
+  /** POST duplicado: alguns proxies/CDNs tratam PATCH pior; o front usa POST. */
   @Patch('site-settings')
+  @Post('site-settings')
   updateSiteSettings(@CurrentUser() user: User, @Body() body: UpdateSiteSettingsDto) {
     return this.adminService.updateAdminSiteSettings(user, body);
   }

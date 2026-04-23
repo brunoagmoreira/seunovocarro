@@ -54,7 +54,7 @@ export function useUpdateSiteSettings() {
       }>,
     ) => {
       return await fetchApi<AdminSiteSettings>('/admin/site-settings', {
-        method: 'PATCH',
+        method: 'POST',
         requireAuth: true,
         body: JSON.stringify(settings),
       });
