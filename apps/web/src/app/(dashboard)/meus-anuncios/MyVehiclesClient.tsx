@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Edit2, Trash2, Eye, Clock, CheckCircle, XCircle, FileText, Car, BadgeCheck, BarChart3, ArrowLeft } from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, Clock, CheckCircle, XCircle, FileText, Car, BadgeCheck, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -33,11 +33,6 @@ interface VehicleWithMedia {
   vehicle_media: { url: string }[];
 }
 
-interface LeadInfo {
-  vehicle_id: string;
-  count: number;
-}
-
 const statusConfig = {
   draft: { label: 'Rascunho', icon: FileText, variant: 'secondary' as const, color: 'text-muted-foreground' },
   pending: { label: 'Em análise', icon: Clock, variant: 'outline' as const, color: 'text-amber-600' },
@@ -50,7 +45,6 @@ export function MyVehiclesClient() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [vehicles, setVehicles] = useState<VehicleWithMedia[]>([]);
-  const [leadsCount, setLeadsCount] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
 
@@ -61,7 +55,6 @@ export function MyVehiclesClient() {
   useEffect(() => {
     if (user) {
       fetchVehicles();
-      fetchLeadsCount();
     }
   }, [user]);
 
@@ -76,21 +69,10 @@ export function MyVehiclesClient() {
       
       setVehicles(mappedVehicles);
 
-      // Extract leads count from counts in the same response if available
-      const counts: Record<string, number> = {};
-      data.forEach(v => {
-        counts[v.id] = v._count?.leads || 0;
-      });
-      setLeadsCount(counts);
-
     } catch (error) {
       console.error('Error fetching vehicles:', error);
     }
     setIsLoading(false);
-  };
-
-  const fetchLeadsCount = () => {
-    // Already handled in fetchVehicles with _count
   };
 
   const handleDelete = async (vehicleId: string) => {
@@ -157,7 +139,6 @@ export function MyVehiclesClient() {
     active: vehicles.filter(v => v.status === 'approved').length,
     pending: vehicles.filter(v => v.status === 'pending' || v.status === 'draft').length,
     sold: vehicles.filter(v => v.status === 'sold').length,
-    totalLeads: Object.values(leadsCount).reduce((a, b) => a + b, 0),
   };
 
   if (isLoading) {
@@ -192,7 +173,7 @@ export function MyVehiclesClient() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-card rounded-xl p-4 shadow-card">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg gradient-brand-soft">
@@ -237,17 +218,6 @@ export function MyVehiclesClient() {
               </div>
             </div>
           </div>
-          <div className="bg-card rounded-xl p-4 shadow-card">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-500/10">
-                <BarChart3 className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.totalLeads}</p>
-                <p className="text-xs text-muted-foreground">Leads</p>
-              </div>
-            </div>
-          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
@@ -282,8 +252,6 @@ export function MyVehiclesClient() {
               const status = statusConfig[vehicle.status as keyof typeof statusConfig] || statusConfig.draft;
               const StatusIcon = status.icon;
               const thumbnail = vehicle.vehicle_media?.[0]?.url || '/placeholder.svg';
-              const vehicleLeads = leadsCount[vehicle.id] || 0;
-
               return (
                 <div
                   key={vehicle.id}
@@ -310,12 +278,6 @@ export function MyVehiclesClient() {
                       <p className="text-sm text-muted-foreground">{vehicle.year}</p>
                       <div className="flex items-center gap-4 mt-1">
                         <p className="font-semibold gradient-brand-text">{formatPrice(vehicle.price)}</p>
-                        {vehicleLeads > 0 && (
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <BarChart3 className="h-3 w-3" />
-                            {vehicleLeads} lead{vehicleLeads !== 1 ? 's' : ''}
-                          </span>
-                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 mt-2 flex-wrap">

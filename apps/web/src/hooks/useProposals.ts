@@ -25,11 +25,3 @@ export function useCreateProposal() {
     },
   });
 }
-
-export async function submitProposal(data: any) {
-  // Legacy function for backward compatibility if needed elsewhere
-  return await fetchApi<{ success: boolean; leadId: string }>('/leads', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-}

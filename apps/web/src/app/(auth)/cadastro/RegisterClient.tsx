@@ -10,8 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Logo } from '@/components/Logo';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { useUTM, getStoredUTM } from '@/hooks/useUTM';
-import { trackSignUp, trackLead } from '@/lib/tracking';
+import { useUTM } from '@/hooks/useUTM';
+import { trackSignUp } from '@/lib/tracking';
 import {
   Select,
   SelectContent,
@@ -69,23 +69,16 @@ function RegisterForm() {
     setFormData({ ...formData, phone: formatted });
   };
 
-  const handleWhatsAppRedirect = async (userName: string, userEmail: string, userPhone: string) => {
+  const handleWhatsAppRedirect = (userName: string) => {
     if (!vehicleIdParam || !sellerWhatsappParam) return;
 
-    try {
-      const utmParams = getStoredUTM();
-
-      // TODO: Replace with NestJS API call to create Lead record
-      // await fetch('/api/leads', { method: 'POST', body: JSON.stringify({...}) })
-
-      const message = encodeURIComponent(
-        `Olá! Sou ${userName} e vi o ${vehicleNameParam} no Seu Novo Carro. Gostaria de mais informações!`
-      );
-      const cleanPhone = sellerWhatsappParam.replace(/\D/g, '');
-      window.open(`https://wa.me/55${cleanPhone}?text=${message}`, '_blank');
-    } catch (error) {
-      console.error('Error creating lead for WhatsApp:', error);
-    }
+    const message = encodeURIComponent(
+      `Olá! Sou ${userName} e vi o ${vehicleNameParam} no Seu Novo Carro. Gostaria de mais informações!`
+    );
+    const digits = sellerWhatsappParam.replace(/\D/g, '');
+    if (!digits) return;
+    const phone = digits.startsWith('55') ? digits : `55${digits}`;
+    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -146,14 +139,7 @@ function RegisterForm() {
     trackSignUp('email', isSeller ? 'editor' : 'user');
 
     if (actionParam === 'whatsapp') {
-      await handleWhatsAppRedirect(formData.name, formData.email, formData.phone);
-      
-      if (vehicleIdParam) {
-        trackLead('whatsapp', {
-          vehicleId: vehicleIdParam,
-          vehicleName: vehicleNameParam || '',
-        });
-      }
+      handleWhatsAppRedirect(formData.name);
     }
 
     setIsLoading(false);

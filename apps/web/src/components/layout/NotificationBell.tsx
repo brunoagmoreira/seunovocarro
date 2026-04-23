@@ -20,7 +20,7 @@ export function NotificationBell() {
       case 'new_message':
         return '/conversas';
       case 'new_lead':
-        return '/meus-leads';
+        return '/meus-anuncios';
       case 'new_proposal':
         return '/propostas';
       case 'vehicle_approved':

@@ -99,6 +99,72 @@ export class VehiclesService {
     });
   }
 
+  private async resolveDealerPlanConfigByUserId(userId: string) {
+    const dealer = await this.prisma.dealer.findUnique({
+      where: { user_id: userId },
+      select: { working_hours: true },
+    });
+    const metadata = (dealer?.working_hours || {}) as any;
+    const planSlug = metadata?.dealer_plan_slug || 'dealer-plan-1';
+    const plan = await this.prisma.adPlan.findUnique({
+      where: { slug: planSlug },
+      select: { max_vehicles: true, features: true },
+    });
+    const features = (plan?.features || {}) as any;
+    return {
+      slug: planSlug,
+      maxVehicles: Number(plan?.max_vehicles || 3),
+      xmlEnabled: Boolean(features.xml_enabled),
+      sdrEnabled: Boolean(features.sdr_enabled),
+      sdrWhatsapp: this.normalizeText(features.sdr_whatsapp),
+    };
+  }
+
+  private async applyContactRouting<T extends { user_id: string; whatsapp?: string | null; seller?: any }>(vehicles: T[]) {
+    if (!vehicles.length) return vehicles;
+
+    const userIds = Array.from(new Set(vehicles.map((vehicle) => vehicle.user_id)));
+    const dealers = await this.prisma.dealer.findMany({
+      where: { user_id: { in: userIds } },
+      select: { user_id: true, working_hours: true },
+    });
+    const planByUser = new Map<string, string>();
+    for (const dealer of dealers) {
+      const metadata = (dealer.working_hours || {}) as any;
+      planByUser.set(dealer.user_id, metadata.dealer_plan_slug || 'dealer-plan-1');
+    }
+
+    const planSlugs = Array.from(new Set(Array.from(planByUser.values())));
+    const plans = await this.prisma.adPlan.findMany({
+      where: { slug: { in: planSlugs }, plan_type: 'dealer' },
+      select: { slug: true, features: true },
+    });
+    const planFeatures = new Map<string, any>();
+    for (const plan of plans) {
+      planFeatures.set(plan.slug, (plan.features || {}) as any);
+    }
+
+    return vehicles.map((vehicle) => {
+      const planSlug = planByUser.get(vehicle.user_id) || 'dealer-plan-1';
+      const features = planFeatures.get(planSlug) || {};
+      const useSdr = Boolean(features.sdr_enabled);
+      const sdrWhatsapp = this.normalizeText(features.sdr_whatsapp);
+      const fallbackWhatsapp = this.normalizeText(vehicle.whatsapp || vehicle.seller?.whatsapp);
+      const effectiveWhatsapp = useSdr && sdrWhatsapp ? sdrWhatsapp : fallbackWhatsapp;
+
+      return {
+        ...vehicle,
+        whatsapp: effectiveWhatsapp || vehicle.whatsapp,
+        seller: vehicle.seller
+          ? {
+            ...vehicle.seller,
+            whatsapp: effectiveWhatsapp || vehicle.seller.whatsapp,
+          }
+          : vehicle.seller,
+      };
+    });
+  }
+
   async configureXmlImport(
     user: User,
     data: {
@@ -116,6 +182,10 @@ export class VehiclesService {
     });
     if (!dealer) {
       throw new BadRequestException('Perfil de lojista não encontrado para este usuário.');
+    }
+    const dealerPlan = await this.resolveDealerPlanConfigByUserId(user.id);
+    if (!dealerPlan.xmlEnabled) {
+      throw new ForbiddenException('O seu plano atual não permite importação XML.');
     }
 
     await this.upsertXmlSyncMetadata(dealer.id, dealer.working_hours, {
@@ -282,6 +352,10 @@ export class VehiclesService {
   }
 
   async syncXmlImportNow(user: User, xmlContent?: string) {
+    const dealerPlan = await this.resolveDealerPlanConfigByUserId(user.id);
+    if (!dealerPlan.xmlEnabled) {
+      throw new ForbiddenException('O seu plano atual não permite importação XML.');
+    }
     const dealer = await this.prisma.dealer.findUnique({
       where: { user_id: user.id },
       select: {
@@ -338,7 +412,7 @@ export class VehiclesService {
   }
 
   async findFeatured(limit = 4) {
-    return this.prisma.vehicle.findMany({
+    const vehicles = await this.prisma.vehicle.findMany({
       where: { status: 'approved' },
       include: {
         seller: {
@@ -359,11 +433,12 @@ export class VehiclesService {
       orderBy: { created_at: 'desc' },
       take: limit,
     });
+    return this.applyContactRouting(vehicles as any);
   }
 
   async findAll(query: any) {
     // TODO: implement filters (brand, price, year, etc)
-    return this.prisma.vehicle.findMany({
+    const vehicles = await this.prisma.vehicle.findMany({
       where: { status: 'approved' },
       include: {
         media: {
@@ -372,6 +447,7 @@ export class VehiclesService {
       },
       orderBy: { created_at: 'desc' },
     });
+    return this.applyContactRouting(vehicles as any);
   }
 
   async findAllAdmin() {
@@ -420,7 +496,8 @@ export class VehiclesService {
       throw new NotFoundException('Veículo não encontrado');
     }
 
-    return vehicle;
+    const [mapped] = await this.applyContactRouting([vehicle as any]);
+    return mapped;
   }
 
   async findByIdForUser(id: string, user: User) {
@@ -446,6 +523,20 @@ export class VehiclesService {
 
   async create(createDto: CreateVehicleDto, user: User) {
     const { media, ...vehicleData } = createDto;
+    const plan = await this.resolveDealerPlanConfigByUserId(user.id);
+    if (plan.slug === 'dealer-plan-1') {
+      const activeCount = await this.prisma.vehicle.count({
+        where: {
+          user_id: user.id,
+          status: { notIn: ['sold', 'expired'] },
+        },
+      });
+      if (activeCount >= plan.maxVehicles) {
+        throw new BadRequestException(
+          `Seu plano atual permite até ${plan.maxVehicles} veículos ativos. Faça upgrade para publicar ilimitado.`,
+        );
+      }
+    }
     
     return this.prisma.vehicle.create({
       data: {

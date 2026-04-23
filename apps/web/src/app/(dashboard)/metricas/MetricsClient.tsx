@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Eye, MessageSquare, TrendingUp, Car, BarChart3, Calendar, Target, DollarSign, MousePointer, Users } from 'lucide-react';
+import { Eye, TrendingUp, Car, BarChart3, Calendar, Target, DollarSign, MousePointer, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchApi } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,8 +26,6 @@ interface VehicleMetrics {
   year: number;
   status: string;
   views: number;
-  leads: number;
-  conversionRate: number;
   dailyViews: { date: string; views: number }[];
 }
 
@@ -39,8 +37,7 @@ export function MetricsClient() {
   const [totals, setTotals] = useState({
     vehicles: 0,
     views: 0,
-    leads: 0,
-    conversionRate: 0,
+    avgViewsPerVehicle: 0,
     activeVehicles: 0,
     soldVehicles: 0,
   });
@@ -55,10 +52,9 @@ export function MetricsClient() {
       reach: (acc.reach || 0) + (totals.total_reach || 0),
       clicks: (acc.clicks || 0) + (totals.total_clicks || 0),
       spend: (acc.spend || 0) + (totals.total_spend || 0),
-      leads: (acc.leads || 0) + (totals.total_leads || 0),
       activeCampaigns: (acc.activeCampaigns || 0) + (campaign.status === 'active' ? 1 : 0)
     };
-  }, { impressions: 0, reach: 0, clicks: 0, spend: 0, leads: 0, activeCampaigns: 0 }) || { impressions: 0, reach: 0, clicks: 0, spend: 0, leads: 0, activeCampaigns: 0 };
+  }, { impressions: 0, reach: 0, clicks: 0, spend: 0, activeCampaigns: 0 }) || { impressions: 0, reach: 0, clicks: 0, spend: 0, activeCampaigns: 0 };
 
   useEffect(() => {
     if (user) {
@@ -75,7 +71,7 @@ export function MetricsClient() {
         requireAuth: true
       });
 
-      const { vehicles, views: viewsData, leads: leadsData } = data;
+      const { vehicles, views: viewsData } = data;
 
       if (!vehicles?.length) {
         setIsLoading(false);
@@ -91,8 +87,6 @@ export function MetricsClient() {
       const metrics: VehicleMetrics[] = vehicles.map((vehicle: any) => {
         const vehicleViews = viewsData?.filter((v: any) => v.vehicle_id === vehicle.id) || [];
         const viewsCount = vehicleViews.length;
-        const leadsCount = leadsData?.filter((l: any) => l.vehicle_id === vehicle.id).length || 0;
-        const conversionRate = viewsCount > 0 ? (leadsCount / viewsCount) * 100 : 0;
 
         const viewsByDate: Record<string, number> = {};
         vehicleViews.forEach((v: any) => {
@@ -108,8 +102,6 @@ export function MetricsClient() {
         return {
           ...vehicle,
           views: viewsCount,
-          leads: leadsCount,
-          conversionRate,
           dailyViews,
         };
       });
@@ -118,13 +110,11 @@ export function MetricsClient() {
       setVehicleMetrics(metrics);
 
       const totalViews = metrics.reduce((sum, v) => sum + v.views, 0);
-      const totalLeads = metrics.reduce((sum, v) => sum + v.leads, 0);
 
       setTotals({
         vehicles: vehicles.length,
         views: totalViews,
-        leads: totalLeads,
-        conversionRate: totalViews > 0 ? (totalLeads / totalViews) * 100 : 0,
+        avgViewsPerVehicle: vehicles.length > 0 ? totalViews / vehicles.length : 0,
         activeVehicles: vehicles.filter((v: any) => v.status === 'approved').length,
         soldVehicles: vehicles.filter((v: any) => v.status === 'sold').length,
       });
@@ -176,7 +166,7 @@ export function MetricsClient() {
           </TabsList>
 
           <TabsContent value="organic" className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
               <div className="bg-card rounded-xl p-4 shadow-card">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg gradient-brand-soft">
@@ -224,22 +214,11 @@ export function MetricsClient() {
               <div className="bg-card rounded-xl p-4 shadow-card">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-purple-500/10">
-                    <MessageSquare className="h-5 w-5 text-purple-600" />
+                    <TrendingUp className="h-5 w-5 text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{totals.leads}</p>
-                    <p className="text-xs text-muted-foreground">Leads</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-card rounded-xl p-4 shadow-card">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-amber-500/10">
-                    <TrendingUp className="h-5 w-5 text-amber-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{totals.conversionRate.toFixed(1)}%</p>
-                    <p className="text-xs text-muted-foreground">Conversão</p>
+                    <p className="text-2xl font-bold">{totals.avgViewsPerVehicle.toFixed(1)}</p>
+                    <p className="text-xs text-muted-foreground">Views / anúncio</p>
                   </div>
                 </div>
               </div>
@@ -280,15 +259,7 @@ export function MetricsClient() {
                         <div className="flex gap-4 text-sm text-muted-foreground mt-1">
                           <span className="flex items-center gap-1">
                             <Eye className="h-3.5 w-3.5" />
-                            {vehicle.views} views
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <MessageSquare className="h-3.5 w-3.5" />
-                            {vehicle.leads} leads
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <TrendingUp className="h-3.5 w-3.5" />
-                            {vehicle.conversionRate.toFixed(1)}%
+                            {vehicle.views} visualizações
                           </span>
                         </div>
                       </CardHeader>
@@ -354,7 +325,7 @@ export function MetricsClient() {
           </TabsContent>
 
           <TabsContent value="ads" className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               <Card>
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
@@ -410,19 +381,6 @@ export function MetricsClient() {
               <Card>
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-amber-500/10">
-                      <MessageSquare className="h-5 w-5 text-amber-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{adTotals.leads}</p>
-                      <p className="text-xs text-muted-foreground">Leads</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-4">
-                  <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-red-500/10">
                       <DollarSign className="h-5 w-5 text-red-600" />
                     </div>
@@ -462,7 +420,6 @@ export function MetricsClient() {
                           <th className="text-center py-3 px-2 text-sm font-medium text-muted-foreground">Status</th>
                           <th className="text-center py-3 px-2 text-sm font-medium text-muted-foreground">Impressões</th>
                           <th className="text-center py-3 px-2 text-sm font-medium text-muted-foreground">Cliques</th>
-                          <th className="text-center py-3 px-2 text-sm font-medium text-muted-foreground">Leads</th>
                           <th className="text-center py-3 px-2 text-sm font-medium text-muted-foreground">Gasto</th>
                         </tr>
                       </thead>
@@ -500,9 +457,6 @@ export function MetricsClient() {
                               </td>
                               <td className="text-center py-3 px-2 font-medium">
                                 {(totals.total_clicks || 0).toLocaleString()}
-                              </td>
-                              <td className="text-center py-3 px-2 font-medium text-green-600">
-                                {totals.total_leads || 0}
                               </td>
                               <td className="text-center py-3 px-2 font-medium">
                                 {formatCurrency(totals.total_spend || 0)}

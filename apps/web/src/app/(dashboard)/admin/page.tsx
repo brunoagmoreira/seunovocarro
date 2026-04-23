@@ -175,13 +175,11 @@ export default function AdminDashboard() {
     { label: 'Veículos', value: stats.totalVehicles, icon: Car, color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
     { label: 'Pendentes', value: stats.pendingVehicles, icon: Clock, color: 'text-yellow-500', bgColor: 'bg-yellow-500/10' },
     { label: 'Usuários', value: stats.totalUsers, icon: Users, color: 'text-green-500', bgColor: 'bg-green-500/10' },
-    { label: 'Leads', value: stats.totalLeads, icon: MessageSquare, color: 'text-purple-500', bgColor: 'bg-purple-500/10' },
     { label: 'Visualizações', value: stats.totalViews, icon: Eye, color: 'text-primary', bgColor: 'gradient-kairos-soft' },
   ];
 
   const todayCards = [
     { label: 'Novos Usuários', value: stats.newUsersToday, icon: UserPlus, color: 'text-green-500' },
-    { label: 'Leads Hoje', value: stats.leadsToday, icon: MessageSquare, color: 'text-purple-500' },
     { label: 'Views Hoje', value: stats.viewsToday, icon: Eye, color: 'text-blue-500' },
     { label: 'Taxa Conversão', value: `${stats.conversionRate.toFixed(1)}%`, icon: TrendingUp, color: 'text-amber-500' },
   ];
@@ -191,8 +189,8 @@ export default function AdminDashboard() {
       <div className="container py-8">
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-muted rounded w-48" />
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {[1, 2, 3, 4, 5].map((i) => (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
               <div key={i} className="h-24 bg-muted rounded-xl" />
             ))}
           </div>
@@ -227,7 +225,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {statCards.map((stat) => (
             <div key={stat.label} className="bg-card rounded-2xl p-4 shadow-card">
               <div className="flex items-center gap-3 mb-2">
@@ -242,7 +240,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Today Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
           {todayCards.map((stat) => (
             <div key={stat.label} className="bg-card rounded-xl p-4 shadow-card border-l-4 border-l-primary flex items-center justify-between">
               <div>
@@ -276,18 +274,17 @@ export default function AdminDashboard() {
                     }}
                   />
                   <Line type="monotone" dataKey="views" stroke="hsl(var(--primary))" strokeWidth={2} name="Views" dot={false} />
-                  <Line type="monotone" dataKey="leads" stroke="#a855f7" strokeWidth={2} name="Leads" dot={false} />
                   <Line type="monotone" dataKey="signups" stroke="#22c55e" strokeWidth={2} name="Cadastros" dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* Leads by Source */}
+          {/* Traffic by source (placeholder until wired) */}
           <div className="bg-card rounded-2xl p-6 shadow-card">
             <h2 className="font-heading font-semibold mb-4 flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
-              Leads por Fonte
+              Tráfego por fonte
             </h2>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -302,7 +299,7 @@ export default function AdminDashboard() {
                       borderRadius: '8px',
                     }}
                   />
-                  <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} name="Leads" />
+                  <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} name="Sessões" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -325,7 +322,7 @@ export default function AdminDashboard() {
                     </div>
                     <span className="font-medium truncate max-w-[200px]">{campaign.campaign}</span>
                   </div>
-                  <Badge variant="secondary">{campaign.leads} leads</Badge>
+                  <Badge variant="secondary">{campaign.leads}</Badge>
                 </div>
               ))}
             </div>
@@ -333,7 +330,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           <Button variant="outline" size="lg" className="justify-between" asChild>
             <Link href="/admin/veiculos">
               <span className="flex items-center gap-2">
@@ -348,15 +345,6 @@ export default function AdminDashboard() {
               <span className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
                 Usuários
-              </span>
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
-          <Button variant="outline" size="lg" className="justify-between" asChild>
-            <Link href="/admin/leads">
-              <span className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
-                Leads
               </span>
               <ArrowRight className="h-4 w-4" />
             </Link>

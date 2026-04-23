@@ -163,27 +163,12 @@ export function VehicleAdMetrics({ vehicleId }: VehicleAdMetricsProps) {
         />
       </div>
 
-      {/* Conversion Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="max-w-md mx-auto w-full">
         <MetricCard 
           icon={DollarSign} 
-          label="Custo por Clique" 
+          label="Custo por clique (média)" 
           value={formatCurrency(totals?.avg_cpc || 0)} 
           color="teal"
-          highlight
-        />
-        <MetricCard 
-          icon={Users} 
-          label="Leads Gerados" 
-          value={formatNumber(totals?.total_leads || 0)} 
-          color="primary"
-          highlight
-        />
-        <MetricCard 
-          icon={Target} 
-          label="Custo por Lead" 
-          value={formatCurrency(totals?.avg_cost_per_lead || 0)} 
-          color="green"
           highlight
         />
       </div>
@@ -214,14 +199,12 @@ export function VehicleAdMetrics({ vehicleId }: VehicleAdMetricsProps) {
                       name === 'spend' ? formatCurrency(value) : formatNumber(value),
                       name === 'impressions' ? 'Impressões' :
                       name === 'clicks' ? 'Cliques' :
-                      name === 'spend' ? 'Gasto' :
-                      name === 'leads' ? 'Leads' : name
+                      name === 'spend' ? 'Gasto' : name
                     ]}
                   />
                   <Legend />
                   <Line type="monotone" dataKey="impressions" name="Impressões" stroke="#3b82f6" strokeWidth={2} dot={false} />
                   <Line type="monotone" dataKey="clicks" name="Cliques" stroke="#10b981" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="leads" name="Leads" stroke="#8b5cf6" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -233,10 +216,6 @@ export function VehicleAdMetrics({ vehicleId }: VehicleAdMetricsProps) {
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-green-500" />
                 Cliques
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-purple-500" />
-                Leads
               </div>
             </div>
           </CardContent>

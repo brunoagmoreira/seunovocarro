@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Search, User, Menu, LogOut, Settings, Car, Heart, MessageSquare, MessageCircle, BarChart3, UserCircle, FileText, Store, Rocket } from 'lucide-react';
+import { Search, User, Menu, LogOut, Settings, Car, Heart, MessageCircle, BarChart3, UserCircle, FileText, Store, Rocket, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/Logo';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
@@ -120,12 +120,6 @@ export function Header() {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="/meus-leads" className="cursor-pointer">
-                        <MessageSquare className="mr-2 h-4 w-4" />
-                        Meus Leads
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
                       <Link href="/metricas" className="cursor-pointer">
                         <BarChart3 className="mr-2 h-4 w-4" />
                         Métricas
@@ -158,6 +152,12 @@ export function Header() {
                       <Link href="/admin/blog" className="cursor-pointer">
                         <FileText className="mr-2 h-4 w-4" />
                         Admin Blog
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin/planos" className="cursor-pointer">
+                        <Layers className="mr-2 h-4 w-4" />
+                        Planos de Lojista
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
@@ -275,14 +275,6 @@ export function Header() {
                       </SheetClose>
                       <SheetClose asChild>
                         <Link 
-                          href="/meus-leads" 
-                          className="text-lg font-medium hover:text-primary transition-colors"
-                        >
-                          Meus Leads
-                        </Link>
-                      </SheetClose>
-                      <SheetClose asChild>
-                        <Link 
                           href="/metricas" 
                           className="text-lg font-medium hover:text-primary transition-colors"
                         >
@@ -323,6 +315,14 @@ export function Header() {
                           className="text-lg font-medium hover:text-primary transition-colors"
                         >
                           Admin Blog
+                        </Link>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Link 
+                          href="/admin/planos" 
+                          className="text-lg font-medium hover:text-primary transition-colors"
+                        >
+                          Planos de Lojista
                         </Link>
                       </SheetClose>
                     </>

@@ -9,7 +9,6 @@ import {
   ChevronRight, 
   Heart, 
   Share2, 
-  MessageCircle,
   Gauge,
   Calendar,
   Fuel,
@@ -27,8 +26,6 @@ import { VehicleCard } from '@/components/vehicles/VehicleCard';
 import { useTrackView } from '@/hooks/useTrackView';
 import { ImageLightbox } from '@/components/vehicles/ImageLightbox';
 import { OptimizedImage } from '@/components/ui/optimized-image';
-import { ContactOptionsModal } from '@/components/vehicles/ContactOptionsModal';
-import { ChatWindow } from '@/components/vehicles/ChatWindow';
 import { useAuth } from '@/contexts/AuthContext';
 import { FUEL_TYPES, TRANSMISSION_TYPES } from '@/types/vehicle';
 import { Badge } from '@/components/ui/badge';
@@ -36,9 +33,20 @@ import { trackViewContent } from '@/lib/tracking';
 import { VehicleSchema } from '@/components/seo/schemas';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 
+function WhatsAppIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M16.01 4.5c-6.34 0-11.5 5.12-11.5 11.42 0 2.02.53 4 1.53 5.75L4.5 27.5l6.02-1.5a11.54 11.54 0 0 0 5.49 1.39h.01c6.34 0 11.48-5.12 11.48-11.42S22.35 4.5 16.01 4.5Zm0 20.95h-.01a9.63 9.63 0 0 1-4.9-1.33l-.35-.21-3.57.89.95-3.47-.23-.36a9.43 9.43 0 0 1-1.47-5.05c0-5.23 4.28-9.48 9.56-9.48 5.27 0 9.56 4.25 9.56 9.48 0 5.22-4.29 9.48-9.54 9.48Zm5.25-7.14c-.29-.15-1.72-.84-1.99-.93-.27-.1-.47-.15-.67.14-.2.29-.77.93-.95 1.12-.17.2-.35.22-.64.07-.29-.14-1.24-.45-2.36-1.43-.88-.77-1.47-1.72-1.64-2.01-.17-.29-.02-.45.13-.6.13-.13.29-.35.44-.52.15-.17.2-.29.3-.49.1-.2.05-.37-.03-.52-.08-.14-.67-1.62-.92-2.22-.24-.57-.49-.49-.67-.5h-.57c-.2 0-.52.07-.79.37-.27.29-1.04 1.01-1.04 2.46 0 1.45 1.07 2.85 1.22 3.04.15.2 2.08 3.3 5.14 4.5.73.31 1.3.49 1.75.63.74.24 1.41.21 1.94.13.59-.09 1.72-.7 1.96-1.38.24-.68.24-1.26.17-1.38-.06-.12-.25-.19-.54-.34Z"
+      />
+    </svg>
+  );
+}
+
 export function VehicleClient({ slug }: { slug: string }) {
   const searchParams = useSearchParams();
-  const { user, isAdmin, isLoading: isAuthLoading } = useAuth();
+  const { isAdmin, isLoading: isAuthLoading } = useAuth();
   
   const isPreviewMode = searchParams.get('preview') === 'true';
   const allowAnyStatus = !isAuthLoading && isAdmin && isPreviewMode;
@@ -48,8 +56,6 @@ export function VehicleClient({ slug }: { slug: string }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [showLightbox, setShowLightbox] = useState(false);
-  const [showContactModal, setShowContactModal] = useState(false);
-  const [showChat, setShowChat] = useState(false);
 
   // Track page view
   useTrackView(vehicle?.id);
@@ -172,6 +178,17 @@ export function VehicleClient({ slug }: { slug: string }) {
   }
 
   const allMedia = [...vehicle.images, ...vehicle.videos];
+  const sellerPhone = vehicle.whatsapp || vehicle.seller?.whatsapp || '';
+
+  const handleDirectWhatsApp = () => {
+    const digits = sellerPhone.replace(/\D/g, '');
+    if (!digits) return;
+    const phone = digits.startsWith('55') ? digits : `55${digits}`;
+    const message = encodeURIComponent(
+      `Olá! Vi o ${vehicle.brand} ${vehicle.model} ${vehicle.year} no Seu Novo Carro e gostaria de mais informações.`
+    );
+    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+  };
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % allMedia.length);
@@ -396,23 +413,12 @@ export function VehicleClient({ slug }: { slug: string }) {
                 variant="kairos" 
                 size="lg" 
                 className="w-full text-base"
-                onClick={() => setShowContactModal(true)}
+                onClick={handleDirectWhatsApp}
               >
-                <MessageCircle className="h-5 w-5 mr-2 shrink-0" />
+                <WhatsAppIcon className="h-5 w-5 mr-2 shrink-0" />
                 <span className="truncate">Falar Com o Vendedor</span>
               </Button>
 
-              {showChat && user && vehicle.seller && (
-                <div className="mt-4">
-                  <ChatWindow
-                    vehicleId={vehicle.id}
-                    vehicleName={`${vehicle.brand} ${vehicle.model} ${vehicle.year}`}
-                    sellerId={vehicle.seller.id}
-                    sellerName={vehicle.seller.name}
-                    sellerAvatar={vehicle.seller.avatarUrl}
-                  />
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -444,37 +450,14 @@ export function VehicleClient({ slug }: { slug: string }) {
             variant="kairos" 
             size="lg" 
             className="w-full text-base"
-            onClick={() => setShowContactModal(true)}
+            onClick={handleDirectWhatsApp}
           >
-            <MessageCircle className="h-5 w-5 mr-2 shrink-0" />
+            <WhatsAppIcon className="h-5 w-5 mr-2 shrink-0" />
             <span className="truncate">Falar Com o Vendedor</span>
           </Button>
 
-          {showChat && user && vehicle.seller && (
-            <div className="mt-4">
-              <ChatWindow
-                vehicleId={vehicle.id}
-                vehicleName={`${vehicle.brand} ${vehicle.model} ${vehicle.year}`}
-                sellerId={vehicle.seller.id}
-                sellerName={vehicle.seller.name}
-                sellerAvatar={vehicle.seller.avatarUrl}
-              />
-            </div>
-          )}
         </div>
       </div>
-
-      <ContactOptionsModal
-        isOpen={showContactModal}
-        onClose={() => setShowContactModal(false)}
-        vehicleId={vehicle.id}
-        vehicleName={`${vehicle.brand} ${vehicle.model} ${vehicle.year}`}
-        vehiclePrice={vehicle.price}
-        sellerName={vehicle.seller?.name || "Vendedor"}
-        sellerAvatar={vehicle.seller?.avatarUrl}
-        sellerWhatsapp={vehicle.whatsapp || vehicle.seller?.whatsapp}
-        onSelectChat={() => setShowChat(true)}
-      />
 
       <ImageLightbox
         isOpen={showLightbox}

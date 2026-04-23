@@ -73,6 +73,8 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
       image_urls: 'images.image',
     },
   });
+  const currentPlanSlug = profile?.dealer_plan_slug || 'dealer-plan-1';
+  const xmlLockedByPlan = currentPlanSlug === 'dealer-plan-1';
 
   useEffect(() => {
     setDealerData({
@@ -502,10 +504,16 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
                 <p className="text-xs text-muted-foreground">
                   Sincroniza automaticamente novos veículos e inativa os removidos no XML.
                 </p>
+                {xmlLockedByPlan && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    Disponível a partir do Plano 2.
+                  </p>
+                )}
               </div>
               <Switch
                 checked={dealerData.dealer_xml_enabled}
                 onCheckedChange={(v) => setDealerData({ ...dealerData, dealer_xml_enabled: v })}
+                disabled={xmlLockedByPlan}
               />
             </div>
 
@@ -515,6 +523,7 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
                 value={dealerData.dealer_xml_source_url}
                 onChange={(e) => setDealerData({ ...dealerData, dealer_xml_source_url: e.target.value })}
                 placeholder="https://erp.exemplo.com/estoque.xml"
+                disabled={xmlLockedByPlan}
               />
             </div>
 
@@ -525,6 +534,7 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
                   value={dealerData.dealer_xml_item_path}
                   onChange={(e) => setDealerData({ ...dealerData, dealer_xml_item_path: e.target.value })}
                   placeholder="vehicles.vehicle"
+                  disabled={xmlLockedByPlan}
                 />
               </div>
               <div className="space-y-2">
@@ -533,6 +543,7 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
                   value={dealerData.dealer_xml_image_path}
                   onChange={(e) => setDealerData({ ...dealerData, dealer_xml_image_path: e.target.value })}
                   placeholder="images.image"
+                  disabled={xmlLockedByPlan}
                 />
               </div>
               <div className="space-y-2">
@@ -542,6 +553,7 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
                   min={10}
                   value={dealerData.dealer_xml_frequency_minutes}
                   onChange={(e) => setDealerData({ ...dealerData, dealer_xml_frequency_minutes: Number(e.target.value) || 60 })}
+                  disabled={xmlLockedByPlan}
                 />
               </div>
             </div>
@@ -564,12 +576,13 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
                     value={dealerData.dealer_xml_field_map?.[field.key] || ''}
                     onChange={(e) => updateXmlFieldMap(field.key, e.target.value)}
                     placeholder={field.key}
+                    disabled={xmlLockedByPlan}
                   />
                 </div>
               ))}
             </div>
 
-            <Button type="button" variant="outline" onClick={handleXmlSyncNow} disabled={isSyncingXml}>
+            <Button type="button" variant="outline" onClick={handleXmlSyncNow} disabled={isSyncingXml || xmlLockedByPlan}>
               {isSyncingXml ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
               Sincronizar XML agora
             </Button>

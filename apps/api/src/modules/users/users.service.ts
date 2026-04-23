@@ -15,7 +15,8 @@ export class UsersService {
 
     if (!user) return null;
 
-    const xmlImport = (user.dealer?.working_hours as any)?.xml_import || {};
+    const dealerMetadata = (user.dealer?.working_hours as any) || {};
+    const xmlImport = dealerMetadata?.xml_import || {};
 
     return {
       ...user,
@@ -38,6 +39,7 @@ export class UsersService {
       dealer_xml_frequency_minutes: Number(xmlImport.update_frequency_minutes || 60),
       dealer_xml_field_map: xmlImport.field_map ?? {},
       dealer_xml_last_synced_at: xmlImport.last_synced_at ?? null,
+      dealer_plan_slug: dealerMetadata?.dealer_plan_slug || 'dealer-plan-1',
     };
   }
 
