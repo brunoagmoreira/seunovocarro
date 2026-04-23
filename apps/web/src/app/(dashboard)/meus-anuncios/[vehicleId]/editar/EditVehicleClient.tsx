@@ -49,6 +49,7 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
   const [isSaving, setIsSaving] = useState(false);
   
   const [originalData, setOriginalData] = useState<any>(null);
+  const [vehicleSlug, setVehicleSlug] = useState('');
   
   const [existingMedia, setExistingMedia] = useState<VehicleMedia[]>([]);
   const [mediaToDelete, setMediaToDelete] = useState<string[]>([]);
@@ -116,7 +117,7 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
         color: ownerVehicle.color || '',
         doors: ownerVehicle.doors || 4,
         plateEnding: ownerVehicle.plate_ending || '',
-        price: ownerVehicle.price,
+        price: Number(ownerVehicle.price),
         description: ownerVehicle.description || '',
         city: ownerVehicle.city,
         state: ownerVehicle.state,
@@ -126,6 +127,7 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
       
       setFormData(vehicleFormData);
       setOriginalData(vehicleFormData);
+      setVehicleSlug(String(ownerVehicle.slug || ''));
 
       const media = (ownerVehicle.media || []).sort((a: any, b: any) => a.order - b.order);
       setExistingMedia(media.map((m: any, i: number) => ({ 
@@ -298,14 +300,39 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
         ...youtubeUrls.map((url, i) => ({ url, type: 'video', order: 100 + i }))
       ];
 
-      // Step 3: Update vehicle data and media via single PATCH
+      const slug = vehicleSlug.trim();
+      if (!slug) {
+        toast({
+          title: 'Slug inválido',
+          description: 'Recarregue a página ou entre em contato com o suporte.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Step 3: Update vehicle — body must match API DTO (snake_case + slug)
       await fetchApi(`/vehicles/${vehicleId}`, {
         method: 'PATCH',
         body: {
-          ...formData,
-          year: formData.yearModel,
+          brand: formData.brand,
+          model: formData.model,
+          version: formData.version || null,
+          year: Number(formData.yearModel),
+          mileage: Number(formData.mileage),
+          transmission: formData.transmission,
+          fuel: formData.fuel,
+          color: formData.color || null,
+          doors: Number(formData.doors),
+          plate_ending: formData.plateEnding || null,
+          price: Number(formData.price),
+          description: formData.description || null,
+          city: formData.city,
+          state: formData.state,
+          whatsapp: formData.whatsapp || null,
+          phone: formData.phone || null,
+          slug,
           status: asDraft ? 'draft' : 'pending',
-          media: finalMedia
+          media: finalMedia,
         },
         requireAuth: true
       });

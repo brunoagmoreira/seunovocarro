@@ -1,3 +1,4 @@
+import { PartialType } from '@nestjs/mapped-types';
 import { IsString, IsNumber, IsEnum, IsOptional, Min, Max } from 'class-validator';
 import { Transmission, FuelType, VehicleStatus } from '@prisma/client';
 
@@ -70,7 +71,8 @@ export class CreateVehicleDto {
   media?: { url: string; type: 'image' | 'video'; order: number }[];
 }
 
-export class UpdateVehicleDto extends CreateVehicleDto {
+/** PATCH: all vehicle fields optional; avoids requiring slug on partial updates from older clients */
+export class UpdateVehicleDto extends PartialType(CreateVehicleDto) {
   @IsEnum(VehicleStatus)
   @IsOptional()
   status?: VehicleStatus;
