@@ -26,5 +26,5 @@ ENV NODE_ENV production
 ENV PORT 3001
 EXPOSE 3001
 
-# Aplica migrações pendentes (ex.: colunas novas) antes de subir a API
-CMD ["sh", "-c", "npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma && exec node apps/api/dist/src/main.js"]
+# Migrações antes do Nest; falha em migrate não deve derrubar o container (API sobe para você ver logs e corrigir o banco).
+CMD ["sh", "-c", "npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma || echo '[api] prisma migrate deploy falhou — confira DATABASE_URL e histórico de migrações'; exec node apps/api/dist/src/main.js"]
