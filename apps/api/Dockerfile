@@ -26,5 +26,5 @@ ENV NODE_ENV production
 ENV PORT 3001
 EXPOSE 3001
 
-# CAMINHO CORRIGIDO: O typescript gerou a pasta src dentro do dist
-CMD ["node", "apps/api/dist/src/main.js"]
+# Aplica migrações pendentes (ex.: colunas novas) antes de subir a API
+CMD ["sh", "-c", "npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma && exec node apps/api/dist/src/main.js"]
