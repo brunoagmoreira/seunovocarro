@@ -306,6 +306,8 @@ export interface SiteSettings {
   ga_id: string | null;
   gtm_id: string | null;
   meta_pixel_id: string | null;
+  google_oauth_client_id?: string | null;
+  google_oauth_client_secret_set?: boolean;
   updated_at: string;
 }
 

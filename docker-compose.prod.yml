@@ -48,7 +48,10 @@ services:
       - api
     environment:
       - NODE_ENV=production
+      # URL usada no browser. Se for o mesmo domínio do site + /api, defina também API_INTERNAL_URL.
       - NEXT_PUBLIC_API_URL=https://api.seunovocarro.com.br/api
+      # Descomente se o front chamar /api no mesmo host do Next (rede Docker): repassa ao serviço `api`.
+      # - API_INTERNAL_URL=http://api:3001
     ports:
       - "3000:3000"
 

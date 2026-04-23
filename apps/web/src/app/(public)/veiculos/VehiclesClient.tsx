@@ -84,7 +84,8 @@ function VehiclesContent() {
   const handleFilterChange = (newFilters: VehicleFilters) => {
     const params = new URLSearchParams();
     Object.entries(newFilters).forEach(([key, value]) => {
-      if (value) params.set(key, String(value));
+      if (value === undefined || value === null || value === '') return;
+      params.set(key, String(value));
     });
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };

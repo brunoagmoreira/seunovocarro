@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Check, X, Eye, Clock, CheckCircle, XCircle, FileText, Search, Download, BarChart3, ArrowLeft, Loader2, Star } from 'lucide-react';
+import { Check, X, Eye, Clock, CheckCircle, XCircle, FileText, Search, Download, BarChart3, ArrowLeft, Loader2, Star, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,18 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { fetchApi } from '@/lib/api';
+import { downloadCsv, csvFilename } from '@/lib/csvExport';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface VehicleMedia {
   id: string;
@@ -61,6 +73,7 @@ export default function AdminVehiclesPage() {
   const [filterBrand, setFilterBrand] = useState<string>(ALL_VALUE);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [featuredUpdatingId, setFeaturedUpdatingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const loadVehicles = async () => {
     try {
@@ -92,6 +105,24 @@ export default function AdminVehiclesPage() {
       toast.error('Erro ao atualizar status', { description: error.message });
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const deleteVehicle = async (vehicleId: string) => {
+    setDeletingId(vehicleId);
+    try {
+      await fetchApi(`/vehicles/admin/${vehicleId}`, {
+        method: 'DELETE',
+        requireAuth: true,
+      });
+      setVehicles((prev) => prev.filter((v) => v.id !== vehicleId));
+      toast.success('Veículo excluído', {
+        description: 'O anúncio e as mídias vinculadas foram removidos do sistema.',
+      });
+    } catch (error: any) {
+      toast.error('Erro ao excluir', { description: error.message });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -135,6 +166,53 @@ export default function AdminVehiclesPage() {
 
   const pendingCount = vehicles.filter(v => v.status === 'pending').length;
 
+  const handleExportCsv = () => {
+    if (filteredVehicles.length === 0) {
+      toast.warning('Nada para exportar', { description: 'Ajuste os filtros ou aguarde novos veículos.' });
+      return;
+    }
+    const headers = [
+      'id',
+      'codigo_exibicao',
+      'marca',
+      'modelo',
+      'ano',
+      'status',
+      'preco',
+      'cidade',
+      'uf',
+      'vendedor',
+      'cidade_vendedor',
+      'uf_vendedor',
+      'slug',
+      'destaque',
+      'url_imagem',
+      'criado_em',
+    ];
+    const rows = filteredVehicles.map((v) => [
+      v.id,
+      v.display_id ?? '',
+      v.brand,
+      v.model,
+      v.year,
+      v.status,
+      v.price,
+      v.city,
+      v.state,
+      v.seller?.full_name ?? '',
+      v.seller?.city ?? '',
+      v.seller?.state ?? '',
+      v.slug,
+      v.featured ? 'sim' : 'nao',
+      v.media?.[0]?.url ?? '',
+      v.created_at,
+    ]);
+    downloadCsv(csvFilename('veiculos-admin'), headers, rows);
+    toast.success('Arquivo gerado', {
+      description: `${filteredVehicles.length} veículo(s) no CSV (separador ;, UTF-8).`,
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="container py-8">
@@ -158,8 +236,8 @@ export default function AdminVehiclesPage() {
               <Badge variant="destructive" className="animate-pulse">{pendingCount} pendente{pendingCount > 1 ? 's' : ''}</Badge>
             )}
           </div>
-          <Button variant="outline" size="sm" onClick={() => toast.success('Exportado!', { description: `${filteredVehicles.length} veículos exportados.` })}>
-            <Download className="h-4 w-4 mr-2" /> Exportar
+          <Button variant="outline" size="sm" type="button" onClick={handleExportCsv}>
+            <Download className="h-4 w-4 mr-2" /> Exportar CSV
           </Button>
         </div>
 
@@ -199,6 +277,7 @@ export default function AdminVehiclesPage() {
               const StatusIcon = status.icon;
               const thumbnail = vehicle.media?.[0]?.url;
               const isUpdating = updatingId === vehicle.id;
+              const isDeleting = deletingId === vehicle.id;
               return (
                 <div key={vehicle.id} className={`bg-card rounded-2xl shadow-card overflow-hidden ${vehicle.status === 'pending' ? 'ring-2 ring-amber-400/50' : ''}`}>
                   <div className="flex">
@@ -272,6 +351,41 @@ export default function AdminVehiclesPage() {
                         {vehicle.status === 'approved' && (
                           <Button variant="ghost" size="sm" onClick={() => updateVehicleStatus(vehicle.id, 'pending')} disabled={isUpdating} className="text-amber-600">Pausar</Button>
                         )}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive"
+                              disabled={isDeleting || isUpdating}
+                              title="Excluir anúncio permanentemente"
+                            >
+                              {isDeleting ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir este veículo?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {vehicle.brand} {vehicle.model} {vehicle.year} — esta ação não pode ser desfeita.
+                                Leads e dados ligados a este anúncio podem ser afetados conforme as regras do banco.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                onClick={() => deleteVehicle(vehicle.id)}
+                              >
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </div>
                   </div>

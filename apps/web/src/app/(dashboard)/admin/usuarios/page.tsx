@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { fetchApi } from '@/lib/api';
+import { downloadCsv, csvFilename } from '@/lib/csvExport';
 
 interface UserWithRole {
   id: string;
@@ -135,7 +136,44 @@ export default function AdminUsersPage() {
   });
 
   const handleExportUsers = () => {
-    toast.success('Exportado!', { description: `${filteredUsers.length} usuários exportados para CSV.` });
+    if (filteredUsers.length === 0) {
+      toast.warning('Nada para exportar', { description: 'Ajuste os filtros ou aguarde novos cadastros.' });
+      return;
+    }
+    const headers = [
+      'id',
+      'email',
+      'nome',
+      'papel',
+      'papel_codigo',
+      'situacao',
+      'situacao_codigo',
+      'telefone',
+      'cidade',
+      'uf',
+      'loja_nome',
+      'loja_slug',
+      'criado_em',
+    ];
+    const rows = filteredUsers.map((u) => [
+      u.id,
+      u.email,
+      u.full_name ?? '',
+      roleLabels[u.role],
+      u.role,
+      statusLabels[u.status],
+      u.status,
+      u.phone ?? '',
+      u.city ?? '',
+      u.state ?? '',
+      u.dealer?.name ?? '',
+      u.dealer?.slug ?? '',
+      u.created_at,
+    ]);
+    downloadCsv(csvFilename('usuarios-admin'), headers, rows);
+    toast.success('Arquivo gerado', {
+      description: `${filteredUsers.length} usuário(s) no CSV (separador ;, UTF-8).`,
+    });
   };
 
   if (isLoading) {
@@ -160,7 +198,7 @@ export default function AdminUsersPage() {
             <Badge variant="secondary">{filteredUsers.length} de {users.length}</Badge>
             {isSuperAdmin && <Badge>Super Admin</Badge>}
           </div>
-          <Button variant="outline" size="sm" onClick={handleExportUsers}>
+          <Button variant="outline" size="sm" type="button" onClick={handleExportUsers}>
             <Download className="h-4 w-4 mr-2" />
             Exportar CSV
           </Button>
@@ -218,6 +256,7 @@ export default function AdminUsersPage() {
           <div className="space-y-4">
             {filteredUsers.map((user) => {
               const RoleIcon = roleIcons[user.role];
+              const location = [user.city?.trim(), user.state?.trim()].filter(Boolean).join(', ');
               return (
                 <div key={user.id} className="bg-card rounded-2xl p-4 shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
@@ -232,7 +271,8 @@ export default function AdminUsersPage() {
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {roleLabels[user.role]} • {user.city || '-'}, {user.state || '-'}
+                        {roleLabels[user.role]}
+                        {location ? ` · ${location}` : ''}
                       </p>
                       <p className="text-sm text-muted-foreground">{user.email}</p>
                       {user.phone && (

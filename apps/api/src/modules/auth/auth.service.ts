@@ -1,7 +1,13 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
+import { OAuth2Client } from 'google-auth-library';
 import { LoginDto, RegisterDto } from './dto/auth.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { isSuperAdminEmail } from '../../common/auth/super-admin';
@@ -44,6 +50,61 @@ export class AuthService {
     return {
       access_token: this.jwtService.sign(payload),
       user,
+    };
+  }
+
+  async loginWithGoogle(idToken: string) {
+    const row = await this.prisma.siteSettings.findFirst();
+    const clientId = row?.google_oauth_client_id?.trim();
+    if (!clientId) {
+      throw new BadRequestException('Login com Google não está configurado');
+    }
+
+    const oauthClient = new OAuth2Client(clientId);
+    let ticket;
+    try {
+      ticket = await oauthClient.verifyIdToken({
+        idToken,
+        audience: clientId,
+      });
+    } catch {
+      throw new UnauthorizedException('Credencial Google inválida ou expirada');
+    }
+
+    const payload = ticket.getPayload();
+    if (!payload?.email) {
+      throw new UnauthorizedException('E-mail não disponível na conta Google');
+    }
+    if (!payload.email_verified) {
+      throw new UnauthorizedException('Confirme o e-mail na sua conta Google antes de entrar');
+    }
+
+    const email = payload.email.toLowerCase();
+    let user = await this.usersService.findByEmail(email);
+
+    if (user) {
+      if (user.status === 'suspended') {
+        throw new UnauthorizedException('Conta suspensa');
+      }
+    } else {
+      const randomHash = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
+      const shouldBeSuperAdmin = isSuperAdminEmail(email);
+      user = await this.usersService.create({
+        email,
+        password_hash: randomHash,
+        full_name: payload.name?.trim() || undefined,
+        avatar_url: payload.picture?.trim() || undefined,
+        role: shouldBeSuperAdmin ? 'admin' : 'user',
+        status: 'active',
+      });
+    }
+
+    const { password_hash, ...safeUser } = user;
+    const jwtPayload = { email: user.email, sub: user.id, role: user.role };
+
+    return {
+      access_token: this.jwtService.sign(jwtPayload),
+      user: safeUser,
     };
   }
 

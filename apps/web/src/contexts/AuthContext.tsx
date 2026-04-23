@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from 'react';
 import { getPublicApiUrl } from '@/lib/api';
 
 export interface User {
@@ -34,6 +41,7 @@ interface AuthContextType {
   token: string | null;
   signUp: (email: string, password: string, metadata?: Record<string, any>) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInWithGoogle: (idToken: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updateProfile: (data: Partial<Profile>) => Promise<{ error: Error | null }>;
 }
@@ -50,6 +58,7 @@ const defaultAuthContext: AuthContextType = {
   token: null,
   signUp: async () => ({ error: new Error('AuthProvider not mounted') }),
   signIn: async () => ({ error: new Error('AuthProvider not mounted') }),
+  signInWithGoogle: async () => ({ error: new Error('AuthProvider not mounted') }),
   signOut: async () => {},
   updateProfile: async () => ({ error: new Error('AuthProvider not mounted') }),
 };
@@ -159,6 +168,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const signInWithGoogle = useCallback(async (idToken: string) => {
+    try {
+      const res = await fetch(`${API_URL}/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+
+      if (!res.ok) {
+        let message = 'Não foi possível entrar com Google';
+        try {
+          const err = await res.json();
+          message = err.message || message;
+        } catch {
+          /* ignore */
+        }
+        throw new Error(message);
+      }
+
+      const data = await res.json();
+
+      if (data.access_token) {
+        localStorage.setItem('snc_auth_token', data.access_token);
+        setToken(data.access_token);
+        await fetchMe(data.access_token);
+      }
+
+      return { error: null };
+    } catch (error: any) {
+      return { error: error as Error };
+    }
+  }, []);
+
   const signOut = async () => {
     localStorage.removeItem('snc_auth_token');
     setToken(null);
@@ -209,6 +251,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       token,
       signUp,
       signIn,
+      signInWithGoogle,
       signOut,
       updateProfile
     }}>

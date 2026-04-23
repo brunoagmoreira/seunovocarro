@@ -50,3 +50,9 @@ export class LoginDto {
   @IsNotEmpty({ message: 'A senha é obrigatória' })
   password!: string;
 }
+
+export class GoogleAuthDto {
+  @IsString()
+  @IsNotEmpty({ message: 'Credencial Google ausente' })
+  idToken!: string;
+}

@@ -130,8 +130,8 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
     }));
   };
 
-  // Only show for editors/sellers
-  if (userRole === 'user') {
+  // Only sellers (editors) manage lojista settings; admins and buyers do not
+  if (userRole !== 'editor') {
     return null;
   }
 

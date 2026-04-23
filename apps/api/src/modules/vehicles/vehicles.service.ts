@@ -1,7 +1,15 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateVehicleDto, UpdateVehicleDto } from './dto/vehicles.dto';
-import { User, Vehicle, MediaType } from '@prisma/client';
+import {
+  User,
+  Vehicle,
+  MediaType,
+  Prisma,
+  Transmission,
+  FuelType,
+  VehicleStatus,
+} from '@prisma/client';
 import { XMLParser } from 'fast-xml-parser';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
@@ -436,16 +444,95 @@ export class VehiclesService {
     return this.applyContactRouting(vehicles as any);
   }
 
-  async findAll(query: any) {
-    // TODO: implement filters (brand, price, year, etc)
+  private parseQueryInt(v: unknown): number | undefined {
+    if (v === undefined || v === null || v === '') return undefined;
+    const n = typeof v === 'number' ? v : parseInt(String(v), 10);
+    return Number.isFinite(n) ? n : undefined;
+  }
+
+  async findAll(query: Record<string, unknown>) {
+    const where: Prisma.VehicleWhereInput = {
+      status: VehicleStatus.approved,
+    };
+
+    const brand = query.brand ? String(query.brand).trim() : '';
+    if (brand) {
+      where.brand = { equals: brand, mode: 'insensitive' };
+    }
+
+    const model = query.model ? String(query.model).trim() : '';
+    if (model) {
+      where.model = { contains: model, mode: 'insensitive' };
+    }
+
+    const yearMin = this.parseQueryInt(query.yearMin);
+    const yearMax = this.parseQueryInt(query.yearMax);
+    if (yearMin !== undefined || yearMax !== undefined) {
+      where.year = {};
+      if (yearMin !== undefined) (where.year as Prisma.IntFilter).gte = yearMin;
+      if (yearMax !== undefined) (where.year as Prisma.IntFilter).lte = yearMax;
+    }
+
+    const priceMin = this.parseQueryInt(query.priceMin);
+    const priceMax = this.parseQueryInt(query.priceMax);
+    if (priceMin !== undefined || priceMax !== undefined) {
+      where.price = {};
+      if (priceMin !== undefined) (where.price as Prisma.DecimalFilter).gte = priceMin;
+      if (priceMax !== undefined) (where.price as Prisma.DecimalFilter).lte = priceMax;
+    }
+
+    const mileageMin = this.parseQueryInt(query.mileageMin);
+    const mileageMax = this.parseQueryInt(query.mileageMax);
+    if (mileageMin !== undefined || mileageMax !== undefined) {
+      where.mileage = {};
+      if (mileageMin !== undefined) (where.mileage as Prisma.IntFilter).gte = mileageMin;
+      if (mileageMax !== undefined) (where.mileage as Prisma.IntFilter).lte = mileageMax;
+    }
+
+    const state = query.state ? String(query.state).trim() : '';
+    if (state) {
+      where.state = { equals: state, mode: 'insensitive' };
+    }
+
+    const city = query.city ? String(query.city).trim() : '';
+    if (city) {
+      where.city = { contains: city, mode: 'insensitive' };
+    }
+
+    const transmission = query.transmission ? String(query.transmission) : '';
+    if (transmission && (Object.values(Transmission) as string[]).includes(transmission)) {
+      where.transmission = transmission as Transmission;
+    }
+
+    const fuel = query.fuel ? String(query.fuel) : '';
+    if (fuel && (Object.values(FuelType) as string[]).includes(fuel)) {
+      where.fuel = fuel as FuelType;
+    }
+
+    const sort = query.sort ? String(query.sort) : 'recent';
+    let orderBy: Prisma.VehicleOrderByWithRelationInput = { created_at: 'desc' };
+    switch (sort) {
+      case 'price_asc':
+        orderBy = { price: 'asc' };
+        break;
+      case 'price_desc':
+        orderBy = { price: 'desc' };
+        break;
+      case 'mileage_asc':
+        orderBy = { mileage: 'asc' };
+        break;
+      default:
+        orderBy = { created_at: 'desc' };
+    }
+
     const vehicles = await this.prisma.vehicle.findMany({
-      where: { status: 'approved' },
+      where,
       include: {
         media: {
           orderBy: { order: 'asc' },
         },
       },
-      orderBy: { created_at: 'desc' },
+      orderBy,
     });
     return this.applyContactRouting(vehicles as any);
   }

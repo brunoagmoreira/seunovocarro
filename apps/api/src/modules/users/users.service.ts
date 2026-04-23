@@ -58,6 +58,7 @@ export class UsersService {
     phone?: string;
     city?: string;
     state?: string;
+    avatar_url?: string | null;
     role?: 'user' | 'editor' | 'admin';
     status?: 'active' | 'pending' | 'suspended';
   }): Promise<User> {

@@ -2,6 +2,7 @@ import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { User } from '@prisma/client';
 import { isSuperAdminEmail } from '../../common/auth/super-admin';
+import type { UpdateSiteSettingsDto } from './dto/site-settings.dto';
 
 @Injectable()
 export class AdminService {
@@ -534,6 +535,73 @@ export class AdminService {
       asaas_payment_id: payment.id,
       status: payment.status,
       invoice_url: payment.invoiceUrl || null,
+    };
+  }
+
+  private async ensureSiteSettingsRow() {
+    const found = await this.prisma.siteSettings.findFirst();
+    if (found) return found;
+    return this.prisma.siteSettings.create({ data: {} });
+  }
+
+  async getPublicSiteSettings() {
+    const row = await this.ensureSiteSettingsRow();
+    return {
+      gtm_id: row.gtm_id,
+      ga_id: row.ga_id,
+      meta_pixel_id: row.meta_pixel_id,
+      google_oauth_client_id: row.google_oauth_client_id,
+    };
+  }
+
+  async getAdminSiteSettings(user: User) {
+    this.checkAdmin(user);
+    const row = await this.ensureSiteSettingsRow();
+    return {
+      id: row.id,
+      gtm_id: row.gtm_id,
+      ga_id: row.ga_id,
+      meta_pixel_id: row.meta_pixel_id,
+      google_oauth_client_id: row.google_oauth_client_id,
+      google_oauth_client_secret_set: Boolean(row.google_oauth_client_secret?.trim()),
+      updated_at: row.updated_at,
+    };
+  }
+
+  async updateAdminSiteSettings(user: User, body: UpdateSiteSettingsDto) {
+    this.checkAdmin(user);
+    const row = await this.ensureSiteSettingsRow();
+    const data: Record<string, string | null> = {};
+    if (body.gtm_id !== undefined) {
+      data.gtm_id = body.gtm_id?.trim() ? body.gtm_id.trim() : null;
+    }
+    if (body.ga_id !== undefined) {
+      data.ga_id = body.ga_id?.trim() ? body.ga_id.trim() : null;
+    }
+    if (body.meta_pixel_id !== undefined) {
+      data.meta_pixel_id = body.meta_pixel_id?.trim() ? body.meta_pixel_id.trim() : null;
+    }
+    if (body.google_oauth_client_id !== undefined) {
+      data.google_oauth_client_id = body.google_oauth_client_id?.trim()
+        ? body.google_oauth_client_id.trim()
+        : null;
+    }
+    if (body.google_oauth_client_secret !== undefined) {
+      const s = body.google_oauth_client_secret?.trim();
+      data.google_oauth_client_secret = s ? s : null;
+    }
+    const updated = await this.prisma.siteSettings.update({
+      where: { id: row.id },
+      data,
+    });
+    return {
+      id: updated.id,
+      gtm_id: updated.gtm_id,
+      ga_id: updated.ga_id,
+      meta_pixel_id: updated.meta_pixel_id,
+      google_oauth_client_id: updated.google_oauth_client_id,
+      google_oauth_client_secret_set: Boolean(updated.google_oauth_client_secret?.trim()),
+      updated_at: updated.updated_at,
     };
   }
 }

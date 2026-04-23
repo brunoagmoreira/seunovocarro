@@ -3,11 +3,22 @@ import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { User } from '@prisma/client';
+import { UpdateSiteSettingsDto } from './dto/site-settings.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
+
+  @Get('site-settings')
+  getSiteSettings(@CurrentUser() user: User) {
+    return this.adminService.getAdminSiteSettings(user);
+  }
+
+  @Patch('site-settings')
+  updateSiteSettings(@CurrentUser() user: User, @Body() body: UpdateSiteSettingsDto) {
+    return this.adminService.updateAdminSiteSettings(user, body);
+  }
 
   @Get('dashboard')
   getDashboardStats(@CurrentUser() user: User) {

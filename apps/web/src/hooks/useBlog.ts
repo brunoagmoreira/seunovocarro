@@ -6,11 +6,11 @@ export interface BlogPost {
   title: string;
   slug: string;
   content: string;
-  excerpt: string;
+  excerpt: string | null;
   cover_image: string | null;
   featured_image: string | null;
   featured_image_alt: string | null;
-  published_at: string;
+  published_at: string | null;
   created_at: string;
   updated_at: string;
   reading_time_minutes: number;
@@ -19,7 +19,7 @@ export interface BlogPost {
     name: string;
     slug: string;
     color?: string;
-  };
+  } | null;
   author: {
     full_name: string;
     avatar_url: string;
@@ -36,6 +36,7 @@ export interface BlogCategory {
   id: string;
   name: string;
   slug: string;
+  color?: string;
 }
 
 export function useBlogPosts(category?: string, searchTerm?: string) {
