@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class RegisterDto {
   @IsEmail({}, { message: 'Por favor, insira um e-mail válido' })
@@ -17,6 +17,28 @@ export class RegisterDto {
   @IsString()
   @IsOptional()
   phone?: string;
+
+  @IsString()
+  @IsOptional()
+  city?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(2, { message: 'UF deve ter no máximo 2 caracteres' })
+  state?: string;
+
+  @IsString()
+  @IsOptional()
+  @IsIn(['user', 'editor'], { message: 'Role inválida para cadastro público' })
+  role?: 'user' | 'editor';
+
+  @IsBoolean()
+  @IsOptional()
+  is_dealer?: boolean;
+
+  @IsString()
+  @IsOptional()
+  dealer_name?: string;
 }
 
 export class LoginDto {

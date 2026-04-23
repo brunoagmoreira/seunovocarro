@@ -20,6 +20,10 @@ export class UsersService {
     password_hash: string;
     full_name?: string;
     phone?: string;
+    city?: string;
+    state?: string;
+    role?: 'user' | 'editor' | 'admin';
+    status?: 'active' | 'pending' | 'suspended';
   }): Promise<User> {
     const existingUser = await this.findByEmail(data.email);
     if (existingUser) {

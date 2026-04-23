@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -17,5 +17,19 @@ export class AdminController {
   @Get('users')
   listUsers(@CurrentUser() user: User) {
     return this.adminService.listUsers(user);
+  }
+
+  @Get('approvals/pending-sellers')
+  listPendingSellerApprovals(@CurrentUser() user: User) {
+    return this.adminService.listPendingSellerApprovals(user);
+  }
+
+  @Patch('approvals/sellers/:userId')
+  decideSellerApproval(
+    @CurrentUser() user: User,
+    @Param('userId') userId: string,
+    @Body() body: { decision: 'approve' | 'reject' },
+  ) {
+    return this.adminService.decideSellerApproval(user, userId, body.decision);
   }
 }

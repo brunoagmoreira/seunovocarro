@@ -3,6 +3,7 @@ import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { User } from '@prisma/client';
+import { isSuperAdminEmail } from '../../common/auth/super-admin';
 
 @Controller('users')
 export class UsersController {
@@ -11,7 +12,10 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   getProfile(@CurrentUser() user: User) {
-    return user;
+    return {
+      ...user,
+      is_super_admin: isSuperAdminEmail(user.email),
+    };
   }
 
   @UseGuards(JwtAuthGuard)

@@ -14,19 +14,27 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { fetchApi } from '@/lib/api';
 
 interface UserWithRole {
   id: string;
-  user_id: string;
   role: 'user' | 'editor' | 'admin';
   status: 'pending' | 'active' | 'suspended';
+  email: string;
+  full_name: string | null;
+  city: string | null;
+  state: string | null;
+  phone: string | null;
   created_at: string;
-  profiles: {
-    full_name: string | null;
-    city: string | null;
-    state: string | null;
-    phone: string | null;
+  dealer?: {
+    id: string;
+    name: string;
+    slug: string;
   } | null;
+}
+
+interface ProfileResponse {
+  is_super_admin?: boolean;
 }
 
 const roleIcons = {
@@ -50,31 +58,66 @@ const statusLabels = {
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState<string | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [filterRole, setFilterRole] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    // Mock data - será conectado à API NestJS futuramente
-    setTimeout(() => {
-      setUsers([
-        { id: '1', user_id: 'u1', role: 'admin', status: 'active', created_at: new Date().toISOString(), profiles: { full_name: 'Admin Master', city: 'São Paulo', state: 'SP', phone: '(11) 99999-0001' } },
-        { id: '2', user_id: 'u2', role: 'editor', status: 'active', created_at: new Date().toISOString(), profiles: { full_name: 'Carlos Silva Motors', city: 'Belo Horizonte', state: 'MG', phone: '(31) 98888-1234' } },
-        { id: '3', user_id: 'u3', role: 'editor', status: 'pending', created_at: new Date().toISOString(), profiles: { full_name: 'Ana Souza Veículos', city: 'Curitiba', state: 'PR', phone: '(41) 97777-5678' } },
-        { id: '4', user_id: 'u4', role: 'user', status: 'active', created_at: new Date().toISOString(), profiles: { full_name: 'João Comprador', city: 'Rio de Janeiro', state: 'RJ', phone: '(21) 96666-9012' } },
-        { id: '5', user_id: 'u5', role: 'editor', status: 'suspended', created_at: new Date().toISOString(), profiles: { full_name: 'Pedro Autos', city: 'Salvador', state: 'BA', phone: '(71) 95555-3456' } },
-        { id: '6', user_id: 'u6', role: 'editor', status: 'pending', created_at: new Date().toISOString(), profiles: { full_name: 'Marina Premium Cars', city: 'Brasília', state: 'DF', phone: '(61) 94444-7890' } },
-        { id: '7', user_id: 'u7', role: 'user', status: 'active', created_at: new Date().toISOString(), profiles: { full_name: 'Roberto Oliveira', city: 'Porto Alegre', state: 'RS', phone: '(51) 93333-2345' } },
-      ]);
-      setIsLoading(false);
-    }, 800);
+    void loadUsers();
   }, []);
 
-  const updateUserStatus = async (userRoleId: string, newStatus: 'active' | 'suspended') => {
-    setUsers(prev => prev.map(u => u.id === userRoleId ? { ...u, status: newStatus } : u));
-    toast.success(newStatus === 'active' ? 'Usuário aprovado!' : 'Usuário suspenso', {
-      description: newStatus === 'active' ? 'O vendedor agora pode criar anúncios.' : 'O usuário foi suspenso.',
-    });
+  const loadUsers = async () => {
+    try {
+      setIsLoading(true);
+
+      const [profile, usersData] = await Promise.all([
+        fetchApi<ProfileResponse>('/users/profile', { requireAuth: true }),
+        fetchApi<UserWithRole[]>('/admin/users', { requireAuth: true }),
+      ]);
+
+      setIsSuperAdmin(Boolean(profile.is_super_admin));
+      setUsers(usersData);
+    } catch (error: any) {
+      toast.error('Erro ao carregar usuários', {
+        description: error.message || 'Não foi possível buscar dados do admin.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSellerDecision = async (userId: string, decision: 'approve' | 'reject') => {
+    try {
+      setIsUpdating(userId);
+      await fetchApi(`/admin/approvals/sellers/${userId}`, {
+        method: 'PATCH',
+        requireAuth: true,
+        body: { decision },
+      });
+
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === userId
+            ? { ...u, status: decision === 'approve' ? 'active' : 'suspended' }
+            : u,
+        ),
+      );
+
+      toast.success(decision === 'approve' ? 'Vendedor aprovado!' : 'Vendedor rejeitado', {
+        description:
+          decision === 'approve'
+            ? 'Esse perfil já pode criar anúncios.'
+            : 'Esse perfil foi suspenso para novos anúncios.',
+      });
+    } catch (error: any) {
+      toast.error('Falha ao atualizar aprovação', {
+        description: error.message || 'Tente novamente.',
+      });
+    } finally {
+      setIsUpdating(null);
+    }
   };
 
   const filteredUsers = users.filter(user => {
@@ -82,10 +125,11 @@ export default function AdminUsersPage() {
     if (filterStatus !== 'all' && user.status !== filterStatus) return false;
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
-      const matchesName = user.profiles?.full_name?.toLowerCase().includes(search);
-      const matchesPhone = user.profiles?.phone?.includes(search);
-      const matchesCity = user.profiles?.city?.toLowerCase().includes(search);
-      if (!matchesName && !matchesPhone && !matchesCity) return false;
+      const matchesName = user.full_name?.toLowerCase().includes(search);
+      const matchesPhone = user.phone?.includes(search);
+      const matchesCity = user.city?.toLowerCase().includes(search);
+      const matchesEmail = user.email.toLowerCase().includes(search);
+      if (!matchesName && !matchesPhone && !matchesCity && !matchesEmail) return false;
     }
     return true;
   });
@@ -114,6 +158,7 @@ export default function AdminUsersPage() {
             <Button variant="ghost" size="icon" asChild><Link href="/admin"><ArrowLeft className="h-5 w-5" /></Link></Button>
             <h1 className="font-heading text-2xl font-bold">Gerenciar Usuários</h1>
             <Badge variant="secondary">{filteredUsers.length} de {users.length}</Badge>
+            {isSuperAdmin && <Badge>Super Admin</Badge>}
           </div>
           <Button variant="outline" size="sm" onClick={handleExportUsers}>
             <Download className="h-4 w-4 mr-2" />
@@ -181,35 +226,45 @@ export default function AdminUsersPage() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="font-heading font-semibold">{user.profiles?.full_name || 'Usuário sem nome'}</p>
+                        <p className="font-heading font-semibold">{user.full_name || 'Usuário sem nome'}</p>
                         <Badge variant={user.status === 'active' ? 'default' : user.status === 'pending' ? 'outline' : 'destructive'}>
                           {statusLabels[user.status]}
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {roleLabels[user.role]} • {user.profiles?.city}, {user.profiles?.state}
+                        {roleLabels[user.role]} • {user.city || '-'}, {user.state || '-'}
                       </p>
-                      {user.profiles?.phone && (
-                        <p className="text-sm text-muted-foreground">{user.profiles.phone}</p>
+                      <p className="text-sm text-muted-foreground">{user.email}</p>
+                      {user.phone && (
+                        <p className="text-sm text-muted-foreground">{user.phone}</p>
+                      )}
+                      {user.dealer?.name && (
+                        <p className="text-xs text-muted-foreground">Loja: {user.dealer.name}</p>
                       )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {user.status === 'pending' && (
+                    {isSuperAdmin && user.status === 'pending' && user.role === 'editor' && (
                       <>
-                        <Button variant="outline" size="sm" onClick={() => updateUserStatus(user.id, 'active')} className="text-green-600 hover:text-green-700">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={isUpdating === user.id}
+                          onClick={() => handleSellerDecision(user.id, 'approve')}
+                          className="text-green-600 hover:text-green-700"
+                        >
                           <Check className="h-4 w-4 mr-1" /> Aprovar
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => updateUserStatus(user.id, 'suspended')} className="text-destructive hover:text-destructive">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={isUpdating === user.id}
+                          onClick={() => handleSellerDecision(user.id, 'reject')}
+                          className="text-destructive hover:text-destructive"
+                        >
                           <X className="h-4 w-4 mr-1" /> Rejeitar
                         </Button>
                       </>
-                    )}
-                    {user.status === 'active' && user.role !== 'admin' && (
-                      <Button variant="ghost" size="sm" onClick={() => updateUserStatus(user.id, 'suspended')} className="text-destructive">Suspender</Button>
-                    )}
-                    {user.status === 'suspended' && (
-                      <Button variant="ghost" size="sm" onClick={() => updateUserStatus(user.id, 'active')}>Reativar</Button>
                     )}
                   </div>
                 </div>
