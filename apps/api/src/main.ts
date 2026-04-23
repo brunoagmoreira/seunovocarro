@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -31,13 +32,43 @@ async function bootstrap() {
       credentials: true,
     });
 
+    const enableSwagger =
+      process.env.SWAGGER_ENABLED === 'true' || process.env.NODE_ENV !== 'production';
+
+    if (enableSwagger) {
+      const swaggerConfig = new DocumentBuilder()
+        .setTitle('Seu Novo Carro — API')
+        .setDescription(
+          'REST da plataforma. Endpoints admin exigem JWT com role `admin`. ' +
+            'Outros recursos autenticados usam JWT no header `Authorization: Bearer <token>`.',
+        )
+        .setVersion('1.0')
+        .addBearerAuth(
+          { type: 'http', scheme: 'bearer', bearerFormat: 'JWT', name: 'Authorization', in: 'header' },
+          'JWT-auth',
+        )
+        .build();
+
+      const document = SwaggerModule.createDocument(app, swaggerConfig);
+      SwaggerModule.setup('docs', app, document, {
+        swaggerOptions: { persistAuthorization: true },
+        customSiteTitle: 'SNC API',
+        useGlobalPrefix: true,
+      });
+    }
+
     // Default 3001 alinhado ao Dockerfile / compose; 80 costuma falhar sem root no container.
     const port = Number.parseInt(process.env.PORT || '3001', 10) || 3001;
     await app.listen(port, '0.0.0.0');
-    
+
     console.log(`\n************************************`);
     console.log(`🚀 API Seu Novo Carro ONLINE`);
     console.log(`🚀 Ouvindo em: http://0.0.0.0:${port}/api`);
+    if (enableSwagger) {
+      console.log(`📘 Swagger UI: http://0.0.0.0:${port}/api/docs`);
+    } else {
+      console.log(`📘 Swagger desligado (defina SWAGGER_ENABLED=true para ativar em produção)`);
+    }
     console.log(`************************************\n`);
 
   } catch (error) {

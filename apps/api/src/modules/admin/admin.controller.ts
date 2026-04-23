@@ -1,10 +1,13 @@
 import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { User } from '@prisma/client';
 import { UpdateSiteSettingsDto } from './dto/site-settings.dto';
 
+@ApiTags('Admin')
+@ApiBearerAuth('JWT-auth')
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
 export class AdminController {
@@ -18,6 +21,7 @@ export class AdminController {
   /** POST duplicado: alguns proxies/CDNs tratam PATCH pior; o front usa POST. */
   @Patch('site-settings')
   @Post('site-settings')
+  @ApiOperation({ summary: 'Atualizar pixels, Google OAuth e demais site settings' })
   updateSiteSettings(@CurrentUser() user: User, @Body() body: UpdateSiteSettingsDto) {
     return this.adminService.updateAdminSiteSettings(user, body);
   }
@@ -47,6 +51,7 @@ export class AdminController {
   }
 
   @Get('dealer-plans')
+  @ApiOperation({ summary: 'Listar planos de lojista, lojistas e billing Asaas' })
   listDealerPlans(@CurrentUser() user: User) {
     return this.adminService.listDealerPlans(user);
   }
