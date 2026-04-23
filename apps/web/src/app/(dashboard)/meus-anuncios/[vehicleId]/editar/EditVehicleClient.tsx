@@ -63,7 +63,8 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
     brand: '',
     model: '',
     version: '',
-    year: new Date().getFullYear(),
+    yearManufacture: new Date().getFullYear(),
+    yearModel: new Date().getFullYear(),
     mileage: 0,
     transmission: 'automatic',
     fuel: 'flex',
@@ -86,36 +87,36 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
 
   const fetchVehicle = async () => {
     try {
-      const vehicle = await fetchApi<any>(`/vehicles/${vehicleId}`, {
-        params: { anyStatus: true },
+      const ownerVehicle = await fetchApi<any>(`/vehicles/mine/${vehicleId}`, {
         requireAuth: true
       });
 
-      if (!vehicle) throw new Error('Not found');
+      if (!ownerVehicle) throw new Error('Not found');
 
       const vehicleFormData = {
-        brand: vehicle.brand,
-        model: vehicle.model,
-        version: vehicle.version || '',
-        year: vehicle.year,
-        mileage: vehicle.mileage,
-        transmission: vehicle.transmission,
-        fuel: vehicle.fuel,
-        color: vehicle.color || '',
-        doors: vehicle.doors || 4,
-        plateEnding: vehicle.plate_ending || '',
-        price: vehicle.price,
-        description: vehicle.description || '',
-        city: vehicle.city,
-        state: vehicle.state,
-        whatsapp: vehicle.whatsapp || '',
-        phone: vehicle.phone || ''
+        brand: ownerVehicle.brand,
+        model: ownerVehicle.model,
+        version: ownerVehicle.version || '',
+        yearManufacture: ownerVehicle.year,
+        yearModel: ownerVehicle.year,
+        mileage: ownerVehicle.mileage,
+        transmission: ownerVehicle.transmission,
+        fuel: ownerVehicle.fuel,
+        color: ownerVehicle.color || '',
+        doors: ownerVehicle.doors || 4,
+        plateEnding: ownerVehicle.plate_ending || '',
+        price: ownerVehicle.price,
+        description: ownerVehicle.description || '',
+        city: ownerVehicle.city,
+        state: ownerVehicle.state,
+        whatsapp: ownerVehicle.whatsapp || '',
+        phone: ownerVehicle.phone || ''
       };
       
       setFormData(vehicleFormData);
       setOriginalData(vehicleFormData);
 
-      const media = (vehicle.media || []).sort((a: any, b: any) => a.order - b.order);
+      const media = (ownerVehicle.media || []).sort((a: any, b: any) => a.order - b.order);
       setExistingMedia(media.map((m: any, i: number) => ({ 
         ...m, 
         is_primary: i === 0 
@@ -239,6 +240,15 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
       return;
     }
 
+    if (!formData.yearManufacture || !formData.yearModel) {
+      toast({
+        title: "Ano obrigatório",
+        description: "Preencha ano de fabricação e ano modelo.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const totalImages = existingMedia.length + newImages.length;
     if (totalImages === 0) {
       toast({
@@ -282,6 +292,7 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
         method: 'PATCH',
         body: {
           ...formData,
+          year: formData.yearModel,
           status: asDraft ? 'draft' : 'pending',
           media: finalMedia
         },
@@ -469,10 +480,14 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
               <Input value={formData.version} onChange={(e) => setFormData({ ...formData, version: e.target.value })} placeholder="Ex: Touring" />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>Ano *</Label>
-                <Input type="number" value={formData.year} onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })} min={1990} max={new Date().getFullYear() + 1} />
+                <Label>Ano Fabricação *</Label>
+                <Input type="number" value={formData.yearManufacture} onChange={(e) => setFormData({ ...formData, yearManufacture: parseInt(e.target.value) || 0 })} min={1990} max={new Date().getFullYear() + 1} />
+              </div>
+              <div className="space-y-2">
+                <Label>Ano Modelo *</Label>
+                <Input type="number" value={formData.yearModel} onChange={(e) => setFormData({ ...formData, yearModel: parseInt(e.target.value) || 0 })} min={1990} max={new Date().getFullYear() + 1} />
               </div>
               <div className="space-y-2">
                 <Label>KM *</Label>

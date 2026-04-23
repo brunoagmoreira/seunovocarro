@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, X, Loader2, ImagePlus } from 'lucide-react';
+import { ArrowLeft, X, Loader2, ImagePlus, GripVertical, Star } from 'lucide-react';
 import { applyWatermark } from '@/lib/watermark';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,7 +38,8 @@ export function CreateVehicleClient() {
     brand: '',
     model: '',
     version: '',
-    year: new Date().getFullYear(),
+    yearManufacture: new Date().getFullYear(),
+    yearModel: new Date().getFullYear(),
     mileage: 0,
     transmission: 'automatic',
     fuel: 'flex',
@@ -63,6 +64,18 @@ export function CreateVehicleClient() {
       }
     }
   }, [formData.state, cities]);
+
+  useEffect(() => {
+    if (!profile) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      state: prev.state || profile.state || '',
+      city: prev.city || profile.city || '',
+      whatsapp: prev.whatsapp || profile.whatsapp || profile.phone || '',
+      phone: prev.phone || profile.phone || '',
+    }));
+  }, [profile]);
 
   if (!user) {
     return (
@@ -142,8 +155,26 @@ export function CreateVehicleClient() {
     setPreviews(previews.filter((_, i) => i !== index));
   };
 
+  const moveImage = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+
+    setImages((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return next;
+    });
+
+    setPreviews((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return next;
+    });
+  };
+
   const generateSlug = () => {
-    const slug = `${formData.brand}-${formData.model}-${formData.year}-${Date.now()}`
+    const slug = `${formData.brand}-${formData.model}-${formData.yearModel}-${Date.now()}`
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
@@ -159,6 +190,15 @@ export function CreateVehicleClient() {
       toast({
         title: "Campos obrigatórios",
         description: "Preencha marca, modelo e preço.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!formData.yearManufacture || !formData.yearModel) {
+      toast({
+        title: "Ano obrigatório",
+        description: "Preencha ano de fabricação e ano modelo.",
         variant: "destructive"
       });
       return;
@@ -214,7 +254,7 @@ export function CreateVehicleClient() {
           brand: formData.brand,
           model: formData.model,
           version: formData.version || null,
-          year: formData.year,
+          year: formData.yearModel,
           mileage: formData.mileage,
           transmission: formData.transmission,
           fuel: formData.fuel,
@@ -271,11 +311,32 @@ export function CreateVehicleClient() {
       <div className="container py-6">
         <form onSubmit={(e) => handleSubmit(e, false)} className="max-w-2xl mx-auto space-y-6">
           <div className="space-y-4">
-            <Label>Fotos do veículo *</Label>
+            <Label>Fotos do veículo * (arraste para reorganizar)</Label>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
               {previews.map((preview, index) => (
-                <div key={index} className="relative aspect-square rounded-xl overflow-hidden border border-border">
+                <div
+                  key={index}
+                  className={`relative aspect-square rounded-xl overflow-hidden border-2 ${
+                    index === 0 ? 'border-primary' : 'border-border'
+                  }`}
+                  draggable
+                  onDragStart={(e) => e.dataTransfer.setData('dragIndex', index.toString())}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    const dragIndex = parseInt(e.dataTransfer.getData('dragIndex'));
+                    moveImage(dragIndex, index);
+                  }}
+                >
                   <img src={preview} alt="" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
+                    <GripVertical className="h-6 w-6 text-white" />
+                  </div>
+                  {index === 0 && (
+                    <span className="absolute top-2 left-2 text-xs bg-primary text-primary-foreground px-2 py-1 rounded-full inline-flex items-center gap-1">
+                      <Star className="h-3 w-3 fill-current" />
+                      Principal
+                    </span>
+                  )}
                   <button
                     type="button"
                     onClick={() => removeImage(index)}
@@ -300,7 +361,7 @@ export function CreateVehicleClient() {
               )}
             </div>
             <p className="text-sm text-muted-foreground">
-              Máximo 10 fotos. Formatos: JPG, PNG, WebP
+              Máximo 10 fotos. Formatos: JPG, PNG, WebP. A primeira foto será a principal.
             </p>
           </div>
 
@@ -344,13 +405,24 @@ export function CreateVehicleClient() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label>Ano *</Label>
+                <Label>Ano Fabricação *</Label>
                 <Input
                   type="number"
-                  value={formData.year}
-                  onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}
+                  value={formData.yearManufacture}
+                  onChange={(e) => setFormData({ ...formData, yearManufacture: parseInt(e.target.value) || 0 })}
+                  min={1990}
+                  max={new Date().getFullYear() + 1}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Ano Modelo *</Label>
+                <Input
+                  type="number"
+                  value={formData.yearModel}
+                  onChange={(e) => setFormData({ ...formData, yearModel: parseInt(e.target.value) || 0 })}
                   min={1990}
                   max={new Date().getFullYear() + 1}
                 />

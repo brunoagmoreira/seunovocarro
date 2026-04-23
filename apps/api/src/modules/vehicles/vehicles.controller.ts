@@ -21,6 +21,12 @@ export class VehiclesController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('mine/:id')
+  findMineById(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.vehiclesService.findByIdForUser(id, user);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('metrics')
   getMetrics(@CurrentUser() user: User, @Query('period') period?: string) {
     const days = period ? parseInt(period) : 30;

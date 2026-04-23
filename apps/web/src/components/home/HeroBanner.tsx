@@ -14,7 +14,16 @@ interface Banner {
 }
 
 export function HeroBanner() {
-  const [banners, setBanners] = useState<Banner[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([
+    {
+      id: 'default',
+      title: 'Carros verificados, perto de você.',
+      subtitle: 'Veículos inspecionados de lojas confiáveis da região de Belo Horizonte. Sem surpresa, sem enrolação.',
+      image_url: '',
+      link_url: '/veiculos',
+      order: 0,
+    },
+  ]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -23,16 +32,6 @@ export function HeroBanner() {
         const data = await fetchApi<Banner[]>('/banners/active');
         if (data && data.length > 0) {
           setBanners(data);
-        } else {
-          // Fallback Default Banner from Briefing
-          setBanners([{
-            id: 'default',
-            title: 'Carros verificados, perto de você.',
-            subtitle: 'Veículos inspecionados de lojas confiáveis da região de Belo Horizonte. Sem surpresa, sem enrolação.',
-            image_url: '', // Fallback vazio para mostrar placeholder
-            link_url: '/veiculos',
-            order: 0
-          }]);
         }
       } catch (error) {
         console.error('Failed to load banners');
@@ -59,8 +58,6 @@ export function HeroBanner() {
   const prevSlide = () => {
     setCurrentIndex((prev) => (prev === 0 ? banners.length - 1 : prev - 1));
   };
-
-  if (banners.length === 0) return null;
 
   const currentBanner = banners[currentIndex];
 
@@ -129,6 +126,9 @@ export function HeroBanner() {
                 <img 
                   src={currentBanner.image_url} 
                   alt="Veículo Verificado" 
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
                   className="w-full h-auto object-contain drop-shadow-2xl scale-110" 
                 />
               </div>

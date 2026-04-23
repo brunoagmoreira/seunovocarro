@@ -1,0 +1,114 @@
+"use client";
+
+import Link from 'next/link';
+import { ArrowRight, BadgeCheck, MapPin, Store } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useFeaturedDealers } from '@/hooks/useDealers';
+
+export function HomeDealersSection() {
+  const { data: featuredDealers, isLoading } = useFeaturedDealers();
+
+  if (!isLoading && (!featuredDealers || featuredDealers.length === 0)) {
+    return null;
+  }
+
+  return (
+    <section className="py-12 md:py-16">
+      <div className="container">
+        <div className="flex items-center justify-between mb-6 md:mb-8">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg gradient-brand">
+              <Store className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h2 className="font-heading text-2xl md:text-3xl font-bold">
+                Lojas Parceiras
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                Lojistas verificados pela Seu Novo Carro
+              </p>
+            </div>
+          </div>
+          <Button variant="ghost" asChild className="hidden md:flex">
+            <Link href="/lojas">
+              Ver todas
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Link>
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {isLoading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-48 rounded-2xl" />
+            ))
+          ) : (
+            featuredDealers?.map((dealer) => (
+              <Link
+                key={dealer.id}
+                href={`/loja/${dealer.dealer_slug || dealer.slug}`}
+                className="group block bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-elevated transition-all"
+              >
+                <div className="h-20 bg-gradient-to-r from-primary/20 to-primary/5 relative">
+                  {(dealer.dealer_banner || dealer.banner_url) && (
+                    <img
+                      src={dealer.dealer_banner || dealer.banner_url || ''}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  )}
+                  {(dealer.dealer_verified || dealer.verified) && (
+                    <div className="absolute top-2 right-2 bg-primary/90 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                      <BadgeCheck className="h-3 w-3" />
+                      Verificado
+                    </div>
+                  )}
+                </div>
+                <div className="p-4 relative">
+                  <div className="absolute -top-8 left-4 w-14 h-14 rounded-xl bg-white shadow-lg overflow-hidden border-2 border-background">
+                    {(dealer.dealer_logo || dealer.logo_url) ? (
+                      <img
+                        src={dealer.dealer_logo || dealer.logo_url || ''}
+                        alt=""
+                        className="w-full h-full object-contain p-1"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    ) : (
+                      <div className="w-full h-full gradient-brand flex items-center justify-center text-white font-bold text-lg">
+                        {(dealer.dealer_name || dealer.name || 'L').charAt(0)}
+                      </div>
+                    )}
+                  </div>
+                  <div className="pt-4">
+                    <h3 className="font-heading font-semibold group-hover:text-primary transition-colors line-clamp-1">
+                      {dealer.dealer_name || dealer.name}
+                    </h3>
+                    {dealer.city && dealer.state && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                        <MapPin className="h-3 w-3" />
+                        {dealer.city}, {dealer.state}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))
+          )}
+        </div>
+
+        <div className="mt-6 md:hidden">
+          <Button variant="outline" asChild className="w-full">
+            <Link href="/lojas">
+              Ver todas as lojas
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}

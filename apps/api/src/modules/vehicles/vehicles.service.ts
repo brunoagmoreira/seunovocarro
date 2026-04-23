@@ -69,6 +69,27 @@ export class VehiclesService {
     return vehicle;
   }
 
+  async findByIdForUser(id: string, user: User) {
+    const vehicle = await this.prisma.vehicle.findUnique({
+      where: { id },
+      include: {
+        media: {
+          orderBy: { order: 'asc' },
+        },
+      },
+    });
+
+    if (!vehicle) {
+      throw new NotFoundException('Veículo não encontrado');
+    }
+
+    if (vehicle.user_id !== user.id && user.role !== 'admin') {
+      throw new ForbiddenException('Você não tem permissão para visualizar este veículo');
+    }
+
+    return vehicle;
+  }
+
   async create(createDto: CreateVehicleDto, user: User) {
     const { media, ...vehicleData } = createDto;
     
