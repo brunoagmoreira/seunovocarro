@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Camera, Loader2, LogOut, User, MapPin, Phone, Mail, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -152,8 +153,10 @@ export function ProfileClient() {
       <div className="sticky top-16 z-10 bg-background/95 backdrop-blur-lg border-b border-border">
         <div className="container py-4">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => router.back()}>
-              <ArrowLeft className="h-5 w-5" />
+            <Button variant="ghost" size="icon" asChild title="Voltar ao início">
+              <Link href="/">
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
             </Button>
             <h1 className="font-heading text-xl font-bold">Meu Perfil</h1>
           </div>

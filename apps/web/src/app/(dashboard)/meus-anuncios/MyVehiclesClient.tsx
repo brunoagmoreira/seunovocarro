@@ -158,8 +158,8 @@ export function MyVehiclesClient() {
       <div className="container py-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/perfil">
+            <Button variant="ghost" size="icon" asChild title="Voltar ao início">
+              <Link href="/">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
             </Button>
