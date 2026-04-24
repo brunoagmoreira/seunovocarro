@@ -11,6 +11,7 @@ import {
   Share2,
   KeyRound,
   Image,
+  Timer,
   Type,
   Plus,
   Trash2,
@@ -52,6 +53,7 @@ export default function AdminSettingsPage() {
     ga_id: '',
     meta_pixel_id: '',
     google_oauth_client_id: '',
+    hero_featured_interval_seconds: 5,
   });
   const [googleClientSecret, setGoogleClientSecret] = useState('');
   const [secretWasSet, setSecretWasSet] = useState(false);
@@ -76,6 +78,10 @@ export default function AdminSettingsPage() {
       ga_id: siteSettings.ga_id ?? '',
       meta_pixel_id: siteSettings.meta_pixel_id ?? '',
       google_oauth_client_id: siteSettings.google_oauth_client_id ?? '',
+      hero_featured_interval_seconds:
+        typeof siteSettings.hero_featured_interval_seconds === 'number'
+          ? siteSettings.hero_featured_interval_seconds
+          : 5,
     });
     setSecretWasSet(siteSettings.google_oauth_client_secret_set);
     setGoogleClientSecret('');
@@ -84,11 +90,16 @@ export default function AdminSettingsPage() {
   const saveTrackingAndGoogle = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const body: Record<string, string | null> = {
+      const interval = Math.min(
+        120,
+        Math.max(3, Math.round(Number(formData.hero_featured_interval_seconds)) || 5),
+      );
+      const body: Record<string, string | null | number> = {
         gtm_id: formData.gtm_id.trim() || null,
         ga_id: formData.ga_id.trim() || null,
         meta_pixel_id: formData.meta_pixel_id.trim() || null,
         google_oauth_client_id: formData.google_oauth_client_id.trim() || null,
+        hero_featured_interval_seconds: interval,
       };
       if (googleClientSecret.trim()) {
         body.google_oauth_client_secret = googleClientSecret.trim();
@@ -189,6 +200,36 @@ export default function AdminSettingsPage() {
 
             <div className="bg-card rounded-2xl p-6 shadow-card">
               <h2 className="font-heading font-semibold text-lg mb-2 flex items-center gap-2">
+                <Timer className="h-5 w-5 text-primary" />
+                Banner principal — destaques
+              </h2>
+              <p className="text-sm text-muted-foreground mb-6">
+                Tempo entre cada troca automática de veículo em destaque na página inicial (carrossel
+                verde).
+              </p>
+              <div className="space-y-2 max-w-xs">
+                <Label htmlFor="hero-interval">Intervalo (segundos)</Label>
+                <Input
+                  id="hero-interval"
+                  type="number"
+                  min={3}
+                  max={120}
+                  step={1}
+                  inputMode="numeric"
+                  value={formData.hero_featured_interval_seconds}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      hero_featured_interval_seconds: Number(e.target.value) || 5,
+                    })
+                  }
+                />
+                <p className="text-xs text-muted-foreground">Entre 3 e 120 segundos.</p>
+              </div>
+            </div>
+
+            <div className="bg-card rounded-2xl p-6 shadow-card">
+              <h2 className="font-heading font-semibold text-lg mb-2 flex items-center gap-2">
                 <KeyRound className="h-5 w-5 text-primary" />
                 Login com Google
               </h2>
@@ -242,7 +283,7 @@ export default function AdminSettingsPage() {
               ) : (
                 <>
                   <Save className="h-4 w-4 mr-2" />
-                  Salvar pixels e Google
+                  Salvar configurações
                 </>
               )}
             </Button>

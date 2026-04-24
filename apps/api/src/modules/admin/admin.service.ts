@@ -1005,6 +1005,7 @@ export class AdminService {
       ga_id: row.ga_id,
       meta_pixel_id: row.meta_pixel_id,
       google_oauth_client_id: row.google_oauth_client_id,
+      hero_featured_interval_seconds: row.hero_featured_interval_seconds,
     };
   }
 
@@ -1018,6 +1019,7 @@ export class AdminService {
       meta_pixel_id: row.meta_pixel_id,
       google_oauth_client_id: row.google_oauth_client_id,
       google_oauth_client_secret_set: Boolean(row.google_oauth_client_secret?.trim()),
+      hero_featured_interval_seconds: row.hero_featured_interval_seconds,
       updated_at: row.updated_at,
     };
   }
@@ -1025,7 +1027,7 @@ export class AdminService {
   async updateAdminSiteSettings(user: User, body: UpdateSiteSettingsDto) {
     this.checkAdmin(user);
     const row = await this.ensureSiteSettingsRow();
-    const data: Record<string, string | null> = {};
+    const data: Record<string, string | null | number> = {};
     if (body.gtm_id !== undefined) {
       data.gtm_id = body.gtm_id?.trim() ? body.gtm_id.trim() : null;
     }
@@ -1044,6 +1046,10 @@ export class AdminService {
       const s = body.google_oauth_client_secret?.trim();
       data.google_oauth_client_secret = s ? s : null;
     }
+    if (body.hero_featured_interval_seconds !== undefined) {
+      const n = Math.round(Number(body.hero_featured_interval_seconds));
+      data.hero_featured_interval_seconds = Math.min(120, Math.max(3, Number.isFinite(n) ? n : 5));
+    }
     const updated = await this.prisma.siteSettings.update({
       where: { id: row.id },
       data,
@@ -1055,6 +1061,7 @@ export class AdminService {
       meta_pixel_id: updated.meta_pixel_id,
       google_oauth_client_id: updated.google_oauth_client_id,
       google_oauth_client_secret_set: Boolean(updated.google_oauth_client_secret?.trim()),
+      hero_featured_interval_seconds: updated.hero_featured_interval_seconds,
       updated_at: updated.updated_at,
     };
   }

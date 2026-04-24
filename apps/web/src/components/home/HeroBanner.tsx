@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react';
+"use client";
+
+import { useState, useEffect, useMemo } from 'react';
 import { fetchApi } from '@/lib/api';
 import Link from 'next/link';
 import { ShieldCheck, Zap, Clock, ChevronRight, ChevronLeft } from 'lucide-react';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 interface FeaturedVehicleResponse {
   id: string;
@@ -66,6 +69,13 @@ function mapFeaturedToSlide(vehicle: FeaturedVehicleResponse): HeroSlide {
 export function HeroBanner() {
   const [slides, setSlides] = useState<HeroSlide[]>([defaultSlide]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { data: siteSettings } = useSiteSettings();
+
+  const slideIntervalMs = useMemo(() => {
+    const s = siteSettings?.hero_featured_interval_seconds;
+    if (typeof s !== 'number' || !Number.isFinite(s)) return 5000;
+    return Math.min(120, Math.max(3, Math.round(s))) * 1000;
+  }, [siteSettings?.hero_featured_interval_seconds]);
 
   useEffect(() => {
     const loadFeaturedVehicles = async () => {
@@ -83,16 +93,16 @@ export function HeroBanner() {
     void loadFeaturedVehicles();
   }, []);
 
-  // Auto Rotation
+  // Auto Rotation (intervalo configurável em Admin → Configurações)
   useEffect(() => {
     if (slides.length <= 1) return;
-    
+
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
-    }, 5000); // Roda a cada 5 segundos
+    }, slideIntervalMs);
 
     return () => clearInterval(interval);
-  }, [slides.length]);
+  }, [slides.length, slideIntervalMs]);
 
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev === slides.length - 1 ? 0 : prev + 1));

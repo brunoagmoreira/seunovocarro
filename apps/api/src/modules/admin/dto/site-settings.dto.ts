@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsOptional, IsString, MaxLength, IsInt, Min, Max } from 'class-validator';
 
 export class UpdateSiteSettingsDto {
   @ApiPropertyOptional()
@@ -31,4 +32,12 @@ export class UpdateSiteSettingsDto {
   @IsString()
   @MaxLength(2048)
   google_oauth_client_secret?: string | null;
+
+  @ApiPropertyOptional({ description: 'Segundos entre cada veículo em destaque no banner da home (3–120).' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(3)
+  @Max(120)
+  hero_featured_interval_seconds?: number;
 }

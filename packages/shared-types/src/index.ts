@@ -308,6 +308,8 @@ export interface SiteSettings {
   meta_pixel_id: string | null;
   google_oauth_client_id?: string | null;
   google_oauth_client_secret_set?: boolean;
+  /** Segundos entre cada slide de destaque no banner da home. */
+  hero_featured_interval_seconds?: number;
   updated_at: string;
 }
 
