@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchApi } from '@/lib/api';
 import { BRANDS, STATES, FUEL_TYPES, TRANSMISSION_TYPES } from '@/types/vehicle';
-import { applyWatermark } from '@/lib/watermark';
+import { uploadVehiclePhotoFiles } from '@/lib/vehiclePhotoUpload';
 import { useCities } from '@/hooks/useCities';
 
 interface VehicleMedia {
@@ -275,23 +275,12 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
     setIsSaving(true);
 
     try {
-      // Step 1: Upload NEW images to R2
-      const newUploadedMedia: any[] = [];
-      for (let i = 0; i < newImages.length; i++) {
-        const file = newImages[i];
-        const watermarkedBlob = await applyWatermark(file, {
-          opacity: 0.3, position: 'center', scale: 0.3,
-        });
-        
-        const uploadFormData = new FormData();
-        uploadFormData.append('file', new File([watermarkedBlob], `edit_${Date.now()}_${i}.jpg`, { type: 'image/jpeg' }));
-        
-        const { url } = await fetchApi<{ url: string }>('/media/upload/vehicle', {
-          method: 'POST', body: uploadFormData, requireAuth: true
-        });
-        
-        newUploadedMedia.push({ url, type: 'image', order: 0 }); // Order will be set below
-      }
+      // Step 1: Upload NEW images (batched parallel + compress before watermark)
+      const stamp = Date.now();
+      const newUploadedMedia = await uploadVehiclePhotoFiles(
+        newImages,
+        (i) => `edit_${stamp}_${i}_${Math.random().toString(36).slice(2, 10)}.jpg`
+      );
 
       // Step 2: Combine existing and new media with new orders
       const finalMedia = [

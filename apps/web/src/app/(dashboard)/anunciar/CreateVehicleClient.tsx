@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, X, Loader2, ImagePlus, GripVertical, Star } from 'lucide-react';
-import { applyWatermark } from '@/lib/watermark';
+import { uploadVehiclePhotoFiles } from '@/lib/vehiclePhotoUpload';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -218,34 +218,11 @@ export function CreateVehicleClient() {
     try {
       const slug = generateSlug();
       
-      // Step 1: Upload images one by one and collect URLs
-      const uploadedMedia: { url: string; type: 'image'; order: number }[] = [];
-      
-      for (let i = 0; i < images.length; i++) {
-        const file = images[i];
-        const watermarkedBlob = await applyWatermark(file, {
-          opacity: 0.3,
-          position: 'center',
-          scale: 0.3,
-        });
-
-        const uploadFormData = new FormData();
-        // Convert blob back to file for Multer
-        const watermarkedFile = new File([watermarkedBlob], `vehicle_${i}.jpg`, { type: 'image/jpeg' });
-        uploadFormData.append('file', watermarkedFile);
-
-        const { url } = await fetchApi<{ url: string }>('/media/upload/vehicle', {
-          method: 'POST',
-          body: uploadFormData,
-          requireAuth: true
-        });
-
-        uploadedMedia.push({
-          url,
-          type: 'image',
-          order: i
-        });
-      }
+      // Step 1: Compress, watermark, upload (batched parallel — was ~1 photo at a time full-res)
+      const uploadedMedia = await uploadVehiclePhotoFiles(
+        images,
+        (i) => `vehicle_${i}.jpg`
+      );
 
       // Step 2: Create vehicle with all its data and media links
       await fetchApi('/vehicles', {
