@@ -4,6 +4,10 @@
 @config "../../tailwind.config.ts";
 
 @layer base {
+  html {
+    -webkit-tap-highlight-color: hsl(var(--primary) / 0.12);
+  }
+
   :root {
     /* Seu Novo Carro Brand Colors */
     --brand-green: 149 54% 33%; /* #268052 */

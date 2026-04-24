@@ -1,12 +1,25 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { User } from '@prisma/client';
 import { isSuperAdminEmail } from '../../common/auth/super-admin';
 import type { UpdateSiteSettingsDto } from './dto/site-settings.dto';
+import type { CreateAdminUserDto, UpdateAdminUserDto } from './dto/admin-users.dto';
+import type { CreateAdminDealerDto, UpdateAdminDealerDto } from './dto/admin-dealers.dto';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class AdminService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private usersService: UsersService,
+  ) {}
 
   private readonly billingConfigSlug = 'dealer-billing-config';
 
@@ -98,6 +111,25 @@ export class AdminService {
     return digits || undefined;
   }
 
+  private readonly trialEndDatePattern = /^\d{4}-\d{2}-\d{2}$/;
+
+  /** Data civil YYYY-MM-DD ou null. */
+  private parseTrialEndsOn(value: unknown): string | null {
+    if (value === null || value === undefined || value === '') return null;
+    const s = String(value).trim();
+    if (!this.trialEndDatePattern.test(s)) return null;
+    return s;
+  }
+
+  /** Trial ativo até o fim do dia (UTC) informado em trial_ends_on. */
+  private isBillingTrialActive(billing: Record<string, unknown> | undefined): boolean {
+    const on = billing?.trial_ends_on;
+    if (typeof on !== 'string' || !this.trialEndDatePattern.test(on)) return false;
+    const [y, m, d] = on.split('-').map(Number);
+    const endUtc = Date.UTC(y, m - 1, d, 23, 59, 59, 999);
+    return Date.now() <= endUtc;
+  }
+
   private async requestAsaas<T = any>(
     cfg: { asaas_api_key?: string; asaas_api_url?: string },
     path: string,
@@ -159,29 +191,201 @@ export class AdminService {
     };
   }
 
+  private adminUserListSelect() {
+    return {
+      id: true,
+      email: true,
+      full_name: true,
+      phone: true,
+      city: true,
+      state: true,
+      role: true,
+      status: true,
+      created_at: true,
+      dealer: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+        },
+      },
+    } as const;
+  }
+
   async listUsers(user: User) {
     this.checkAdmin(user);
     return this.prisma.user.findMany({
       orderBy: { created_at: 'desc' },
+      select: this.adminUserListSelect(),
+    });
+  }
+
+  async createAdminUser(actor: User, dto: CreateAdminUserDto) {
+    this.checkAdmin(actor);
+    const role = dto.role ?? 'user';
+    if (role === 'admin' && !isSuperAdminEmail(actor.email)) {
+      throw new ForbiddenException(
+        'Apenas super administrador pode criar usuários com papel Admin',
+      );
+    }
+    const status = dto.status ?? 'active';
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(dto.password, salt);
+    const email = dto.email.trim().toLowerCase();
+
+    const created = await this.usersService.create({
+      email,
+      password_hash,
+      full_name: dto.full_name?.trim() || undefined,
+      phone: dto.phone?.trim() || undefined,
+      city: dto.city?.trim() || undefined,
+      state: dto.state?.trim().toUpperCase() || undefined,
+      role,
+      status,
+    });
+
+    return this.prisma.user.findUniqueOrThrow({
+      where: { id: created.id },
+      select: this.adminUserListSelect(),
+    });
+  }
+
+  async updateAdminUser(actor: User, targetId: string, dto: UpdateAdminUserDto) {
+    this.checkAdmin(actor);
+    const actorIsSuper = isSuperAdminEmail(actor.email);
+    const target = await this.prisma.user.findUnique({
+      where: { id: targetId },
       select: {
         id: true,
         email: true,
-        full_name: true,
-        phone: true,
-        city: true,
-        state: true,
         role: true,
         status: true,
-        created_at: true,
-        dealer: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-          },
-        },
       },
     });
+    if (!target) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    if (target.role === 'admin' && actor.id !== target.id && !actorIsSuper) {
+      throw new ForbiddenException(
+        'Apenas super administrador pode alterar outros administradores',
+      );
+    }
+
+    if (dto.role === 'admin' && !actorIsSuper) {
+      throw new ForbiddenException(
+        'Apenas super administrador pode atribuir papel Admin',
+      );
+    }
+
+    const nextRole = dto.role ?? target.role;
+    const nextStatus = dto.status ?? target.status;
+    const willBeActiveAdmin = nextRole === 'admin' && nextStatus === 'active';
+    const otherActiveAdmins = await this.prisma.user.count({
+      where: {
+        role: 'admin',
+        status: 'active',
+        id: { not: targetId },
+      },
+    });
+    if (!willBeActiveAdmin && otherActiveAdmins < 1) {
+      throw new ForbiddenException(
+        'É necessário manter ao menos um administrador ativo no sistema',
+      );
+    }
+
+    if (dto.email !== undefined) {
+      const email = dto.email.trim().toLowerCase();
+      if (email !== target.email) {
+        const taken = await this.prisma.user.findUnique({
+          where: { email },
+          select: { id: true },
+        });
+        if (taken && taken.id !== targetId) {
+          throw new ConflictException('Este e-mail já está em uso');
+        }
+      }
+    }
+
+    const data: Record<string, unknown> = {};
+    if (dto.email !== undefined) {
+      data.email = dto.email.trim().toLowerCase();
+    }
+    if (dto.password !== undefined && dto.password.length > 0) {
+      const salt = await bcrypt.genSalt(10);
+      data.password_hash = await bcrypt.hash(dto.password, salt);
+    }
+    if (dto.full_name !== undefined) {
+      data.full_name = dto.full_name.trim() || null;
+    }
+    if (dto.phone !== undefined) {
+      data.phone = dto.phone?.trim() || null;
+    }
+    if (dto.city !== undefined) {
+      data.city = dto.city?.trim() || null;
+    }
+    if (dto.state !== undefined) {
+      data.state = dto.state?.trim().toUpperCase() || null;
+    }
+    if (dto.role !== undefined) {
+      data.role = dto.role;
+    }
+    if (dto.status !== undefined) {
+      data.status = dto.status;
+    }
+
+    if (Object.keys(data).length === 0) {
+      return this.prisma.user.findUniqueOrThrow({
+        where: { id: targetId },
+        select: this.adminUserListSelect(),
+      });
+    }
+
+    await this.prisma.user.update({
+      where: { id: targetId },
+      data: data as any,
+    });
+
+    return this.prisma.user.findUniqueOrThrow({
+      where: { id: targetId },
+      select: this.adminUserListSelect(),
+    });
+  }
+
+  async deleteAdminUser(actor: User, targetId: string) {
+    this.checkAdmin(actor);
+    if (actor.id === targetId) {
+      throw new ForbiddenException('Você não pode excluir a si mesmo');
+    }
+
+    const target = await this.prisma.user.findUnique({
+      where: { id: targetId },
+      select: { id: true, role: true },
+    });
+    if (!target) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    const actorIsSuper = isSuperAdminEmail(actor.email);
+    if (target.role === 'admin' && !actorIsSuper) {
+      throw new ForbiddenException(
+        'Apenas super administrador pode excluir administradores',
+      );
+    }
+
+    if (target.role === 'admin') {
+      const adminCount = await this.prisma.user.count({
+        where: { role: 'admin' },
+      });
+      if (adminCount <= 1) {
+        throw new ForbiddenException(
+          'Não é possível excluir o último administrador',
+        );
+      }
+    }
+
+    await this.prisma.user.delete({ where: { id: targetId } });
+    return { ok: true };
   }
 
   async listPendingSellerApprovals(user: User) {
@@ -302,6 +506,9 @@ export class AdminService {
           billing_custom_price: typeof billing.custom_price === 'number' ? billing.custom_price : null,
           billing_discount_percent: typeof billing.discount_percent === 'number' ? billing.discount_percent : null,
           billing_discount_fixed: typeof billing.discount_fixed === 'number' ? billing.discount_fixed : null,
+          billing_exempt: Boolean(billing.exempt),
+          billing_trial_ends_on: this.parseTrialEndsOn(billing.trial_ends_on),
+          billing_trial_active: this.isBillingTrialActive(billing as Record<string, unknown>),
           asaas_customer_id: billing.asaas_customer_id || null,
           last_charge: billing.last_charge || null,
         };
@@ -411,6 +618,8 @@ export class AdminService {
       custom_price?: number | null;
       discount_percent?: number | null;
       discount_fixed?: number | null;
+      exempt?: boolean;
+      trial_ends_on?: string | null;
     },
   ) {
     this.checkAdmin(user);
@@ -422,6 +631,14 @@ export class AdminService {
     const normalize = (value: any) =>
       value === null || value === undefined || value === '' ? null : Number(value);
 
+    const exempt =
+      data.exempt !== undefined ? Boolean(data.exempt) : Boolean(currentBilling.exempt);
+
+    const trialEndsOn =
+      data.trial_ends_on !== undefined
+        ? this.parseTrialEndsOn(data.trial_ends_on)
+        : this.parseTrialEndsOn(currentBilling.trial_ends_on);
+
     return this.prisma.dealer.update({
       where: { id: dealerId },
       data: {
@@ -432,6 +649,8 @@ export class AdminService {
             custom_price: normalize(data.custom_price),
             discount_percent: normalize(data.discount_percent),
             discount_fixed: normalize(data.discount_fixed),
+            exempt,
+            trial_ends_on: trialEndsOn,
           },
         } as any,
       },
@@ -466,6 +685,16 @@ export class AdminService {
     }
 
     const billing = ((metadata.billing || {}) as any);
+    if (billing.exempt === true) {
+      throw new ForbiddenException(
+        'Este lojista está isento de cobrança. Desative a isenção para gerar cobrança.',
+      );
+    }
+    if (this.isBillingTrialActive(billing as Record<string, unknown>)) {
+      throw new ForbiddenException(
+        `Trial ativo até ${billing.trial_ends_on}. Após essa data será possível cobrar.`,
+      );
+    }
     const basePrice = Number(plan.price || 0);
     const customPrice = typeof billing.custom_price === 'number' ? billing.custom_price : null;
     const discountPercent = typeof billing.discount_percent === 'number' ? billing.discount_percent : 0;
@@ -536,6 +765,231 @@ export class AdminService {
       status: payment.status,
       invoice_url: payment.invoiceUrl || null,
     };
+  }
+
+  private buildDealerSlug(value: string): string {
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '') || 'loja';
+  }
+
+  private async ensureUniqueDealerSlug(
+    base: string,
+    excludeDealerId?: string,
+  ): Promise<string> {
+    let slug = base;
+    let n = 1;
+    for (;;) {
+      const found = await this.prisma.dealer.findUnique({ where: { slug } });
+      if (!found || found.id === excludeDealerId) return slug;
+      n += 1;
+      slug = `${base}-${n}`;
+    }
+  }
+
+  private mapAdminDealerRow(d: {
+    id: string;
+    user_id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    address: string | null;
+    website: string | null;
+    instagram: string | null;
+    facebook: string | null;
+    verified: boolean;
+    featured: boolean;
+    user: {
+      email: string;
+      full_name: string | null;
+      phone: string | null;
+      city: string | null;
+      state: string | null;
+      _count: { vehicles: number };
+    } | null;
+  }) {
+    const u = d.user;
+    return {
+      id: d.id,
+      user_id: d.user_id,
+      name: d.name,
+      slug: d.slug,
+      dealer_name: d.name,
+      dealer_slug: d.slug,
+      description: d.description,
+      address: d.address,
+      website: d.website,
+      instagram: d.instagram,
+      facebook: d.facebook,
+      city: u?.city ?? null,
+      state: u?.state ?? null,
+      phone: u?.phone ?? null,
+      owner_email: u?.email ?? null,
+      owner_name: u?.full_name ?? null,
+      dealer_verified: d.verified,
+      dealer_featured: d.featured,
+      vehicle_count: u?._count?.vehicles ?? 0,
+    };
+  }
+
+  async listAdminDealers(actor: User) {
+    this.checkAdmin(actor);
+    const rows = await this.prisma.dealer.findMany({
+      orderBy: { created_at: 'desc' },
+      include: {
+        user: {
+          select: {
+            email: true,
+            full_name: true,
+            phone: true,
+            city: true,
+            state: true,
+            _count: { select: { vehicles: true } },
+          },
+        },
+      },
+    });
+    return rows.map((d) => this.mapAdminDealerRow(d));
+  }
+
+  async createAdminDealer(actor: User, dto: CreateAdminDealerDto) {
+    this.checkAdmin(actor);
+    const email = dto.owner_email.trim().toLowerCase();
+    const owner = await this.prisma.user.findUnique({ where: { email } });
+    if (!owner) {
+      throw new BadRequestException(
+        'Nenhum usuário com este e-mail. Cadastre o usuário em Usuários antes de vincular a loja.',
+      );
+    }
+    const existing = await this.prisma.dealer.findUnique({ where: { user_id: owner.id } });
+    if (existing) {
+      throw new ConflictException('Este usuário já possui uma loja vinculada');
+    }
+    const base = this.buildDealerSlug(dto.slug?.trim() || dto.name);
+    const slug = await this.ensureUniqueDealerSlug(base);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: owner.id },
+        data: {
+          role: owner.role === 'user' ? 'editor' : owner.role,
+          status: owner.status === 'suspended' ? 'active' : owner.status,
+        },
+      });
+      await tx.dealer.create({
+        data: {
+          user_id: owner.id,
+          name: dto.name.trim(),
+          slug,
+        },
+      });
+    });
+
+    const created = await this.prisma.dealer.findUnique({
+      where: { user_id: owner.id },
+      include: {
+        user: {
+          select: {
+            email: true,
+            full_name: true,
+            phone: true,
+            city: true,
+            state: true,
+            _count: { select: { vehicles: true } },
+          },
+        },
+      },
+    });
+    if (!created || !created.user) throw new NotFoundException('Falha ao criar lojista');
+    return this.mapAdminDealerRow(created as any);
+  }
+
+  async updateAdminDealer(actor: User, dealerId: string, dto: UpdateAdminDealerDto) {
+    this.checkAdmin(actor);
+    const dealer = await this.prisma.dealer.findUnique({
+      where: { id: dealerId },
+      include: {
+        user: {
+          select: {
+            email: true,
+            full_name: true,
+            phone: true,
+            city: true,
+            state: true,
+            _count: { select: { vehicles: true } },
+          },
+        },
+      },
+    });
+    if (!dealer || !dealer.user) throw new NotFoundException('Lojista não encontrado');
+
+    const data: Record<string, unknown> = {};
+    if (dto.name !== undefined) data.name = dto.name.trim();
+    if (dto.slug !== undefined) {
+      const slug = await this.ensureUniqueDealerSlug(
+        this.buildDealerSlug(dto.slug),
+        dealerId,
+      );
+      data.slug = slug;
+    }
+    if (dto.description !== undefined) {
+      data.description = dto.description === null || dto.description === ''
+        ? null
+        : String(dto.description).trim();
+    }
+    if (dto.address !== undefined) {
+      data.address =
+        dto.address === null || dto.address === '' ? null : String(dto.address).trim();
+    }
+    if (dto.website !== undefined) {
+      data.website =
+        dto.website === null || dto.website === '' ? null : String(dto.website).trim();
+    }
+    if (dto.instagram !== undefined) {
+      data.instagram =
+        dto.instagram === null || dto.instagram === ''
+          ? null
+          : String(dto.instagram).trim();
+    }
+    if (dto.facebook !== undefined) {
+      data.facebook =
+        dto.facebook === null || dto.facebook === '' ? null : String(dto.facebook).trim();
+    }
+    if (dto.verified !== undefined) data.verified = dto.verified;
+    if (dto.featured !== undefined) data.featured = dto.featured;
+
+    if (Object.keys(data).length === 0) {
+      return this.mapAdminDealerRow(dealer as any);
+    }
+
+    const updated = await this.prisma.dealer.update({
+      where: { id: dealerId },
+      data: data as any,
+      include: {
+        user: {
+          select: {
+            email: true,
+            full_name: true,
+            phone: true,
+            city: true,
+            state: true,
+            _count: { select: { vehicles: true } },
+          },
+        },
+      },
+    });
+    return this.mapAdminDealerRow(updated as any);
+  }
+
+  async deleteAdminDealer(actor: User, dealerId: string) {
+    this.checkAdmin(actor);
+    const dealer = await this.prisma.dealer.findUnique({ where: { id: dealerId } });
+    if (!dealer) throw new NotFoundException('Lojista não encontrado');
+    await this.prisma.dealer.delete({ where: { id: dealerId } });
+    return { ok: true };
   }
 
   private async ensureSiteSettingsRow() {

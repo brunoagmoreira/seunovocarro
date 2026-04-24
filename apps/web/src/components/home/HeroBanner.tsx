@@ -120,11 +120,11 @@ export function HeroBanner() {
             </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-black text-white leading-[1.1]">
-              {currentSlide.title}
+              {defaultSlide.title}
             </h1>
 
             <p className="text-white/80 text-lg md:text-xl font-light leading-relaxed max-w-lg">
-              {currentSlide.subtitle}
+              {defaultSlide.subtitle}
             </p>
 
             <div className="pt-2">
@@ -158,29 +158,40 @@ export function HeroBanner() {
             </div>
           </div>
 
-          {/* Lado Direito - Carro Verificado */}
-          <div className="w-full lg:w-1/2 relative z-10 flex justify-center lg:justify-end min-h-[300px] md:min-h-[400px]">
+          {/* Lado Direito — nome do veículo acima da foto; preço só na faixa sobre a imagem */}
+          <div className="w-full lg:w-1/2 relative z-10 flex flex-col items-center lg:items-end justify-start min-h-[300px] md:min-h-[400px]">
             {currentSlide.imageUrl ? (
-              <div className="relative w-full max-w-2xl animate-fade-in">
-                <Link href={currentSlide.linkUrl} className="block">
-                {/* O Badge de Verificação sobreposto ao carro */}
-                <div className="absolute -top-4 -right-4 md:top-4 md:right-8 z-30 bg-[#FFD91A] w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center shadow-xl border-4 border-white transform rotate-12 hover:rotate-0 transition-transform">
-                  <ShieldCheck className="w-8 h-8 md:w-10 md:h-10 text-black" />
+              <div
+                key={currentSlide.id}
+                className="relative w-full max-w-2xl animate-fade-in flex flex-col items-center lg:items-end"
+              >
+                <div className="w-full mb-3 text-center lg:text-right px-1">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-heading font-bold text-white leading-snug">
+                    {currentSlide.title}
+                  </h2>
+                  {currentSlide.subtitle ? (
+                    <p className="text-white/75 text-sm md:text-base mt-1">{currentSlide.subtitle}</p>
+                  ) : null}
                 </div>
-                <img 
-                  src={currentSlide.imageUrl} 
-                  alt={currentSlide.title}
-                  loading="eager"
-                  fetchPriority="high"
-                  decoding="async"
-                  className="w-full h-auto object-contain drop-shadow-2xl scale-110"
-                />
-                </Link>
-                <div className="absolute left-4 bottom-4 rounded-xl bg-black/55 backdrop-blur-sm px-4 py-3 text-white border border-white/20 max-w-[calc(100%-2rem)]">
-                  <p className="font-semibold text-sm md:text-base truncate">{currentSlide.title}</p>
-                  {currentSlide.priceLabel && (
-                    <p className="text-[#FFD91A] text-base md:text-lg font-bold">{currentSlide.priceLabel}</p>
-                  )}
+                <div className="relative w-full">
+                  <Link href={currentSlide.linkUrl} className="block w-full">
+                    <div className="absolute -top-4 -right-4 md:top-2 md:right-6 z-30 bg-[#FFD91A] w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center shadow-xl border-4 border-white transform rotate-12 hover:rotate-0 transition-transform pointer-events-none">
+                      <ShieldCheck className="w-8 h-8 md:w-10 md:h-10 text-black" aria-hidden />
+                    </div>
+                    <img
+                      src={currentSlide.imageUrl}
+                      alt={currentSlide.title}
+                      loading="eager"
+                      fetchPriority="high"
+                      decoding="async"
+                      className="w-full h-auto object-contain drop-shadow-2xl scale-110"
+                    />
+                  </Link>
+                  {currentSlide.priceLabel ? (
+                    <div className="absolute left-4 bottom-4 z-20 rounded-xl bg-black/55 backdrop-blur-sm px-4 py-2.5 border border-white/20 max-w-[calc(100%-2rem)]">
+                      <p className="text-[#FFD91A] text-base md:text-lg font-bold tabular-nums">{currentSlide.priceLabel}</p>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             ) : (
@@ -193,22 +204,37 @@ export function HeroBanner() {
 
         </div>
 
-        {/* Carousel Controls */}
+        {/* Controles fora do fluxo absoluto da imagem — evita cobrir o preço no mobile */}
         {slides.length > 1 && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 z-40 bg-black/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
-            <button onClick={prevSlide} className="text-white/70 hover:text-white transition-colors">
+          <div className="flex justify-center items-center gap-4 mt-8 md:mt-10 w-full bg-black/20 backdrop-blur-md px-4 py-2.5 rounded-full border border-white/10 max-w-md mx-auto">
+            <button
+              type="button"
+              aria-label="Slide anterior"
+              onClick={prevSlide}
+              className="text-white/80 hover:text-white transition-colors p-1 touch-target min-w-[44px] min-h-[44px] flex items-center justify-center"
+            >
               <ChevronLeft className="w-6 h-6" />
             </button>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               {slides.map((_, idx) => (
-                <button 
+                <button
                   key={idx}
+                  type="button"
+                  aria-label={`Ir para o slide ${idx + 1}`}
+                  aria-current={idx === currentIndex ? 'true' : undefined}
                   onClick={() => setCurrentIndex(idx)}
-                  className={`w-2 h-2 rounded-full transition-all ${idx === currentIndex ? 'bg-[#FFD91A] w-6' : 'bg-white/30 hover:bg-white/50'}`}
+                  className={`rounded-full transition-all p-3 -m-1 flex items-center justify-center ${
+                    idx === currentIndex ? 'bg-[#FFD91A] h-2 w-6' : 'bg-white/30 hover:bg-white/50 w-2 h-2'
+                  }`}
                 />
               ))}
             </div>
-            <button onClick={nextSlide} className="text-white/70 hover:text-white transition-colors">
+            <button
+              type="button"
+              aria-label="Próximo slide"
+              onClick={nextSlide}
+              className="text-white/80 hover:text-white transition-colors p-1 touch-target min-w-[44px] min-h-[44px] flex items-center justify-center"
+            >
               <ChevronRight className="w-6 h-6" />
             </button>
           </div>

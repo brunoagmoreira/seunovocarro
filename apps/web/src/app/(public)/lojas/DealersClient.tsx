@@ -95,7 +95,7 @@ export function DealersClient() {
 function DealerCard({ dealer, featured = false }: { dealer: Dealer; featured?: boolean }) {
   return (
     <Link
-      href={`/loja/${dealer.dealer_slug}`}
+      href={`/loja/${dealer.dealer_slug || dealer.slug}`}
       className={cn(
         "group block bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-elevated transition-all",
         featured && "ring-2 ring-primary"

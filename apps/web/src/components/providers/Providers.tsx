@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { useState } from "react";
+import { PwaRegister } from "@/components/pwa/PwaRegister";
 // import { TrackingScripts } from "@/components/tracking/TrackingScripts";
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -25,6 +26,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
+          <PwaRegister />
           {/* <TrackingScripts /> */}
           {children}
           <Toaster />

@@ -9,6 +9,12 @@ import type { User } from '@prisma/client';
 export class DealersController {
   constructor(private readonly dealersService: DealersService) {}
 
+  /** Deve ficar antes de @Get(':slug'), senão "featured" vira slug e a home perde a seção. */
+  @Get('featured')
+  findFeatured() {
+    return this.dealersService.findFeaturedForHome();
+  }
+
   @Get()
   findAll() {
     return this.dealersService.findAll();

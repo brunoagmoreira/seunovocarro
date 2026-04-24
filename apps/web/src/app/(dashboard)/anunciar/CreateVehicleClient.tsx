@@ -513,7 +513,8 @@ export function CreateVehicleClient() {
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Descreva os diferenciais do veículo, opcionais, histórico..."
-                rows={4}
+                rows={10}
+                className="min-h-[220px] resize-y"
               />
             </div>
           </div>

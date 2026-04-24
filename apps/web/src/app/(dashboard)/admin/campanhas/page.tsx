@@ -2,16 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Plus, Search, Filter, Edit2, Play, DollarSign, Calendar, Target, TrendingUp, BarChart3, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Plus, Search, Filter, Edit2, Play, DollarSign, Calendar, Target, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
 interface Campaign {
@@ -21,18 +18,10 @@ interface Campaign {
   totals: { total_impressions: number; total_clicks: number; total_leads: number } | null;
 }
 
-const mockCampaigns: Campaign[] = [
-  { id: '1', vehicle_brand: 'Honda', vehicle_model: 'Civic Touring', vehicle_year: 2023, vehicle_ad_code: 'AD-001', seller_name: 'Carlos Silva', seller_phone: '(31) 98888-1234', start_date: '2026-03-01', end_date: '2026-03-31', status: 'active', payment_status: 'paid', total_budget: 540, totals: { total_impressions: 45200, total_clicks: 1230, total_leads: 28 } },
-  { id: '2', vehicle_brand: 'Toyota', vehicle_model: 'Corolla Altis', vehicle_year: 2024, vehicle_ad_code: 'AD-002', seller_name: 'Ana Souza', seller_phone: '(11) 97777-5678', start_date: '2026-03-10', end_date: '2026-04-10', status: 'active', payment_status: 'paid', total_budget: 360, totals: { total_impressions: 22100, total_clicks: 680, total_leads: 15 } },
-  { id: '3', vehicle_brand: 'BMW', vehicle_model: '320i', vehicle_year: 2022, vehicle_ad_code: 'AD-003', seller_name: 'Pedro Autos', seller_phone: '(31) 95555-3456', start_date: '2026-02-15', end_date: '2026-03-15', status: 'completed', payment_status: 'paid', total_budget: 900, totals: { total_impressions: 78500, total_clicks: 2300, total_leads: 42 } },
-  { id: '4', vehicle_brand: 'Jeep', vehicle_model: 'Compass', vehicle_year: 2023, vehicle_ad_code: 'AD-004', seller_name: 'Marina Premium', seller_phone: '(41) 96666-9012', start_date: '2026-04-01', end_date: '2026-04-30', status: 'pending', payment_status: 'pending', total_budget: 180, totals: null },
-];
-
 export default function AdminCampaignsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
-  const [showNewCampaign, setShowNewCampaign] = useState(false);
-  const [campaigns] = useState<Campaign[]>(mockCampaigns);
+  const [campaigns] = useState<Campaign[]>([]);
 
   const stats = {
     total: campaigns.length,

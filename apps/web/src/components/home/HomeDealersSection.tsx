@@ -9,9 +9,8 @@ import { useFeaturedDealers } from '@/hooks/useDealers';
 export function HomeDealersSection() {
   const { data: featuredDealers, isLoading } = useFeaturedDealers();
 
-  if (!isLoading && (!featuredDealers || featuredDealers.length === 0)) {
-    return null;
-  }
+  const showEmpty =
+    !isLoading && (!featuredDealers || featuredDealers.length === 0);
 
   return (
     <section className="py-12 md:py-16">
@@ -43,6 +42,20 @@ export function HomeDealersSection() {
             Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-48 rounded-2xl" />
             ))
+          ) : showEmpty ? (
+            <div className="col-span-full rounded-2xl border border-dashed bg-muted/30 px-6 py-10 text-center text-muted-foreground">
+              <p className="mb-2 font-medium text-foreground">Nenhuma loja listada no momento</p>
+              <p className="text-sm mb-4">
+                Assim que houver lojistas cadastrados, eles aparecerão aqui. Enquanto isso, confira a
+                página de lojas.
+              </p>
+              <Button variant="outline" asChild>
+                <Link href="/lojas">
+                  Ver página de lojas
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Link>
+              </Button>
+            </div>
           ) : (
             featuredDealers?.map((dealer) => (
               <Link

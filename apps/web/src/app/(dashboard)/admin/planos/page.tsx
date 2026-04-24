@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import { fetchApi } from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -42,6 +43,9 @@ interface DealerItem {
   billing_custom_price: number | null;
   billing_discount_percent: number | null;
   billing_discount_fixed: number | null;
+  billing_exempt: boolean;
+  billing_trial_ends_on: string | null;
+  billing_trial_active: boolean;
   asaas_customer_id: string | null;
   last_charge?: {
     id: string;
@@ -138,9 +142,12 @@ export default function AdminDealerPlansPage() {
           custom_price: dealer.billing_custom_price,
           discount_percent: dealer.billing_discount_percent,
           discount_fixed: dealer.billing_discount_fixed,
+          exempt: dealer.billing_exempt,
+          trial_ends_on: dealer.billing_trial_ends_on,
         },
       });
       toast.success('Condição comercial atualizada');
+      await loadData();
     } catch (error: any) {
       toast.error('Erro ao salvar desconto', { description: error.message });
       await loadData();
@@ -353,6 +360,54 @@ export default function AdminDealerPlansPage() {
                   <p className="font-medium">{dealer.name}</p>
                   <p className="text-xs text-muted-foreground">{dealer.owner_name || 'Sem nome'} • {dealer.owner_email || '-'}</p>
                 </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-dashed bg-muted/20 px-3 py-2">
+                  <div className="flex items-center gap-3">
+                    <Switch
+                      id={`exempt-${dealer.id}`}
+                      checked={dealer.billing_exempt}
+                      onCheckedChange={(checked) =>
+                        updateDealerBillingLocal(dealer.id, { billing_exempt: checked })
+                      }
+                    />
+                    <Label htmlFor={`exempt-${dealer.id}`} className="cursor-pointer text-sm font-medium leading-snug">
+                      Isento de cobrança
+                      <span className="block font-normal text-muted-foreground text-xs">
+                        Não gera fatura no Asaas enquanto ativo
+                      </span>
+                    </Label>
+                  </div>
+                  {dealer.billing_exempt && (
+                    <span className="text-xs font-medium text-amber-700 dark:text-amber-500">Cobrança manual bloqueada</span>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between rounded-lg border bg-muted/10 px-3 py-3">
+                  <div className="space-y-1 flex-1 max-w-xs">
+                    <Label htmlFor={`trial-${dealer.id}`}>Trial gratuito até</Label>
+                    <Input
+                      id={`trial-${dealer.id}`}
+                      type="date"
+                      value={dealer.billing_trial_ends_on ?? ''}
+                      disabled={dealer.billing_exempt}
+                      onChange={(e) =>
+                        updateDealerBillingLocal(dealer.id, {
+                          billing_trial_ends_on: e.target.value === '' ? null : e.target.value,
+                        })
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Com data futura ou hoje, &quot;Cobrar agora&quot; fica bloqueado até o fim do trial. Deixe em branco
+                      para remover.
+                    </p>
+                  </div>
+                  {dealer.billing_trial_active && (
+                    <Badge className="w-fit shrink-0 bg-sky-600 hover:bg-sky-600">
+                      Trial até{' '}
+                      {dealer.billing_trial_ends_on
+                        ? dealer.billing_trial_ends_on.split('-').reverse().join('/')
+                        : '—'}
+                    </Badge>
+                  )}
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
                   <Select value={dealer.plan_slug} onValueChange={(value) => updateDealerPlan(dealer.id, value)}>
                     <SelectTrigger>
@@ -368,6 +423,7 @@ export default function AdminDealerPlansPage() {
                     type="number"
                     placeholder="Preço customizado"
                     value={dealer.billing_custom_price ?? ''}
+                    disabled={dealer.billing_exempt}
                     onChange={(e) =>
                       updateDealerBillingLocal(dealer.id, {
                         billing_custom_price: e.target.value === '' ? null : Number(e.target.value),
@@ -378,6 +434,7 @@ export default function AdminDealerPlansPage() {
                     type="number"
                     placeholder="Desconto %"
                     value={dealer.billing_discount_percent ?? ''}
+                    disabled={dealer.billing_exempt}
                     onChange={(e) =>
                       updateDealerBillingLocal(dealer.id, {
                         billing_discount_percent: e.target.value === '' ? null : Number(e.target.value),
@@ -388,6 +445,7 @@ export default function AdminDealerPlansPage() {
                     type="number"
                     placeholder="Desconto fixo"
                     value={dealer.billing_discount_fixed ?? ''}
+                    disabled={dealer.billing_exempt}
                     onChange={(e) =>
                       updateDealerBillingLocal(dealer.id, {
                         billing_discount_fixed: e.target.value === '' ? null : Number(e.target.value),
@@ -398,7 +456,18 @@ export default function AdminDealerPlansPage() {
                     <Button variant="outline" className="w-full" onClick={() => saveDealerBilling(dealer)}>
                       Salvar condição
                     </Button>
-                    <Button className="w-full" onClick={() => chargeDealerNow(dealer)}>
+                    <Button
+                      className="w-full"
+                      disabled={dealer.billing_exempt || dealer.billing_trial_active}
+                      title={
+                        dealer.billing_exempt
+                          ? 'Lojista isento — desative a isenção para cobrar'
+                          : dealer.billing_trial_active
+                            ? 'Trial ativo — aguarde o fim da data ou remova o trial'
+                            : undefined
+                      }
+                      onClick={() => chargeDealerNow(dealer)}
+                    >
                       Cobrar agora
                     </Button>
                   </div>
