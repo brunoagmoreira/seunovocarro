@@ -3,11 +3,13 @@ import {
   NotFoundException,
   ForbiddenException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BlogPostStatus, Prisma } from '@prisma/client';
 import type { User } from '@prisma/client';
 import { CreateBlogPostDto, UpdateBlogPostDto } from './dto/blog-post.dto';
+import { CreateBlogCategoryDto } from './dto/blog-category.dto';
 
 const DEFAULT_CATEGORIES: { name: string; slug: string; color: string }[] = [
   { name: 'Dicas', slug: 'dicas', color: '#22c55e' },
@@ -28,6 +30,16 @@ function normalizeKeywords(input: string | undefined): string[] {
 function readingTimeFromContent(content: string): number {
   const words = content.trim().split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.ceil(words / 200));
+}
+
+function slugifyCategoryName(value: string): string {
+  const s = value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+  return s || 'categoria';
 }
 
 const publicPostInclude = {
@@ -67,6 +79,50 @@ export class BlogService {
   async findCategoriesAdmin(user: User) {
     this.assertAdmin(user);
     return this.findCategories();
+  }
+
+  async createCategoryAdmin(user: User, dto: CreateBlogCategoryDto) {
+    this.assertAdmin(user);
+    const name = dto.name.trim();
+    if (!name) {
+      throw new BadRequestException('Nome é obrigatório.');
+    }
+
+    const baseSlug = (dto.slug?.trim().toLowerCase() || slugifyCategoryName(name)).replace(
+      /^-+|-+$/g,
+      '',
+    );
+    if (!baseSlug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(baseSlug)) {
+      throw new BadRequestException('Slug inválido. Use apenas letras minúsculas, números e hífens.');
+    }
+
+    let slug = baseSlug;
+    let counter = 1;
+    while (await this.prisma.blogCategory.findUnique({ where: { slug } })) {
+      counter += 1;
+      slug = `${baseSlug}-${counter}`;
+      if (counter > 100) {
+        throw new ConflictException('Não foi possível gerar um slug único para a categoria.');
+      }
+    }
+
+    const color = dto.color?.trim() || '#3B82F6';
+
+    try {
+      return await this.prisma.blogCategory.create({
+        data: {
+          name,
+          slug,
+          color,
+          description: dto.description?.trim() || null,
+        },
+      });
+    } catch (e: any) {
+      if (e?.code === 'P2002') {
+        throw new ConflictException('Já existe uma categoria com este slug.');
+      }
+      throw e;
+    }
   }
 
   async findPublishedPosts(filters?: { category?: string; search?: string }) {

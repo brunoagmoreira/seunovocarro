@@ -15,6 +15,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { User } from '@prisma/client';
 import { CreateBlogPostDto, UpdateBlogPostDto } from './dto/blog-post.dto';
+import { CreateBlogCategoryDto } from './dto/blog-category.dto';
 
 @Controller('blog')
 export class BlogController {
@@ -94,6 +95,12 @@ export class BlogController {
   @Get('admin/categories')
   adminCategories(@CurrentUser() user: User) {
     return this.blogService.findCategoriesAdmin(user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('admin/categories')
+  adminCreateCategory(@CurrentUser() user: User, @Body() body: CreateBlogCategoryDto) {
+    return this.blogService.createCategoryAdmin(user, body);
   }
 
   @UseGuards(JwtAuthGuard)

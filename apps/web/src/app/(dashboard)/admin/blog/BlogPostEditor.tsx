@@ -9,6 +9,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { fetchApi } from '@/lib/api';
 import { compressImage } from '@/lib/imageCompression';
@@ -55,6 +63,12 @@ export function BlogPostEditor({ postId }: { postId?: string }) {
   const [loading, setLoading] = useState(!!postId);
   const [autoSlug, setAutoSlug] = useState(true);
   const [categories, setCategories] = useState<BlogCategory[]>([]);
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatSlug, setNewCatSlug] = useState('');
+  const [newCatColor, setNewCatColor] = useState('#3B82F6');
+  const [catSlugManual, setCatSlugManual] = useState(false);
+  const [savingCategory, setSavingCategory] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -79,6 +93,57 @@ export function BlogPostEditor({ postId }: { postId?: string }) {
       toast.error('Erro ao carregar categorias', { description: e.message });
     }
   }, []);
+
+  const resetNewCategoryForm = useCallback(() => {
+    setNewCatName('');
+    setNewCatSlug('');
+    setNewCatColor('#3B82F6');
+    setCatSlugManual(false);
+  }, []);
+
+  const openNewCategoryDialog = () => {
+    resetNewCategoryForm();
+    setCategoryDialogOpen(true);
+  };
+
+  const handleNewCatNameChange = (value: string) => {
+    setNewCatName(value);
+    if (!catSlugManual) {
+      setNewCatSlug(generateSlug(value));
+    }
+  };
+
+  const handleCreateCategory = async () => {
+    const name = newCatName.trim();
+    if (name.length < 2) {
+      toast.error('Informe um nome com pelo menos 2 caracteres.');
+      return;
+    }
+    setSavingCategory(true);
+    try {
+      const body: { name: string; color: string; slug?: string } = {
+        name,
+        color: newCatColor,
+      };
+      if (catSlugManual && newCatSlug.trim()) {
+        body.slug = newCatSlug.trim().toLowerCase();
+      }
+      const created = await fetchApi<BlogCategory>('/blog/admin/categories', {
+        method: 'POST',
+        requireAuth: true,
+        body,
+      });
+      toast.success('Categoria criada');
+      setCategoryDialogOpen(false);
+      resetNewCategoryForm();
+      await loadCategories();
+      setFormData((prev) => ({ ...prev, category_id: created.id }));
+    } catch (e: any) {
+      toast.error('Não foi possível criar a categoria', { description: e.message });
+    } finally {
+      setSavingCategory(false);
+    }
+  };
 
   const loadPost = useCallback(async () => {
     if (!postId) return;
@@ -414,7 +479,12 @@ export function BlogPostEditor({ postId }: { postId?: string }) {
           </div>
 
           <div className="p-4 rounded-lg border bg-card space-y-4">
-            <h3 className="font-heading font-semibold">Categoria</h3>
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="font-heading font-semibold">Categoria</h3>
+              <Button type="button" variant="outline" size="sm" onClick={openNewCategoryDialog}>
+                Nova categoria
+              </Button>
+            </div>
             <Select
               value={formData.category_id || '__none__'}
               onValueChange={(v) =>
@@ -437,6 +507,83 @@ export function BlogPostEditor({ postId }: { postId?: string }) {
               </SelectContent>
             </Select>
           </div>
+
+          <Dialog
+            open={categoryDialogOpen}
+            onOpenChange={(open) => {
+              setCategoryDialogOpen(open);
+              if (!open) resetNewCategoryForm();
+            }}
+          >
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Nova categoria</DialogTitle>
+                <DialogDescription>
+                  O slug é gerado a partir do nome. Você pode ajustá-lo manualmente se precisar.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <div className="space-y-2">
+                  <Label htmlFor="new-cat-name">Nome</Label>
+                  <Input
+                    id="new-cat-name"
+                    placeholder="Ex.: Mercado"
+                    value={newCatName}
+                    onChange={(e) => handleNewCatNameChange(e.target.value)}
+                    maxLength={100}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-cat-slug">Slug (opcional)</Label>
+                  <Input
+                    id="new-cat-slug"
+                    className="font-mono text-sm"
+                    placeholder="mercado"
+                    value={newCatSlug}
+                    onChange={(e) => {
+                      setCatSlugManual(true);
+                      setNewCatSlug(e.target.value);
+                    }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-cat-color">Cor no blog</Label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      id="new-cat-color"
+                      type="color"
+                      className="h-9 w-14 cursor-pointer rounded border border-input bg-background p-1"
+                      value={newCatColor}
+                      onChange={(e) => setNewCatColor(e.target.value)}
+                    />
+                    <span className="text-sm text-muted-foreground font-mono">{newCatColor}</span>
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    setCategoryDialogOpen(false);
+                    resetNewCategoryForm();
+                  }}
+                >
+                  Cancelar
+                </Button>
+                <Button type="button" onClick={() => void handleCreateCategory()} disabled={savingCategory}>
+                  {savingCategory ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Salvando…
+                    </>
+                  ) : (
+                    'Criar'
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           <div className="p-4 rounded-lg border bg-card space-y-4">
             <h3 className="font-heading font-semibold">SEO</h3>
