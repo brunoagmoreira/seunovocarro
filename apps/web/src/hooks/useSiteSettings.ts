@@ -50,11 +50,29 @@ export function useUpdateSiteSettings() {
         google_oauth_client_secret: string | null;
       }>,
     ) => {
-      return await fetchApi<AdminSiteSettings>('/admin/site-settings', {
-        method: 'POST',
-        requireAuth: true,
-        body: JSON.stringify(settings),
-      });
+      try {
+        return await fetchApi<AdminSiteSettings>('/admin/site-settings', {
+          method: 'POST',
+          requireAuth: true,
+          body: JSON.stringify(settings),
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message.toLowerCase() : '';
+        const shouldFallbackToPatch =
+          message.includes('cannot post') ||
+          message.includes('404') ||
+          message.includes('405');
+
+        if (!shouldFallbackToPatch) {
+          throw error;
+        }
+
+        return await fetchApi<AdminSiteSettings>('/admin/site-settings', {
+          method: 'PATCH',
+          requireAuth: true,
+          body: JSON.stringify(settings),
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['site-settings'] });
