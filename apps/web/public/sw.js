@@ -1,5 +1,5 @@
 /* Seu Novo Carro — service worker (cache mínimo + fallback offline). */
-const CACHE = 'snc-pwa-v1';
+const CACHE = 'snc-pwa-v2';
 const OFFLINE = '/offline';
 
 self.addEventListener('install', (event) => {
