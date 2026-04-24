@@ -7,10 +7,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useFeaturedDealers } from '@/hooks/useDealers';
 
 export function HomeDealersSection() {
-  const { data: featuredDealers, isLoading } = useFeaturedDealers();
+  const { data: featuredDealers, isLoading, isError, refetch } = useFeaturedDealers();
 
   const showEmpty =
-    !isLoading && (!featuredDealers || featuredDealers.length === 0);
+    !isLoading &&
+    !isError &&
+    (!featuredDealers || featuredDealers.length === 0);
 
   return (
     <section className="py-12 md:py-16">
@@ -42,6 +44,16 @@ export function HomeDealersSection() {
             Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-48 rounded-2xl" />
             ))
+          ) : isError ? (
+            <div className="col-span-full rounded-2xl border border-destructive/30 bg-destructive/5 px-6 py-10 text-center">
+              <p className="mb-2 font-medium text-foreground">Não foi possível carregar as lojas</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Tente de novo em instantes. Se persistir, confira os logs da API e as migrações do banco de dados.
+              </p>
+              <Button type="button" variant="outline" onClick={() => void refetch()}>
+                Tentar novamente
+              </Button>
+            </div>
           ) : showEmpty ? (
             <div className="col-span-full rounded-2xl border border-dashed bg-muted/30 px-6 py-10 text-center text-muted-foreground">
               <p className="mb-2 font-medium text-foreground">Nenhuma loja listada no momento</p>

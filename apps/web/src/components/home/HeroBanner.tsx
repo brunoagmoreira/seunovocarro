@@ -158,12 +158,12 @@ export function HeroBanner() {
             </div>
           </div>
 
-          {/* Lado Direito — nome do veículo acima da foto; preço só na faixa sobre a imagem */}
-          <div className="w-full lg:w-1/2 relative z-10 flex flex-col items-center lg:items-end justify-start min-h-[300px] md:min-h-[400px]">
+          {/* Lado Direito — foto em card minimalista (~60% da largura anterior) */}
+          <div className="w-full lg:w-1/2 relative z-10 flex flex-col items-center lg:items-end justify-start min-h-[220px] md:min-h-[280px]">
             {currentSlide.imageUrl ? (
               <div
                 key={currentSlide.id}
-                className="relative w-full max-w-2xl animate-fade-in flex flex-col items-center lg:items-end"
+                className="relative w-full max-w-[min(100%,25.2rem)] animate-fade-in flex flex-col items-center lg:items-end"
               >
                 <div className="w-full mb-3 text-center lg:text-right px-1">
                   <h2 className="text-xl sm:text-2xl md:text-3xl font-heading font-bold text-white leading-snug">
@@ -173,23 +173,28 @@ export function HeroBanner() {
                     <p className="text-white/75 text-sm md:text-base mt-1">{currentSlide.subtitle}</p>
                   ) : null}
                 </div>
-                <div className="relative w-full">
+                <div className="relative w-full rounded-2xl bg-white p-3 md:p-4 shadow-lg ring-1 ring-black/[0.06]">
                   <Link href={currentSlide.linkUrl} className="block w-full">
-                    <div className="absolute -top-4 -right-4 md:top-2 md:right-6 z-30 bg-[#FFD91A] w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center shadow-xl border-4 border-white transform rotate-12 hover:rotate-0 transition-transform pointer-events-none">
-                      <ShieldCheck className="w-8 h-8 md:w-10 md:h-10 text-black" aria-hidden />
+                    <div
+                      className="pointer-events-none absolute right-2 top-2 z-30 flex h-8 w-8 items-center justify-center rounded-full bg-[#268052] text-white shadow-md md:h-9 md:w-9"
+                      aria-hidden
+                    >
+                      <ShieldCheck className="h-4 w-4 md:h-[18px] md:w-[18px]" strokeWidth={2.25} />
                     </div>
-                    <img
-                      src={currentSlide.imageUrl}
-                      alt={currentSlide.title}
-                      loading="eager"
-                      fetchPriority="high"
-                      decoding="async"
-                      className="w-full h-auto object-contain drop-shadow-2xl scale-110"
-                    />
+                    <div className="flex min-h-[140px] items-center justify-center rounded-xl bg-gradient-to-b from-neutral-50 to-neutral-100/90 md:min-h-[180px]">
+                      <img
+                        src={currentSlide.imageUrl}
+                        alt={currentSlide.title}
+                        loading="eager"
+                        fetchPriority="high"
+                        decoding="async"
+                        className="max-h-[min(38vh,15rem)] w-full object-contain md:max-h-[min(42vh,17rem)]"
+                      />
+                    </div>
                   </Link>
                   {currentSlide.priceLabel ? (
-                    <div className="absolute left-4 bottom-4 z-20 rounded-xl bg-black/55 backdrop-blur-sm px-4 py-2.5 border border-white/20 max-w-[calc(100%-2rem)]">
-                      <p className="text-[#FFD91A] text-base md:text-lg font-bold tabular-nums">{currentSlide.priceLabel}</p>
+                    <div className="absolute bottom-3 left-3 z-20 rounded-lg bg-neutral-900/85 px-3 py-2 backdrop-blur-sm md:bottom-4 md:left-4 md:px-4 md:py-2.5">
+                      <p className="text-sm font-bold tabular-nums text-[#FFD91A] md:text-base">{currentSlide.priceLabel}</p>
                     </div>
                   ) : null}
                 </div>
