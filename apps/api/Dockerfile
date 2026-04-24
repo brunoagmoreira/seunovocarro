@@ -26,5 +26,5 @@ ENV NODE_ENV production
 ENV PORT 3001
 EXPOSE 3001
 
-# Migrações antes do Nest; falha em migrate não deve derrubar o container (API sobe para você ver logs e corrigir o banco).
-CMD ["sh", "-c", "npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma || echo '[api] prisma migrate deploy falhou — confira DATABASE_URL e histórico de migrações'; exec node apps/api/dist/src/main.js"]
+# Sobe a API sem bloquear por migração. Para tentar migração no boot, defina RUN_PRISMA_MIGRATIONS=true.
+CMD ["sh", "-c", "if [ \"${RUN_PRISMA_MIGRATIONS:-false}\" = \"true\" ]; then npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma || npx prisma db push --schema=apps/api/prisma/schema.prisma --skip-generate || true; fi; exec node apps/api/dist/src/main.js"]
