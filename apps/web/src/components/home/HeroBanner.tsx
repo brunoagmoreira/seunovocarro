@@ -104,6 +104,37 @@ export function HeroBanner() {
 
   const currentSlide = slides[currentIndex] || defaultSlide;
 
+  const trustBadges = (
+    <div className="flex flex-wrap items-center gap-4 pt-6 mt-4 border-t border-white/10">
+      <div className="flex items-center gap-2">
+        <div className="bg-[#FFD91A]/20 p-1.5 rounded-full">
+          <ShieldCheck className="w-4 h-4 text-[#FFD91A]" />
+        </div>
+        <span className="text-white/90 text-sm font-medium">Lojas verificadas</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="bg-[#FFD91A]/20 p-1.5 rounded-full">
+          <Zap className="w-4 h-4 text-[#FFD91A]" />
+        </div>
+        <span className="text-white/90 text-sm font-medium">Preço transparente</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="bg-[#FFD91A]/20 p-1.5 rounded-full">
+          <Clock className="w-4 h-4 text-[#FFD91A]" />
+        </div>
+        <span className="text-white/90 text-sm font-medium">Atendimento rápido</span>
+      </div>
+    </div>
+  );
+
+  const destaqueButton = (
+    <Link href={currentSlide.linkUrl} className="inline-block w-full sm:w-auto">
+      <button className="bg-[#FFD91A] hover:bg-[#ffe34d] text-black font-bold py-4 px-8 rounded-full shadow-[0_8px_20px_-6px_rgba(255,217,26,0.5)] transition-all transform hover:scale-105 active:scale-95 text-lg w-full sm:w-auto">
+        Ver Destaque
+      </button>
+    </Link>
+  );
+
   return (
     <section className="relative bg-gradient-to-br from-[#268052] to-[#346739] overflow-hidden pt-12 pb-16 md:py-24">
       {/* Dynamic Background Pattern */}
@@ -127,61 +158,34 @@ export function HeroBanner() {
               {defaultSlide.subtitle}
             </p>
 
-            <div className="pt-2">
-              <Link href={currentSlide.linkUrl}>
-                <button className="bg-[#FFD91A] hover:bg-[#ffe34d] text-black font-bold py-4 px-8 rounded-full shadow-[0_8px_20px_-6px_rgba(255,217,26,0.5)] transition-all transform hover:scale-105 active:scale-95 text-lg">
-                  Ver veículo
-                </button>
-              </Link>
-            </div>
-
-            {/* Trust Badges */}
-            <div className="flex flex-wrap items-center gap-4 pt-6 mt-4 border-t border-white/10">
-              <div className="flex items-center gap-2">
-                <div className="bg-[#FFD91A]/20 p-1.5 rounded-full">
-                  <ShieldCheck className="w-4 h-4 text-[#FFD91A]" />
-                </div>
-                <span className="text-white/90 text-sm font-medium">Lojas verificadas</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="bg-[#FFD91A]/20 p-1.5 rounded-full">
-                  <Zap className="w-4 h-4 text-[#FFD91A]" />
-                </div>
-                <span className="text-white/90 text-sm font-medium">Preço transparente</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="bg-[#FFD91A]/20 p-1.5 rounded-full">
-                  <Clock className="w-4 h-4 text-[#FFD91A]" />
-                </div>
-                <span className="text-white/90 text-sm font-medium">Atendimento rápido</span>
-              </div>
-            </div>
+            {trustBadges}
           </div>
 
-          {/* Lado Direito — foto em card minimalista (~60% da largura anterior) */}
-          <div className="w-full lg:w-1/2 relative z-10 flex flex-col items-center lg:items-end justify-start min-h-[220px] md:min-h-[280px]">
+          {/* Lado Direito — nome à esquerda, foto sem moldura branca, Ver Destaque abaixo da foto */}
+          <div className="w-full lg:w-1/2 relative z-10 flex flex-col items-stretch lg:items-end justify-start min-h-[220px] md:min-h-[280px]">
             {currentSlide.imageUrl ? (
               <div
                 key={currentSlide.id}
-                className="relative w-full max-w-[min(100%,25.2rem)] animate-fade-in flex flex-col items-center lg:items-end"
+                className="relative w-full max-w-[min(100%,25.2rem)] animate-fade-in flex flex-col text-left lg:ml-auto"
               >
-                <div className="w-full mb-3 text-center lg:text-right px-1">
-                  <h2 className="text-xl sm:text-2xl md:text-3xl font-heading font-bold text-white leading-snug">
+                <div className="mb-3 w-full px-0">
+                  <h2 className="text-left text-xl sm:text-2xl md:text-3xl font-heading font-bold text-white leading-snug text-balance">
                     {currentSlide.title}
                   </h2>
                   {currentSlide.subtitle ? (
-                    <p className="text-white/75 text-sm md:text-base mt-1">{currentSlide.subtitle}</p>
+                    <p className="text-left text-white/75 text-sm md:text-base mt-1">{currentSlide.subtitle}</p>
                   ) : null}
                 </div>
-                <div className="relative w-full rounded-2xl bg-white p-3 md:p-4 shadow-lg ring-1 ring-black/[0.06]">
-                  <Link href={currentSlide.linkUrl} className="block w-full">
+
+                <div className="relative w-full overflow-hidden rounded-xl bg-white/5">
+                  <Link href={currentSlide.linkUrl} className="relative block w-full">
                     <div
                       className="pointer-events-none absolute right-2 top-2 z-30 flex h-8 w-8 items-center justify-center rounded-full bg-[#268052] text-white shadow-md md:h-9 md:w-9"
                       aria-hidden
                     >
                       <ShieldCheck className="h-4 w-4 md:h-[18px] md:w-[18px]" strokeWidth={2.25} />
                     </div>
-                    <div className="flex min-h-[140px] items-center justify-center rounded-xl bg-gradient-to-b from-neutral-50 to-neutral-100/90 md:min-h-[180px]">
+                    <div className="flex min-h-[140px] items-center justify-center bg-gradient-to-b from-white/10 to-white/[0.03] md:min-h-[180px]">
                       <img
                         src={currentSlide.imageUrl}
                         alt={currentSlide.title}
@@ -193,20 +197,25 @@ export function HeroBanner() {
                     </div>
                   </Link>
                   {currentSlide.priceLabel ? (
-                    <div className="absolute bottom-3 left-3 z-20 rounded-lg bg-neutral-900/85 px-3 py-2 backdrop-blur-sm md:bottom-4 md:left-4 md:px-4 md:py-2.5">
+                    <div className="pointer-events-none absolute bottom-3 left-3 z-20 rounded-lg bg-neutral-900/85 px-3 py-2 backdrop-blur-sm md:bottom-4 md:left-4 md:px-4 md:py-2.5">
                       <p className="text-sm font-bold tabular-nums text-[#FFD91A] md:text-base">{currentSlide.priceLabel}</p>
                     </div>
                   ) : null}
                 </div>
+
+                <div className="mt-4 w-full">{destaqueButton}</div>
               </div>
             ) : (
-              // Empty State visual elegante
-              <div className="w-full max-w-lg aspect-video bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                <span className="text-white/30 font-medium">Adicione a foto do carro no Admin</span>
+              <div className="flex w-full max-w-lg flex-col text-left lg:ml-auto">
+                <div className="aspect-video w-full rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm flex items-center justify-center px-4">
+                  <span className="text-left text-white/30 font-medium text-sm">
+                    Adicione a foto do carro no Admin
+                  </span>
+                </div>
+                <div className="mt-4">{destaqueButton}</div>
               </div>
             )}
           </div>
-
         </div>
 
         {/* Controles fora do fluxo absoluto da imagem — evita cobrir o preço no mobile */}
