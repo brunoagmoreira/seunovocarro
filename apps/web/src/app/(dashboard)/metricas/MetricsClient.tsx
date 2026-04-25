@@ -1,12 +1,9 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { Eye, TrendingUp, Car, BarChart3, Calendar, Target, DollarSign, MousePointer, Users } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEffect, useMemo, useState } from 'react';
+import { BarChart3, Calendar, Eye, Home, MessageCircle, Car } from 'lucide-react';
 import { fetchApi } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -14,116 +11,107 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useAllVehicleAdCampaigns } from '@/hooks/useAdMetrics';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { format, subDays, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 
-interface VehicleMetrics {
+interface VehicleMetricRow {
   id: string;
   brand: string;
   model: string;
   year: number;
+  slug: string;
   status: string;
   views: number;
-  dailyViews: { date: string; views: number }[];
+  whatsapp_clicks: number;
+}
+
+interface UtmMetricRow {
+  utm_source: string;
+  utm_medium: string;
+  utm_campaign: string;
+  count: number;
+}
+
+interface MetricsResponse {
+  period_days: number;
+  summary: {
+    total_vehicles: number;
+    home_views: number;
+    vehicle_views: number;
+    whatsapp_clicks: number;
+  };
+  vehicles: VehicleMetricRow[];
+  utm: {
+    home_views: UtmMetricRow[];
+    vehicle_views: UtmMetricRow[];
+    whatsapp_clicks: UtmMetricRow[];
+  };
+}
+
+function UtmTable({ title, rows }: { title: string; rows: UtmMetricRow[] }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {rows.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhum UTM registrado no período.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-muted-foreground">
+                  <th className="py-2 pr-3 text-left font-medium">Source</th>
+                  <th className="py-2 pr-3 text-left font-medium">Medium</th>
+                  <th className="py-2 pr-3 text-left font-medium">Campaign</th>
+                  <th className="py-2 text-right font-medium">Qtd</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, idx) => (
+                  <tr key={`${row.utm_source}-${row.utm_medium}-${row.utm_campaign}-${idx}`} className="border-b border-border/50">
+                    <td className="py-2 pr-3">{row.utm_source}</td>
+                    <td className="py-2 pr-3">{row.utm_medium}</td>
+                    <td className="py-2 pr-3">{row.utm_campaign}</td>
+                    <td className="py-2 text-right font-medium">{row.count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 export function MetricsClient() {
-  const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
   const [period, setPeriod] = useState('30');
-  const [vehicleMetrics, setVehicleMetrics] = useState<VehicleMetrics[]>([]);
-  const [totals, setTotals] = useState({
-    vehicles: 0,
-    views: 0,
-    avgViewsPerVehicle: 0,
-    activeVehicles: 0,
-    soldVehicles: 0,
-  });
-
-  const { data: adCampaigns, isLoading: isLoadingCampaigns } = useAllVehicleAdCampaigns(user?.id);
-
-  // Calculate ad totals
-  const adTotals = adCampaigns?.reduce((acc: any, campaign: any) => {
-    const totals = campaign.totals?.[0] || {};
-    return {
-      impressions: (acc.impressions || 0) + (totals.total_impressions || 0),
-      reach: (acc.reach || 0) + (totals.total_reach || 0),
-      clicks: (acc.clicks || 0) + (totals.total_clicks || 0),
-      spend: (acc.spend || 0) + (totals.total_spend || 0),
-      activeCampaigns: (acc.activeCampaigns || 0) + (campaign.status === 'active' ? 1 : 0)
-    };
-  }, { impressions: 0, reach: 0, clicks: 0, spend: 0, activeCampaigns: 0 }) || { impressions: 0, reach: 0, clicks: 0, spend: 0, activeCampaigns: 0 };
+  const [isLoading, setIsLoading] = useState(true);
+  const [data, setData] = useState<MetricsResponse | null>(null);
 
   useEffect(() => {
-    if (user) {
-      fetchMetrics();
-    }
-  }, [user, period]);
-
-  const fetchMetrics = async () => {
-    setIsLoading(true);
-
-    try {
-      const data = await fetchApi<any>('/vehicles/metrics', {
-        params: { period },
-        requireAuth: true
-      });
-
-      const { vehicles, views: viewsData } = data;
-
-      if (!vehicles?.length) {
-        setIsLoading(false);
-        return;
-      }
-
-      const periodDays = parseInt(period);
-      const allDates: string[] = [];
-      for (let i = periodDays - 1; i >= 0; i--) {
-        allDates.push(format(subDays(new Date(), i), 'yyyy-MM-dd'));
-      }
-
-      const metrics: VehicleMetrics[] = vehicles.map((vehicle: any) => {
-        const vehicleViews = viewsData?.filter((v: any) => v.vehicle_id === vehicle.id) || [];
-        const viewsCount = vehicleViews.length;
-
-        const viewsByDate: Record<string, number> = {};
-        vehicleViews.forEach((v: any) => {
-          const date = format(parseISO(v.created_at), 'yyyy-MM-dd');
-          viewsByDate[date] = (viewsByDate[date] || 0) + 1;
+    const run = async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetchApi<MetricsResponse>('/vehicles/metrics', {
+          params: { period },
+          requireAuth: true,
         });
+        setData(res);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    void run();
+  }, [period]);
 
-        const dailyViews = allDates.map(date => ({
-          date,
-          views: viewsByDate[date] || 0,
-        }));
-
-        return {
-          ...vehicle,
-          views: viewsCount,
-          dailyViews,
-        };
-      });
-
-      metrics.sort((a, b) => b.views - a.views);
-      setVehicleMetrics(metrics);
-
-      const totalViews = metrics.reduce((sum, v) => sum + v.views, 0);
-
-      setTotals({
-        vehicles: vehicles.length,
-        views: totalViews,
-        avgViewsPerVehicle: vehicles.length > 0 ? totalViews / vehicles.length : 0,
-        activeVehicles: vehicles.filter((v: any) => v.status === 'approved').length,
-        soldVehicles: vehicles.filter((v: any) => v.status === 'sold').length,
-      });
-    } catch (error) {
-      console.error('Error fetching metrics:', error);
-    }
-
-    setIsLoading(false);
-  };
+  const vehicles = useMemo(() => {
+    if (!data?.vehicles) return [];
+    return [...data.vehicles].sort((a, b) => {
+      if (b.views !== a.views) return b.views - a.views;
+      return b.whatsapp_clicks - a.whatsapp_clicks;
+    });
+  }, [data?.vehicles]);
 
   if (isLoading) {
     return (
@@ -137,13 +125,10 @@ export function MetricsClient() {
     );
   }
 
-  const formatCurrency = (value: number) => 
-    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
-
   return (
     <div className="min-h-screen pb-24 md:pb-8 pt-16">
-      <div className="container py-6">
-        <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+      <div className="container py-6 space-y-6">
+        <div className="flex items-center justify-between mb-2 flex-wrap gap-4">
           <h1 className="font-heading text-2xl font-bold">Métricas</h1>
           <Select value={period} onValueChange={setPeriod}>
             <SelectTrigger className="w-[180px]">
@@ -159,319 +144,105 @@ export function MetricsClient() {
           </Select>
         </div>
 
-        <Tabs defaultValue="organic" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="organic">Orgânico</TabsTrigger>
-            <TabsTrigger value="ads">Meta Ads</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="organic" className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-              <div className="bg-card rounded-xl p-4 shadow-card">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg gradient-brand-soft">
-                    <Car className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{totals.vehicles}</p>
-                    <p className="text-xs text-muted-foreground">Veículos</p>
-                  </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="pt-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-blue-500/10">
+                  <Home className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{data?.summary.home_views || 0}</p>
+                  <p className="text-xs text-muted-foreground">Views na Home</p>
                 </div>
               </div>
-              <div className="bg-card rounded-xl p-4 shadow-card">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-green-500/10">
-                    <Car className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{totals.activeVehicles}</p>
-                    <p className="text-xs text-muted-foreground">Ativos</p>
-                  </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-500/10">
+                  <Eye className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{data?.summary.vehicle_views || 0}</p>
+                  <p className="text-xs text-muted-foreground">Views por Veículos</p>
                 </div>
               </div>
-              <div className="bg-card rounded-xl p-4 shadow-card">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg gradient-brand-soft">
-                    <Car className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{totals.soldVehicles}</p>
-                    <p className="text-xs text-muted-foreground">Vendidos</p>
-                  </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-emerald-500/10">
+                  <MessageCircle className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{data?.summary.whatsapp_clicks || 0}</p>
+                  <p className="text-xs text-muted-foreground">Cliques WhatsApp</p>
                 </div>
               </div>
-              <div className="bg-card rounded-xl p-4 shadow-card">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-blue-500/10">
-                    <Eye className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{totals.views}</p>
-                    <p className="text-xs text-muted-foreground">Visualizações</p>
-                  </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg gradient-brand-soft">
+                  <Car className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{data?.summary.total_vehicles || 0}</p>
+                  <p className="text-xs text-muted-foreground">Veículos do lojista</p>
                 </div>
               </div>
-              <div className="bg-card rounded-xl p-4 shadow-card">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-purple-500/10">
-                    <TrendingUp className="h-5 w-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{totals.avgViewsPerVehicle.toFixed(1)}</p>
-                    <p className="text-xs text-muted-foreground">Views / anúncio</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            </CardContent>
+          </Card>
+        </div>
 
-            <div className="space-y-6">
-              <h2 className="font-heading font-semibold text-lg flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
-                Visualizações por Veículo
-              </h2>
-
-              {vehicleMetrics.length === 0 ? (
-                <Card>
-                  <CardContent className="py-8">
-                    <p className="text-muted-foreground text-center">
-                      Nenhum dado disponível para o período selecionado.
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="grid gap-6 md:grid-cols-2">
-                  {vehicleMetrics.map((vehicle) => (
-                    <Card key={vehicle.id} className="overflow-hidden">
-                      <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-base font-medium">
-                            {vehicle.brand} {vehicle.model}{' '}
-                            <span className="text-muted-foreground font-normal">{vehicle.year}</span>
-                          </CardTitle>
-                          <Badge 
-                            variant={vehicle.status === 'approved' ? 'default' : 'secondary'}
-                            className={vehicle.status === 'approved' ? 'bg-green-500/10 text-green-600 hover:bg-green-500/20' : ''}
-                          >
-                            {vehicle.status === 'approved' ? 'Ativo' : 
-                             vehicle.status === 'sold' ? 'Vendido' : vehicle.status}
-                          </Badge>
-                        </div>
-                        <div className="flex gap-4 text-sm text-muted-foreground mt-1">
-                          <span className="flex items-center gap-1">
-                            <Eye className="h-3.5 w-3.5" />
-                            {vehicle.views} visualizações
-                          </span>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="pt-2">
-                        <div className="h-[160px] w-full">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart
-                              data={vehicle.dailyViews}
-                              margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                            >
-                              <defs>
-                                <linearGradient id={`gradient-${vehicle.id}`} x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                                </linearGradient>
-                              </defs>
-                              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                              <XAxis 
-                                dataKey="date" 
-                                tickFormatter={(value) => format(parseISO(value), 'dd/MM', { locale: ptBR })}
-                                tick={{ fontSize: 11 }}
-                                className="text-muted-foreground"
-                                interval="preserveStartEnd"
-                              />
-                              <YAxis 
-                                tick={{ fontSize: 11 }}
-                                className="text-muted-foreground"
-                                allowDecimals={false}
-                              />
-                              <Tooltip 
-                                content={({ active, payload, label }) => {
-                                  if (active && payload && payload.length) {
-                                    return (
-                                      <div className="bg-popover border border-border rounded-lg p-2 shadow-lg">
-                                        <p className="text-xs text-muted-foreground">
-                                          {format(parseISO(String(label)), "dd 'de' MMMM", { locale: ptBR })}
-                                        </p>
-                                        <p className="text-sm font-medium">
-                                          {payload[0].value} visualizações
-                                        </p>
-                                      </div>
-                                    );
-                                  }
-                                  return null;
-                                }}
-                              />
-                              <Area
-                                type="monotone"
-                                dataKey="views"
-                                stroke="hsl(var(--primary))"
-                                strokeWidth={2}
-                                fill={`url(#gradient-${vehicle.id})`}
-                              />
-                            </AreaChart>
-                          </ResponsiveContainer>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="ads" className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              <Card>
-                <CardContent className="pt-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-purple-500/10">
-                      <Target className="h-5 w-5 text-purple-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{adTotals.activeCampaigns}</p>
-                      <p className="text-xs text-muted-foreground">Campanhas Ativas</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-blue-500/10">
-                      <Eye className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{adTotals.impressions.toLocaleString()}</p>
-                      <p className="text-xs text-muted-foreground">Impressões</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-cyan-500/10">
-                      <Users className="h-5 w-5 text-cyan-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{adTotals.reach.toLocaleString()}</p>
-                      <p className="text-xs text-muted-foreground">Alcance</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-green-500/10">
-                      <MousePointer className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{adTotals.clicks.toLocaleString()}</p>
-                      <p className="text-xs text-muted-foreground">Cliques</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="pt-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-red-500/10">
-                      <DollarSign className="h-5 w-5 text-red-600" />
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold">{formatCurrency(adTotals.spend)}</p>
-                      <p className="text-xs text-muted-foreground">Gasto Total</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <BarChart3 className="h-5 w-5" />
-                  Performance por Campanha
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isLoadingCampaigns ? (
-                  <div className="animate-pulse space-y-4">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="h-16 bg-muted rounded-xl" />
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <BarChart3 className="h-5 w-5" />
+              Views e cliques por veículo
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!vehicles.length ? (
+              <p className="text-sm text-muted-foreground">Nenhum veículo encontrado para o período.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-muted-foreground">
+                      <th className="py-2 pr-3 text-left font-medium">Veículo</th>
+                      <th className="py-2 pr-3 text-left font-medium">Status</th>
+                      <th className="py-2 text-right font-medium">Views</th>
+                      <th className="py-2 text-right font-medium">Cliques WPP</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {vehicles.map((v) => (
+                      <tr key={v.id} className="border-b border-border/50">
+                        <td className="py-2 pr-3">
+                          {v.brand} {v.model} {v.year}
+                        </td>
+                        <td className="py-2 pr-3">{v.status}</td>
+                        <td className="py-2 text-right font-medium">{v.views}</td>
+                        <td className="py-2 text-right font-medium">{v.whatsapp_clicks}</td>
+                      </tr>
                     ))}
-                  </div>
-                ) : !adCampaigns?.length ? (
-                  <p className="text-muted-foreground text-center py-8">
-                    Você ainda não possui campanhas de anúncios.
-                  </p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-border">
-                          <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground">Veículo</th>
-                          <th className="text-center py-3 px-2 text-sm font-medium text-muted-foreground">Status</th>
-                          <th className="text-center py-3 px-2 text-sm font-medium text-muted-foreground">Impressões</th>
-                          <th className="text-center py-3 px-2 text-sm font-medium text-muted-foreground">Cliques</th>
-                          <th className="text-center py-3 px-2 text-sm font-medium text-muted-foreground">Gasto</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {adCampaigns.map((campaign: any) => {
-                          const totals = campaign.totals?.[0] || {};
-                          return (
-                            <tr key={campaign.id} className="border-b border-border/50 hover:bg-muted/30">
-                              <td className="py-3 px-2">
-                                <div className="flex items-center gap-2">
-                                  {campaign.vehicle?.ad_code && (
-                                    <Badge variant="secondary" className="font-mono text-xs">
-                                      {campaign.vehicle.ad_code}
-                                    </Badge>
-                                  )}
-                                  <div>
-                                    <span className="font-medium">
-                                      {campaign.vehicle?.brand} {campaign.vehicle?.model}
-                                    </span>
-                                    <span className="text-muted-foreground text-sm ml-1">
-                                      {campaign.vehicle?.year}
-                                    </span>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="text-center py-3 px-2">
-                                <Badge variant={campaign.status === 'active' ? 'default' : 'secondary'}>
-                                  {campaign.status === 'active' ? 'Ativo' : 
-                                   campaign.status === 'paused' ? 'Pausado' : 
-                                   campaign.status === 'completed' ? 'Concluído' : campaign.status}
-                                </Badge>
-                              </td>
-                              <td className="text-center py-3 px-2 font-medium">
-                                {(totals.total_impressions || 0).toLocaleString()}
-                              </td>
-                              <td className="text-center py-3 px-2 font-medium">
-                                {(totals.total_clicks || 0).toLocaleString()}
-                              </td>
-                              <td className="text-center py-3 px-2 font-medium">
-                                {formatCurrency(totals.total_spend || 0)}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          <UtmTable title="UTM Home Views" rows={data?.utm.home_views || []} />
+          <UtmTable title="UTM Views de Veículos" rows={data?.utm.vehicle_views || []} />
+          <UtmTable title="UTM Cliques de WhatsApp" rows={data?.utm.whatsapp_clicks || []} />
+        </div>
       </div>
     </div>
   );

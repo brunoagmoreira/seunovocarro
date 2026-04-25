@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Car, Shield, Users } from 'lucide-react';
@@ -15,10 +15,11 @@ import { BuyerBanners } from '@/components/home/BuyerBanners';
 import { TrustBadges } from '@/components/home/TrustBadges';
 
 import { useFeaturedVehicles, useVehicleCount } from '@/hooks/useVehicles';
-import { useUTM } from '@/hooks/useUTM';
+import { getStoredUTM, useUTM } from '@/hooks/useUTM';
 import { VehicleFilters } from '@/types/vehicle';
 import { Skeleton } from '@/components/ui/skeleton';
 import { OrganizationSchema, WebsiteSearchSchema, LocalBusinessSchema } from '@/components/seo/schemas';
+import { fetchApi } from '@/lib/api';
 
 const HomeBlogSection = dynamic(
   () => import('@/components/home/HomeBlogSection').then((mod) => mod.HomeBlogSection),
@@ -74,6 +75,30 @@ export function HomeClient() {
   
   // Capture UTM params on page load
   useUTM();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const sessionKey = 'snc_home_view_tracked';
+    if (sessionStorage.getItem(sessionKey)) return;
+
+    const utm = getStoredUTM();
+    const payload = {
+      session_id: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+      referrer: utm.referrer || document.referrer || null,
+      utm_source: utm.utm_source,
+      utm_medium: utm.utm_medium,
+      utm_campaign: utm.utm_campaign,
+      utm_term: utm.utm_term,
+      utm_content: utm.utm_content,
+    };
+
+    void fetchApi('/vehicles/track-home-view', {
+      method: 'POST',
+      body: payload,
+    }).finally(() => {
+      sessionStorage.setItem(sessionKey, '1');
+    });
+  }, []);
 
   const handleSearch = () => {
     const params = new URLSearchParams();

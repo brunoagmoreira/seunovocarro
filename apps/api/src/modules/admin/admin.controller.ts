@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -40,6 +41,12 @@ export class AdminController {
   @Get('dashboard')
   getDashboardStats(@CurrentUser() user: User) {
     return this.adminService.getDashboardStats(user);
+  }
+
+  @Get('metrics')
+  getPlatformMetrics(@CurrentUser() user: User, @Query('period') period?: string) {
+    const days = period ? parseInt(period, 10) : 30;
+    return this.adminService.getPlatformMetrics(user, Number.isNaN(days) ? 30 : days);
   }
 
   @Get('users')

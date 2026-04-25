@@ -191,6 +191,150 @@ export class AdminService {
     };
   }
 
+
+  async getPlatformMetrics(user: User, days = 30) {
+    this.checkAdmin(user);
+
+    const periodDays = Number.isFinite(days) ? Math.min(Math.max(days, 1), 365) : 30;
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - periodDays);
+
+    const [
+      homeViews,
+      vehicleViewGroups,
+      whatsappClickGroups,
+      vehicleViewUtms,
+      whatsappClickUtms,
+    ] = await Promise.all([
+      this.prisma.trackingEvent.count({
+        where: { event_type: 'home_view', created_at: { gte: startDate } },
+      }),
+      this.prisma.vehicleView.groupBy({
+        by: ['vehicle_id'],
+        where: { created_at: { gte: startDate } },
+        _count: { _all: true },
+      }),
+      this.prisma.trackingEvent.groupBy({
+        by: ['vehicle_id'],
+        where: {
+          event_type: 'whatsapp_click',
+          created_at: { gte: startDate },
+          vehicle_id: { not: null },
+        },
+        _count: { _all: true },
+      }),
+      this.prisma.vehicleView.findMany({
+        where: { created_at: { gte: startDate } },
+        select: {
+          utm_source: true,
+          utm_medium: true,
+          utm_campaign: true,
+        },
+      }),
+      this.prisma.trackingEvent.findMany({
+        where: {
+          event_type: 'whatsapp_click',
+          created_at: { gte: startDate },
+        },
+        select: {
+          utm_source: true,
+          utm_medium: true,
+          utm_campaign: true,
+        },
+      }),
+    ]);
+
+    const vehicleIds: string[] = Array.from(
+      new Set([
+        ...vehicleViewGroups.map((row) => row.vehicle_id),
+        ...whatsappClickGroups.map((row) => row.vehicle_id).filter(Boolean),
+      ]),
+    ).filter((id): id is string => Boolean(id));
+
+    const vehicles = vehicleIds.length
+      ? await this.prisma.vehicle.findMany({
+          where: { id: { in: vehicleIds } },
+          select: {
+            id: true,
+            brand: true,
+            model: true,
+            year: true,
+            status: true,
+            user_id: true,
+          },
+        })
+      : [];
+
+    const vehicleById = new Map(vehicles.map((vehicle) => [vehicle.id, vehicle]));
+    const whatsappByVehicle = new Map(
+      whatsappClickGroups
+        .filter((row) => Boolean(row.vehicle_id))
+        .map((row) => [row.vehicle_id as string, row._count._all]),
+    );
+
+    const vehicleMetrics = vehicleViewGroups
+      .map((row) => {
+        const vehicle = vehicleById.get(row.vehicle_id);
+        if (!vehicle) return null;
+        return {
+          vehicle_id: vehicle.id,
+          brand: vehicle.brand,
+          model: vehicle.model,
+          year: vehicle.year,
+          status: vehicle.status,
+          seller_id: vehicle.user_id,
+          views: row._count._all,
+          whatsapp_clicks: whatsappByVehicle.get(vehicle.id) || 0,
+        };
+      })
+      .filter(Boolean)
+      .sort((a: any, b: any) => b.views - a.views);
+
+    const sourceCounter = new Map<string, number>();
+    const campaignCounter = new Map<string, number>();
+
+    const bump = (map: Map<string, number>, key: string) => {
+      map.set(key, (map.get(key) || 0) + 1);
+    };
+
+    const rows = [...vehicleViewUtms, ...whatsappClickUtms];
+    rows.forEach((row) => {
+      const source = (row.utm_source || 'direto').toLowerCase();
+      const medium = (row.utm_medium || '').toLowerCase();
+      const campaign = (row.utm_campaign || '').trim();
+      const sourceKey = medium ? `${source} / ${medium}` : source;
+      bump(sourceCounter, sourceKey);
+      if (campaign) {
+        bump(campaignCounter, campaign);
+      }
+    });
+
+    const utmBySource = Array.from(sourceCounter.entries())
+      .map(([source, count]) => ({ source, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 12);
+
+    const utmByCampaign = Array.from(campaignCounter.entries())
+      .map(([campaign, count]) => ({ campaign, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 12);
+
+    const totalVehicleViews = vehicleViewGroups.reduce((acc, row) => acc + row._count._all, 0);
+    const totalWhatsappClicks = whatsappClickGroups.reduce((acc, row) => acc + row._count._all, 0);
+
+    return {
+      period_days: periodDays,
+      home_views: homeViews,
+      total_vehicle_views: totalVehicleViews,
+      total_whatsapp_clicks: totalWhatsappClicks,
+      vehicle_metrics: vehicleMetrics,
+      utm: {
+        by_source: utmBySource,
+        by_campaign: utmByCampaign,
+      },
+    };
+  }
+
   private adminUserListSelect() {
     return {
       id: true,

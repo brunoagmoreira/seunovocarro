@@ -187,6 +187,7 @@ model Vehicle {
   seller         User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
   media          VehicleMedia[]
   views          VehicleView[]
+  tracking_events TrackingEvent[]
   leads          Lead[]
   conversations  Conversation[]
   proposals      Proposal[]
@@ -240,6 +241,30 @@ model VehicleView {
 }
 
 // ============ LEADS ============
+
+
+model TrackingEvent {
+  id           String   @id @default(uuid())
+  event_type   String
+  page         String?
+  vehicle_id   String?
+  viewer_id    String?
+  session_id   String?
+  referrer     String?
+  utm_source   String?
+  utm_medium   String?
+  utm_campaign String?
+  utm_content  String?
+  utm_term     String?
+  created_at   DateTime @default(now())
+
+  vehicle Vehicle? @relation(fields: [vehicle_id], references: [id], onDelete: SetNull)
+
+  @@index([event_type])
+  @@index([vehicle_id])
+  @@index([created_at])
+  @@map("tracking_events")
+}
 
 model Lead {
   id           String   @id @default(uuid())

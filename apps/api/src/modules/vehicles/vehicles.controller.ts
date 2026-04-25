@@ -70,6 +70,60 @@ export class VehiclesController {
   }
 
 
+  @Post('track-home-view')
+  trackHomeView(
+    @Body()
+    body: {
+      viewer_id?: string | null;
+      session_id?: string | null;
+      referrer?: string | null;
+      utm_source?: string | null;
+      utm_medium?: string | null;
+      utm_campaign?: string | null;
+      utm_term?: string | null;
+      utm_content?: string | null;
+    },
+  ) {
+    return this.vehiclesService.trackHomeView(body);
+  }
+
+  @Post(':id/track-view')
+  trackView(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      viewer_id?: string | null;
+      session_id?: string | null;
+      referrer?: string | null;
+      utm_source?: string | null;
+      utm_medium?: string | null;
+      utm_campaign?: string | null;
+      utm_term?: string | null;
+      utm_content?: string | null;
+    },
+  ) {
+    return this.vehiclesService.trackVehicleView(id, body);
+  }
+
+  @Post(':id/track-whatsapp-click')
+  trackWhatsAppClick(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      viewer_id?: string | null;
+      session_id?: string | null;
+      referrer?: string | null;
+      utm_source?: string | null;
+      utm_medium?: string | null;
+      utm_campaign?: string | null;
+      utm_term?: string | null;
+      utm_content?: string | null;
+    },
+  ) {
+    return this.vehiclesService.trackWhatsAppClick(id, body);
+  }
+
+
   @Get(':slug')
   findBySlug(@Param('slug') slug: string) {
     return this.vehiclesService.findBySlug(slug);

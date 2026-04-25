@@ -754,25 +754,271 @@ export class VehiclesService {
     });
   }
 
-  async getMetrics(userId: string, days: number = 30) {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
 
-    const [total, approved, pending, sold, expired] = await Promise.all([
-      this.prisma.vehicle.count({ where: { user_id: userId } }),
-      this.prisma.vehicle.count({ where: { user_id: userId, status: 'approved' } }),
-      this.prisma.vehicle.count({ where: { user_id: userId, status: 'pending' } }),
-      this.prisma.vehicle.count({ where: { user_id: userId, status: 'sold' } }),
-      this.prisma.vehicle.count({ where: { user_id: userId, status: 'expired' } }),
+  private sanitizeTrackingPayload(body: {
+    viewer_id?: string | null;
+    session_id?: string | null;
+    referrer?: string | null;
+    utm_source?: string | null;
+    utm_medium?: string | null;
+    utm_campaign?: string | null;
+    utm_term?: string | null;
+    utm_content?: string | null;
+  }) {
+    const trim = (v?: string | null) => (v && String(v).trim() ? String(v).trim() : null);
+    return {
+      viewer_id: trim(body.viewer_id),
+      session_id: trim(body.session_id),
+      referrer: trim(body.referrer),
+      utm_source: trim(body.utm_source),
+      utm_medium: trim(body.utm_medium),
+      utm_campaign: trim(body.utm_campaign),
+      utm_term: trim(body.utm_term),
+      utm_content: trim(body.utm_content),
+    };
+  }
+
+  async trackHomeView(body: {
+    viewer_id?: string | null;
+    session_id?: string | null;
+    referrer?: string | null;
+    utm_source?: string | null;
+    utm_medium?: string | null;
+    utm_campaign?: string | null;
+    utm_term?: string | null;
+    utm_content?: string | null;
+  }) {
+    const payload = this.sanitizeTrackingPayload(body);
+    await this.prisma.trackingEvent.create({
+      data: {
+        event_type: 'home_view',
+        page: 'home',
+        ...payload,
+      },
+    });
+    return { ok: true };
+  }
+
+  async trackVehicleView(
+    vehicleId: string,
+    body: {
+      viewer_id?: string | null;
+      session_id?: string | null;
+      referrer?: string | null;
+      utm_source?: string | null;
+      utm_medium?: string | null;
+      utm_campaign?: string | null;
+      utm_term?: string | null;
+      utm_content?: string | null;
+    },
+  ) {
+    const vehicle = await this.prisma.vehicle.findUnique({ where: { id: vehicleId }, select: { id: true } });
+    if (!vehicle) throw new NotFoundException('Veículo não encontrado');
+
+    const payload = this.sanitizeTrackingPayload(body);
+
+    await this.prisma.$transaction([
+      this.prisma.vehicle.update({
+        where: { id: vehicleId },
+        data: { view_count: { increment: 1 } },
+      }),
+      this.prisma.vehicleView.create({
+        data: {
+          vehicle_id: vehicleId,
+          viewer_id: payload.viewer_id,
+          referrer: payload.referrer,
+          utm_source: payload.utm_source,
+          utm_medium: payload.utm_medium,
+          utm_campaign: payload.utm_campaign,
+          utm_term: payload.utm_term,
+          utm_content: payload.utm_content,
+        },
+      }),
     ]);
 
+    return { ok: true };
+  }
+
+  async trackWhatsAppClick(
+    vehicleId: string,
+    body: {
+      viewer_id?: string | null;
+      session_id?: string | null;
+      referrer?: string | null;
+      utm_source?: string | null;
+      utm_medium?: string | null;
+      utm_campaign?: string | null;
+      utm_term?: string | null;
+      utm_content?: string | null;
+    },
+  ) {
+    const vehicle = await this.prisma.vehicle.findUnique({ where: { id: vehicleId }, select: { id: true } });
+    if (!vehicle) throw new NotFoundException('Veículo não encontrado');
+
+    const payload = this.sanitizeTrackingPayload(body);
+
+    await this.prisma.trackingEvent.create({
+      data: {
+        event_type: 'whatsapp_click',
+        page: 'vehicle_detail',
+        vehicle_id: vehicleId,
+        ...payload,
+      },
+    });
+
+    return { ok: true };
+  }
+
+  async getMetrics(userId: string, days: number = 30) {
+    const period = Number.isFinite(days) ? Math.min(Math.max(days, 1), 365) : 30;
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - period);
+
+    const vehicles = await this.prisma.vehicle.findMany({
+      where: { user_id: userId },
+      select: {
+        id: true,
+        brand: true,
+        model: true,
+        year: true,
+        status: true,
+        slug: true,
+        created_at: true,
+      },
+      orderBy: { created_at: 'desc' },
+    });
+
+    const vehicleIds = vehicles.map((v) => v.id);
+
+    const [
+      homeViewsCount,
+      viewsByVehicle,
+      whatsappByVehicle,
+      homeUtmRows,
+      vehicleViewUtmRows,
+      whatsappUtmRows,
+    ] = await Promise.all([
+      this.prisma.trackingEvent.count({
+        where: {
+          event_type: 'home_view',
+          created_at: { gte: startDate },
+        },
+      }),
+      vehicleIds.length
+        ? this.prisma.vehicleView.groupBy({
+            by: ['vehicle_id'],
+            where: {
+              vehicle_id: { in: vehicleIds },
+              created_at: { gte: startDate },
+            },
+            _count: { _all: true },
+          })
+        : Promise.resolve([]),
+      vehicleIds.length
+        ? this.prisma.trackingEvent.groupBy({
+            by: ['vehicle_id'],
+            where: {
+              event_type: 'whatsapp_click',
+              vehicle_id: { in: vehicleIds },
+              created_at: { gte: startDate },
+            },
+            _count: { _all: true },
+          })
+        : Promise.resolve([]),
+      this.prisma.trackingEvent.groupBy({
+        by: ['utm_source', 'utm_medium', 'utm_campaign'],
+        where: {
+          event_type: 'home_view',
+          created_at: { gte: startDate },
+        },
+        _count: { _all: true },
+      }),
+      vehicleIds.length
+        ? this.prisma.vehicleView.groupBy({
+            by: ['utm_source', 'utm_medium', 'utm_campaign'],
+            where: {
+              vehicle_id: { in: vehicleIds },
+              created_at: { gte: startDate },
+            },
+            _count: { _all: true },
+          })
+        : Promise.resolve([]),
+      vehicleIds.length
+        ? this.prisma.trackingEvent.groupBy({
+            by: ['utm_source', 'utm_medium', 'utm_campaign'],
+            where: {
+              event_type: 'whatsapp_click',
+              vehicle_id: { in: vehicleIds },
+              created_at: { gte: startDate },
+            },
+            _count: { _all: true },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const viewsMap = new Map<string, number>(
+      viewsByVehicle.map((row: { vehicle_id: string; _count: { _all: number } }) => [
+        row.vehicle_id,
+        row._count._all,
+      ]),
+    );
+    const whatsappMap = new Map<string, number>(
+      whatsappByVehicle
+        .filter((row: { vehicle_id: string | null }) => Boolean(row.vehicle_id))
+        .map((row: { vehicle_id: string | null; _count: { _all: number } }) => [
+          row.vehicle_id as string,
+          row._count._all,
+        ]),
+    );
+
+    const rows = vehicles.map((v) => ({
+      id: v.id,
+      brand: v.brand,
+      model: v.model,
+      year: v.year,
+      slug: v.slug,
+      status: v.status,
+      views: viewsMap.get(v.id) || 0,
+      whatsapp_clicks: whatsappMap.get(v.id) || 0,
+      created_at: v.created_at,
+    }));
+
+    const totalVehicleViews = rows.reduce((acc, row) => acc + row.views, 0);
+    const totalWhatsappClicks = rows.reduce((acc, row) => acc + row.whatsapp_clicks, 0);
+
+    const mapUtm = (
+      items: Array<{
+        utm_source: string | null;
+        utm_medium: string | null;
+        utm_campaign: string | null;
+        _count?: { _all?: number };
+      }>,
+    ) =>
+      items
+        .map((item) => ({
+          utm_source: item.utm_source || '(direto)',
+          utm_medium: item.utm_medium || '(none)',
+          utm_campaign: item.utm_campaign || '(none)',
+          count: item._count?._all || 0,
+        }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 20);
+
     return {
-      total,
-      approved,
-      pending,
-      sold,
-      expired,
-      period: days,
+      period_days: period,
+      start_date: startDate,
+      summary: {
+        total_vehicles: rows.length,
+        home_views: homeViewsCount,
+        vehicle_views: totalVehicleViews,
+        whatsapp_clicks: totalWhatsappClicks,
+      },
+      vehicles: rows,
+      utm: {
+        home_views: mapUtm(homeUtmRows),
+        vehicle_views: mapUtm(vehicleViewUtmRows),
+        whatsapp_clicks: mapUtm(whatsappUtmRows),
+      },
     };
   }
 }

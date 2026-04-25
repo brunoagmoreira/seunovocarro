@@ -32,6 +32,8 @@ import { Badge } from '@/components/ui/badge';
 import { trackViewContent } from '@/lib/tracking';
 import { VehicleSchema } from '@/components/seo/schemas';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
+import { getStoredUTM } from '@/hooks/useUTM';
+import { fetchApi } from '@/lib/api';
 
 function WhatsAppIcon({ className = '' }: { className?: string }) {
   return (
@@ -183,6 +185,30 @@ export function VehicleClient({ slug }: { slug: string }) {
   const handleDirectWhatsApp = () => {
     const digits = sellerPhone.replace(/\D/g, '');
     if (!digits) return;
+
+    const utm = getStoredUTM();
+    const sessionId =
+      typeof window !== 'undefined'
+        ? sessionStorage.getItem('snc_session_id') || `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+        : null;
+    if (typeof window !== 'undefined' && sessionId) {
+      sessionStorage.setItem('snc_session_id', sessionId);
+    }
+
+    void fetchApi(`/vehicles/${vehicle.id}/track-whatsapp-click`, {
+      method: 'POST',
+      body: {
+        viewer_id: null,
+        session_id: sessionId,
+        referrer: utm.referrer || (typeof document !== 'undefined' ? document.referrer : null),
+        utm_source: utm.utm_source,
+        utm_medium: utm.utm_medium,
+        utm_campaign: utm.utm_campaign,
+        utm_term: utm.utm_term,
+        utm_content: utm.utm_content,
+      },
+    }).catch(() => undefined);
+
     const phone = digits.startsWith('55') ? digits : `55${digits}`;
     const message = encodeURIComponent(
       `Olá! Vi o ${vehicle.brand} ${vehicle.model} ${vehicle.year} no Seu Novo Carro e gostaria de mais informações.`
