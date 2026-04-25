@@ -156,7 +156,7 @@ export function BlogPostClient({ slug }: { slug: string }) {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                
+                Facebook
               </a>
             </Button>
             <Button variant="outline" size="sm" asChild>

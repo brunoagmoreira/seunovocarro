@@ -37,6 +37,8 @@ export interface Seller {
   id: string;
   name: string;
   avatarUrl: string;
+  dealerLogoUrl?: string;
+  isDealer?: boolean;
   city: string;
   state: string;
   whatsapp: string;

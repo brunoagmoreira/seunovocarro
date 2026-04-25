@@ -33,6 +33,8 @@ const mapVehicleResponse = (v: any): Vehicle => {
       city: v.seller.city || v.city || '',
       state: v.seller.state || v.state || '',
       avatarUrl: v.seller.avatar_url || v.seller.avatarUrl || '/placeholder.svg',
+      dealerLogoUrl: v.seller.dealer?.logo_url || v.seller.dealer_logo_url || undefined,
+      isDealer: Boolean(v.seller.dealer?.logo_url || v.seller.dealer_logo_url || v.seller.role === 'editor'),
       phone: v.seller.phone || v.phone || '',
       whatsapp: v.seller.whatsapp || v.whatsapp || '',
     } : {
@@ -41,6 +43,8 @@ const mapVehicleResponse = (v: any): Vehicle => {
       city: v.city || '',
       state: v.state || '',
       avatarUrl: '/placeholder.svg',
+      dealerLogoUrl: undefined,
+      isDealer: false,
       phone: v.phone || '',
       whatsapp: v.whatsapp || '',
     }

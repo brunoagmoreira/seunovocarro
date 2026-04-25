@@ -78,6 +78,16 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <a
+                  href="https://www.instagram.com/_seunovocarro"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Instagram
+                </a>
+              </li>
+              <li>
                 <Link href="/login" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   Entrar / Cadastrar
                 </Link>

@@ -427,11 +427,13 @@ export class VehiclesService {
           select: {
             id: true,
             full_name: true,
+            role: true,
             avatar_url: true,
             city: true,
             state: true,
             phone: true,
             whatsapp: true,
+            dealer: { select: { logo_url: true } },
           },
         },
         media: {
@@ -528,6 +530,19 @@ export class VehiclesService {
     const vehicles = await this.prisma.vehicle.findMany({
       where,
       include: {
+        seller: {
+          select: {
+            id: true,
+            full_name: true,
+            role: true,
+            avatar_url: true,
+            city: true,
+            state: true,
+            phone: true,
+            whatsapp: true,
+            dealer: { select: { logo_url: true } },
+          },
+        },
         media: {
           orderBy: { order: 'asc' },
         },
@@ -590,11 +605,13 @@ export class VehiclesService {
           select: {
             id: true,
             full_name: true,
+            role: true,
             avatar_url: true,
             city: true,
             state: true,
             phone: true,
             whatsapp: true,
+            dealer: { select: { logo_url: true } },
           },
         },
         media: {

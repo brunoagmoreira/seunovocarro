@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import Link from 'next/link';
 import { Heart, Flame } from 'lucide-react';
-import { Vehicle, FUEL_TYPES, TRANSMISSION_TYPES } from '@/types/vehicle';
+import { Vehicle, TRANSMISSION_TYPES } from '@/types/vehicle';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { OptimizedImage } from '@/components/ui/optimized-image';
@@ -39,6 +39,14 @@ export const VehicleCard = memo(function VehicleCard({ vehicle, className }: Veh
     const diffDays = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
     return diffDays < 7;
   };
+
+  const sellerImage = vehicle.seller.isDealer && vehicle.seller.dealerLogoUrl
+    ? vehicle.seller.dealerLogoUrl
+    : vehicle.seller.avatarUrl;
+
+  const sellerImageClass = vehicle.seller.isDealer
+    ? 'w-6 h-6 rounded-full bg-white object-contain p-0.5 border border-border'
+    : 'w-6 h-6 rounded-full';
 
   return (
     <Link 
@@ -127,9 +135,9 @@ export const VehicleCard = memo(function VehicleCard({ vehicle, className }: Veh
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
           <div className="flex items-center gap-2">
             <OptimizedImage
-              src={vehicle.seller.avatarUrl}
-              alt={`Vendedor ${vehicle.seller.name}`}
-              className="w-6 h-6 rounded-full"
+              src={sellerImage}
+              alt={vehicle.seller.isDealer ? `Logo de ${vehicle.seller.name}` : `Vendedor ${vehicle.seller.name}`}
+              className={sellerImageClass}
               aspectRatio="1/1"
             />
             <span className="text-xs text-muted-foreground">

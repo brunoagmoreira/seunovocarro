@@ -56,7 +56,17 @@ export function useFeaturedDealers() {
   return useQuery({
     queryKey: ['dealers', 'featured'],
     queryFn: async () => {
-      return await fetchApi<Dealer[]>('/dealers/featured');
+      try {
+        const featured = await fetchApi<Dealer[]>('/dealers/featured');
+        if (Array.isArray(featured) && featured.length > 0) {
+          return featured;
+        }
+        // Fallback útil para ambientes onde /featured está vazio ou desatualizado.
+        return await fetchApi<Dealer[]>('/dealers');
+      } catch {
+        // Fallback para compatibilidade com APIs antigas (rota /featured ausente).
+        return await fetchApi<Dealer[]>('/dealers');
+      }
     },
   });
 }
