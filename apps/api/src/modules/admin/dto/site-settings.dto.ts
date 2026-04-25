@@ -27,6 +27,36 @@ export class UpdateSiteSettingsDto {
   @MaxLength(512)
   google_oauth_client_id?: string | null;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(512)
+  social_instagram_url?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(512)
+  social_facebook_url?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(512)
+  social_linkedin_url?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(512)
+  social_youtube_url?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(512)
+  social_whatsapp_url?: string | null;
+
   @ApiPropertyOptional({ description: 'Omitir para manter; string vazia remove o segredo armazenado.' })
   @IsOptional()
   @IsString()

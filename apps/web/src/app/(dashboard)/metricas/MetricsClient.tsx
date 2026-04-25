@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from 'react';
-import { BarChart3, Calendar, Eye, Home, MessageCircle, Car } from 'lucide-react';
+import { BarChart3, Calendar, Eye, MessageCircle, Car } from 'lucide-react';
 import { fetchApi } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -34,13 +34,11 @@ interface MetricsResponse {
   period_days: number;
   summary: {
     total_vehicles: number;
-    home_views: number;
-    vehicle_views: number;
+    total_views: number;
     whatsapp_clicks: number;
   };
   vehicles: VehicleMetricRow[];
   utm: {
-    home_views: UtmMetricRow[];
     vehicle_views: UtmMetricRow[];
     whatsapp_clicks: UtmMetricRow[];
   };
@@ -144,20 +142,7 @@ export function MetricsClient() {
           </Select>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-5">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-500/10">
-                  <Home className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{data?.summary.home_views || 0}</p>
-                  <p className="text-xs text-muted-foreground">Views na Home</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <Card>
             <CardContent className="pt-5">
               <div className="flex items-center gap-3">
@@ -165,8 +150,8 @@ export function MetricsClient() {
                   <Eye className="h-5 w-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{data?.summary.vehicle_views || 0}</p>
-                  <p className="text-xs text-muted-foreground">Views por Veículos</p>
+                  <p className="text-2xl font-bold">{data?.summary.total_views || 0}</p>
+                  <p className="text-xs text-muted-foreground">Total de views (seus veículos)</p>
                 </div>
               </div>
             </CardContent>
@@ -238,8 +223,7 @@ export function MetricsClient() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-          <UtmTable title="UTM Home Views" rows={data?.utm.home_views || []} />
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           <UtmTable title="UTM Views de Veículos" rows={data?.utm.vehicle_views || []} />
           <UtmTable title="UTM Cliques de WhatsApp" rows={data?.utm.whatsapp_clicks || []} />
         </div>

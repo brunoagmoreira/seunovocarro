@@ -1148,6 +1148,11 @@ export class AdminService {
       gtm_id: row.gtm_id,
       ga_id: row.ga_id,
       meta_pixel_id: row.meta_pixel_id,
+      social_instagram_url: row.social_instagram_url,
+      social_facebook_url: row.social_facebook_url,
+      social_linkedin_url: row.social_linkedin_url,
+      social_youtube_url: row.social_youtube_url,
+      social_whatsapp_url: row.social_whatsapp_url,
       google_oauth_client_id: row.google_oauth_client_id,
       hero_featured_interval_seconds: row.hero_featured_interval_seconds,
     };
@@ -1161,6 +1166,11 @@ export class AdminService {
       gtm_id: row.gtm_id,
       ga_id: row.ga_id,
       meta_pixel_id: row.meta_pixel_id,
+      social_instagram_url: row.social_instagram_url,
+      social_facebook_url: row.social_facebook_url,
+      social_linkedin_url: row.social_linkedin_url,
+      social_youtube_url: row.social_youtube_url,
+      social_whatsapp_url: row.social_whatsapp_url,
       google_oauth_client_id: row.google_oauth_client_id,
       google_oauth_client_secret_set: Boolean(row.google_oauth_client_secret?.trim()),
       hero_featured_interval_seconds: row.hero_featured_interval_seconds,
@@ -1180,6 +1190,31 @@ export class AdminService {
     }
     if (body.meta_pixel_id !== undefined) {
       data.meta_pixel_id = body.meta_pixel_id?.trim() ? body.meta_pixel_id.trim() : null;
+    }
+    if (body.social_instagram_url !== undefined) {
+      data.social_instagram_url = body.social_instagram_url?.trim()
+        ? body.social_instagram_url.trim()
+        : null;
+    }
+    if (body.social_facebook_url !== undefined) {
+      data.social_facebook_url = body.social_facebook_url?.trim()
+        ? body.social_facebook_url.trim()
+        : null;
+    }
+    if (body.social_linkedin_url !== undefined) {
+      data.social_linkedin_url = body.social_linkedin_url?.trim()
+        ? body.social_linkedin_url.trim()
+        : null;
+    }
+    if (body.social_youtube_url !== undefined) {
+      data.social_youtube_url = body.social_youtube_url?.trim()
+        ? body.social_youtube_url.trim()
+        : null;
+    }
+    if (body.social_whatsapp_url !== undefined) {
+      data.social_whatsapp_url = body.social_whatsapp_url?.trim()
+        ? body.social_whatsapp_url.trim()
+        : null;
     }
     if (body.google_oauth_client_id !== undefined) {
       data.google_oauth_client_id = body.google_oauth_client_id?.trim()
@@ -1203,6 +1238,11 @@ export class AdminService {
       gtm_id: updated.gtm_id,
       ga_id: updated.ga_id,
       meta_pixel_id: updated.meta_pixel_id,
+      social_instagram_url: updated.social_instagram_url,
+      social_facebook_url: updated.social_facebook_url,
+      social_linkedin_url: updated.social_linkedin_url,
+      social_youtube_url: updated.social_youtube_url,
+      social_whatsapp_url: updated.social_whatsapp_url,
       google_oauth_client_id: updated.google_oauth_client_id,
       google_oauth_client_secret_set: Boolean(updated.google_oauth_client_secret?.trim()),
       hero_featured_interval_seconds: updated.hero_featured_interval_seconds,

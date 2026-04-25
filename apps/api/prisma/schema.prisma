@@ -573,10 +573,15 @@ model SiteSettings {
   ga_id                            String?
   gtm_id                           String?
   meta_pixel_id                    String?
+  social_instagram_url             String?
+  social_facebook_url              String?
+  social_linkedin_url              String?
+  social_youtube_url               String?
+  social_whatsapp_url              String?
   google_oauth_client_id           String?
   google_oauth_client_secret       String?
   /// Segundos entre cada slide de veículo em destaque no banner da home (3–120).
-  hero_featured_interval_seconds Int      @default(5)
+  hero_featured_interval_seconds   Int      @default(5)
   updated_at                       DateTime @updatedAt
 
   @@map("site_settings")

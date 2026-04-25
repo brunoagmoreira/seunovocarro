@@ -1,11 +1,22 @@
 import Link from 'next/link';
+import { Facebook, Instagram, Linkedin, MessageCircle, Youtube } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { POPULAR_BRANDS, POPULAR_CITIES } from '@/data/brandContent';
 import { useAvailableBrandsAndCities } from '@/hooks/useAvailableBrandsAndCities';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
   const { data: available } = useAvailableBrandsAndCities();
+  const { data: siteSettings } = useSiteSettings();
+
+  const socialLinks = [
+    { href: siteSettings?.social_instagram_url, icon: Instagram, label: 'Instagram' },
+    { href: siteSettings?.social_facebook_url, icon: Facebook, label: 'Facebook' },
+    { href: siteSettings?.social_linkedin_url, icon: Linkedin, label: 'LinkedIn' },
+    { href: siteSettings?.social_youtube_url, icon: Youtube, label: 'YouTube' },
+    { href: siteSettings?.social_whatsapp_url, icon: MessageCircle, label: 'WhatsApp' },
+  ].filter((item) => Boolean(item.href));
 
   // Filter brands and cities to only show those with vehicles
   const brandsWithVehicles = POPULAR_BRANDS.filter(brand => 
@@ -28,6 +39,25 @@ export function Footer() {
             <p className="text-sm text-muted-foreground mb-4">
               A melhor plataforma para comprar e vender carros usados e seminovos no Brasil.
             </p>
+            {socialLinks.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs text-muted-foreground mb-2">Redes sociais</p>
+                <div className="flex items-center gap-2">
+                  {socialLinks.map(({ href, icon: Icon, label }) => (
+                    <a
+                      key={label}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={label}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:text-primary hover:border-primary/40"
+                    >
+                      <Icon className="h-4 w-4" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
             <p className="text-xs text-muted-foreground">
               © {currentYear} Seu Novo Carro. Todos os direitos reservados.
             </p>
@@ -76,16 +106,6 @@ export function Footer() {
                 <Link href="/sobre" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   Sobre a Seu Novo Carro
                 </Link>
-              </li>
-              <li>
-                <a
-                  href="https://www.instagram.com/_seunovocarro"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Instagram
-                </a>
               </li>
               <li>
                 <Link href="/login" className="text-sm text-muted-foreground hover:text-primary transition-colors">

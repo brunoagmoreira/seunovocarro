@@ -306,6 +306,11 @@ export interface SiteSettings {
   ga_id: string | null;
   gtm_id: string | null;
   meta_pixel_id: string | null;
+  social_instagram_url?: string | null;
+  social_facebook_url?: string | null;
+  social_linkedin_url?: string | null;
+  social_youtube_url?: string | null;
+  social_whatsapp_url?: string | null;
   google_oauth_client_id?: string | null;
   google_oauth_client_secret_set?: boolean;
   /** Segundos entre cada slide de destaque no banner da home. */

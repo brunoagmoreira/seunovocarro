@@ -890,20 +890,7 @@ export class VehiclesService {
 
     const vehicleIds = vehicles.map((v) => v.id);
 
-    const [
-      homeViewsCount,
-      viewsByVehicle,
-      whatsappByVehicle,
-      homeUtmRows,
-      vehicleViewUtmRows,
-      whatsappUtmRows,
-    ] = await Promise.all([
-      this.prisma.trackingEvent.count({
-        where: {
-          event_type: 'home_view',
-          created_at: { gte: startDate },
-        },
-      }),
+    const [viewsByVehicle, whatsappByVehicle, vehicleViewUtmRows, whatsappUtmRows] = await Promise.all([
       vehicleIds.length
         ? this.prisma.vehicleView.groupBy({
             by: ['vehicle_id'],
@@ -925,14 +912,6 @@ export class VehiclesService {
             _count: { _all: true },
           })
         : Promise.resolve([]),
-      this.prisma.trackingEvent.groupBy({
-        by: ['utm_source', 'utm_medium', 'utm_campaign'],
-        where: {
-          event_type: 'home_view',
-          created_at: { gte: startDate },
-        },
-        _count: { _all: true },
-      }),
       vehicleIds.length
         ? this.prisma.vehicleView.groupBy({
             by: ['utm_source', 'utm_medium', 'utm_campaign'],
@@ -1009,13 +988,11 @@ export class VehiclesService {
       start_date: startDate,
       summary: {
         total_vehicles: rows.length,
-        home_views: homeViewsCount,
-        vehicle_views: totalVehicleViews,
+        total_views: totalVehicleViews,
         whatsapp_clicks: totalWhatsappClicks,
       },
       vehicles: rows,
       utm: {
-        home_views: mapUtm(homeUtmRows),
         vehicle_views: mapUtm(vehicleViewUtmRows),
         whatsapp_clicks: mapUtm(whatsappUtmRows),
       },

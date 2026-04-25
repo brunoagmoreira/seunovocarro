@@ -10,26 +10,29 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts';
 import { toast } from 'sonner';
 
-const mockTimeSeries = [
-  { date: '20/03', views: 180, leads: 8, signups: 1 }, { date: '21/03', views: 220, leads: 12, signups: 2 },
-  { date: '22/03', views: 310, leads: 15, signups: 1 }, { date: '23/03', views: 280, leads: 18, signups: 3 },
-  { date: '24/03', views: 420, leads: 22, signups: 2 }, { date: '25/03', views: 380, leads: 20, signups: 4 },
-  { date: '26/03', views: 510, leads: 28, signups: 3 }, { date: '27/03', views: 460, leads: 25, signups: 2 },
-  { date: '28/03', views: 540, leads: 30, signups: 5 }, { date: '29/03', views: 590, leads: 34, signups: 6 },
-];
-
-const mockCampaignMetrics = [
-  { campaign: 'Promo_Semana_Consumidor', source: 'google', views: 2400, leads: 85, signups: 12, conversionRate: 3.54 },
-  { campaign: 'Retargeting_BH', source: 'facebook', views: 1800, leads: 62, signups: 8, conversionRate: 3.44 },
-  { campaign: 'Orgânico/Direto', source: 'direto', views: 3200, leads: 45, signups: 18, conversionRate: 1.41 },
-  { campaign: 'Instagram_Stories', source: 'instagram', views: 980, leads: 38, signups: 5, conversionRate: 3.88 },
-  { campaign: 'Google_Search_BH', source: 'google', views: 1500, leads: 52, signups: 7, conversionRate: 3.47 },
-];
+type CampaignMetric = {
+  campaign: string;
+  source: string;
+  views: number;
+  leads: number;
+  signups: number;
+  conversionRate: number;
+};
 
 export default function AdminUTMReportsPage() {
   const [period, setPeriod] = useState('30');
+  const campaignMetrics: CampaignMetric[] = [];
+  const timeSeries: Array<{ date: string; views: number; leads: number; signups: number }> = [];
 
-  const summaryStats = { totalViews: 9880, totalLeads: 282, totalSignups: 50, overallConversionRate: 2.85 };
+  const totalViews = campaignMetrics.reduce((acc, item) => acc + item.views, 0);
+  const totalLeads = campaignMetrics.reduce((acc, item) => acc + item.leads, 0);
+  const totalSignups = campaignMetrics.reduce((acc, item) => acc + item.signups, 0);
+  const summaryStats = {
+    totalViews,
+    totalLeads,
+    totalSignups,
+    overallConversionRate: totalViews > 0 ? (totalLeads / totalViews) * 100 : 0,
+  };
 
   const statCards = [
     { label: 'Views', value: summaryStats.totalViews.toLocaleString('pt-BR'), icon: Eye, color: 'text-blue-500', bgColor: 'bg-blue-500/10' },
@@ -38,7 +41,7 @@ export default function AdminUTMReportsPage() {
     { label: 'Taxa de Conversão', value: `${summaryStats.overallConversionRate.toFixed(2)}%`, icon: TrendingUp, color: 'text-primary', bgColor: 'bg-primary/10' },
   ];
 
-  const barChartData = mockCampaignMetrics.slice(0, 8).map(c => ({ name: c.campaign.length > 15 ? c.campaign.substring(0, 15) + '...' : c.campaign, Views: c.views, Leads: c.leads }));
+  const barChartData = campaignMetrics.slice(0, 8).map(c => ({ name: c.campaign.length > 15 ? c.campaign.substring(0, 15) + '...' : c.campaign, Views: c.views, Leads: c.leads }));
 
   return (
     <div className="min-h-screen pb-24 md:pb-8">
@@ -72,7 +75,7 @@ export default function AdminUTMReportsPage() {
             <h2 className="font-heading font-semibold mb-4 flex items-center gap-2"><BarChart3 className="h-5 w-5" />Evolução Temporal</h2>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={mockTimeSeries}>
+                <LineChart data={timeSeries}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis dataKey="date" tick={{ fontSize: 11 }} className="text-muted-foreground" />
                   <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" />
@@ -109,7 +112,7 @@ export default function AdminUTMReportsPage() {
             <Table>
               <TableHeader><TableRow><TableHead className="min-w-[200px]">Campanha</TableHead><TableHead>Source</TableHead><TableHead className="text-right">Views</TableHead><TableHead className="text-right">Leads</TableHead><TableHead className="text-right">Conv. %</TableHead><TableHead className="text-right">Cadastros</TableHead></TableRow></TableHeader>
               <TableBody>
-                {mockCampaignMetrics.map((campaign, index) => (
+                {campaignMetrics.map((campaign, index) => (
                   <TableRow key={campaign.campaign}>
                     <TableCell className="font-medium"><div className="flex items-center gap-2">{index < 3 && (<Badge variant={index === 0 ? 'default' : 'secondary'}>#{index + 1}</Badge>)}<span className="truncate max-w-[180px]">{campaign.campaign}</span></div></TableCell>
                     <TableCell><Badge variant="outline" className="text-xs">{campaign.source}</Badge></TableCell>
@@ -119,6 +122,13 @@ export default function AdminUTMReportsPage() {
                     <TableCell className="text-right font-mono">{campaign.signups.toLocaleString('pt-BR')}</TableCell>
                   </TableRow>
                 ))}
+                {campaignMetrics.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                      Nenhum dado disponível no período selecionado.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>

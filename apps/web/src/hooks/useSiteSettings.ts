@@ -7,6 +7,11 @@ export interface PublicSiteSettings {
   gtm_id: string | null;
   ga_id: string | null;
   meta_pixel_id: string | null;
+  social_instagram_url?: string | null;
+  social_facebook_url?: string | null;
+  social_linkedin_url?: string | null;
+  social_youtube_url?: string | null;
+  social_whatsapp_url?: string | null;
   google_oauth_client_id: string | null;
   /** Segundos entre cada veículo em destaque no banner da home (3–120). */
   hero_featured_interval_seconds?: number;
@@ -48,6 +53,11 @@ export function useUpdateSiteSettings() {
         gtm_id: string | null;
         ga_id: string | null;
         meta_pixel_id: string | null;
+        social_instagram_url: string | null;
+        social_facebook_url: string | null;
+        social_linkedin_url: string | null;
+        social_youtube_url: string | null;
+        social_whatsapp_url: string | null;
         google_oauth_client_id: string | null;
         google_oauth_client_secret: string | null;
         hero_featured_interval_seconds: number;

@@ -52,6 +52,11 @@ export default function AdminSettingsPage() {
     gtm_id: '',
     ga_id: '',
     meta_pixel_id: '',
+    social_instagram_url: '',
+    social_facebook_url: '',
+    social_linkedin_url: '',
+    social_youtube_url: '',
+    social_whatsapp_url: '',
     google_oauth_client_id: '',
     hero_featured_interval_seconds: 5,
   });
@@ -77,6 +82,11 @@ export default function AdminSettingsPage() {
       gtm_id: siteSettings.gtm_id ?? '',
       ga_id: siteSettings.ga_id ?? '',
       meta_pixel_id: siteSettings.meta_pixel_id ?? '',
+      social_instagram_url: siteSettings.social_instagram_url ?? '',
+      social_facebook_url: siteSettings.social_facebook_url ?? '',
+      social_linkedin_url: siteSettings.social_linkedin_url ?? '',
+      social_youtube_url: siteSettings.social_youtube_url ?? '',
+      social_whatsapp_url: siteSettings.social_whatsapp_url ?? '',
       google_oauth_client_id: siteSettings.google_oauth_client_id ?? '',
       hero_featured_interval_seconds:
         typeof siteSettings.hero_featured_interval_seconds === 'number'
@@ -98,6 +108,11 @@ export default function AdminSettingsPage() {
         gtm_id: formData.gtm_id.trim() || null,
         ga_id: formData.ga_id.trim() || null,
         meta_pixel_id: formData.meta_pixel_id.trim() || null,
+        social_instagram_url: formData.social_instagram_url.trim() || null,
+        social_facebook_url: formData.social_facebook_url.trim() || null,
+        social_linkedin_url: formData.social_linkedin_url.trim() || null,
+        social_youtube_url: formData.social_youtube_url.trim() || null,
+        social_whatsapp_url: formData.social_whatsapp_url.trim() || null,
         google_oauth_client_id: formData.google_oauth_client_id.trim() || null,
         hero_featured_interval_seconds: interval,
       };
@@ -225,6 +240,73 @@ export default function AdminSettingsPage() {
                   }
                 />
                 <p className="text-xs text-muted-foreground">Entre 3 e 120 segundos.</p>
+              </div>
+            </div>
+
+            <div className="bg-card rounded-2xl p-6 shadow-card">
+              <h2 className="font-heading font-semibold text-lg mb-2 flex items-center gap-2">
+                <Share2 className="h-5 w-5 text-primary" />
+                Redes sociais da SNC
+              </h2>
+              <p className="text-sm text-muted-foreground mb-6">
+                Esses links alimentam os ícones de redes sociais exibidos no rodapé do site.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="social-instagram">Instagram</Label>
+                  <Input
+                    id="social-instagram"
+                    placeholder="https://instagram.com/..."
+                    value={formData.social_instagram_url}
+                    onChange={(e) =>
+                      setFormData({ ...formData, social_instagram_url: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="social-facebook">Facebook</Label>
+                  <Input
+                    id="social-facebook"
+                    placeholder="https://facebook.com/..."
+                    value={formData.social_facebook_url}
+                    onChange={(e) =>
+                      setFormData({ ...formData, social_facebook_url: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="social-linkedin">LinkedIn</Label>
+                  <Input
+                    id="social-linkedin"
+                    placeholder="https://linkedin.com/company/..."
+                    value={formData.social_linkedin_url}
+                    onChange={(e) =>
+                      setFormData({ ...formData, social_linkedin_url: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="social-youtube">YouTube</Label>
+                  <Input
+                    id="social-youtube"
+                    placeholder="https://youtube.com/@..."
+                    value={formData.social_youtube_url}
+                    onChange={(e) =>
+                      setFormData({ ...formData, social_youtube_url: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="social-whatsapp">WhatsApp</Label>
+                  <Input
+                    id="social-whatsapp"
+                    placeholder="https://wa.me/55..."
+                    value={formData.social_whatsapp_url}
+                    onChange={(e) =>
+                      setFormData({ ...formData, social_whatsapp_url: e.target.value })
+                    }
+                  />
+                </div>
               </div>
             </div>
 
