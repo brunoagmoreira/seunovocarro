@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Calculator } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
 import { 
   Dialog, 
   DialogContent, 
@@ -14,31 +16,57 @@ import {
 interface FinancingSimulatorProps {
   vehiclePrice: number;
   vehicleName: string;
-  onSimulate?: (data: { downPayment: number; installments: number; monthlyPayment: number }) => void;
+  monthlyInterestRatePercent?: number;
+  acceptsTrade?: boolean;
+  onSimulate?: (data: {
+    downPayment: number;
+    installments: number;
+    monthlyPayment: number;
+    interestRatePercent: number;
+    tradeInEnabled: boolean;
+    tradeInFipeValue: number;
+  }) => void;
 }
 
-export function FinancingSimulator({ vehiclePrice, vehicleName, onSimulate }: FinancingSimulatorProps) {
-  const [downPayment, setDownPayment] = useState(Math.round(vehiclePrice * 0.2)); // 20% entrada
+export function FinancingSimulator({
+  vehiclePrice,
+  vehicleName,
+  monthlyInterestRatePercent = 1.5,
+  acceptsTrade = false,
+  onSimulate,
+}: FinancingSimulatorProps) {
+  const [downPayment, setDownPayment] = useState(Math.round(vehiclePrice * 0.2));
   const [installments, setInstallments] = useState(48);
+  const [tradeInEnabled, setTradeInEnabled] = useState(false);
+  const [tradeInFipeValue, setTradeInFipeValue] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   
-  const interestRate = 0.015; // 1.5% ao mês
-  const financedAmount = vehiclePrice - downPayment;
-  const monthlyPayment = financedAmount > 0 
-    ? financedAmount * (interestRate * Math.pow(1 + interestRate, installments)) / (Math.pow(1 + interestRate, installments) - 1)
-    : 0;
+  const interestRate = Math.max(0, monthlyInterestRatePercent) / 100;
+  const tradeInValueApplied = tradeInEnabled ? Math.max(0, tradeInFipeValue) : 0;
+  const financedAmount = Math.max(0, vehiclePrice - downPayment - tradeInValueApplied);
+  const monthlyPayment =
+    financedAmount <= 0
+      ? 0
+      : interestRate <= 0
+        ? financedAmount / installments
+        : financedAmount * (interestRate * Math.pow(1 + interestRate, installments)) /
+          (Math.pow(1 + interestRate, installments) - 1);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   };
 
   const handleSimulate = () => {
-    onSimulate?.({ downPayment, installments, monthlyPayment });
+    onSimulate?.({
+      downPayment,
+      installments,
+      monthlyPayment,
+      interestRatePercent: monthlyInterestRatePercent,
+      tradeInEnabled,
+      tradeInFipeValue: tradeInValueApplied,
+    });
     setIsOpen(false);
   };
-
-  // Calculate installment preview for card
-  const previewInstallment = vehiclePrice * (interestRate * Math.pow(1 + interestRate, 60)) / (Math.pow(1 + interestRate, 60) - 1);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -82,6 +110,39 @@ export function FinancingSimulator({ vehiclePrice, vehicleName, onSimulate }: Fi
               </p>
             </div>
 
+            {acceptsTrade && (
+              <div className="space-y-3 rounded-lg border border-border p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <Label htmlFor="trade-in-switch">Usar veículo atual na troca</Label>
+                  <Switch
+                    id="trade-in-switch"
+                    checked={tradeInEnabled}
+                    onCheckedChange={setTradeInEnabled}
+                  />
+                </div>
+                {tradeInEnabled && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="trade-in-fipe">Valor FIPE do seu veículo</Label>
+                      <Input
+                        id="trade-in-fipe"
+                        type="number"
+                        min={0}
+                        step={500}
+                        value={tradeInFipeValue || ''}
+                        onChange={(e) => setTradeInFipeValue(Number(e.target.value) || 0)}
+                        placeholder="Ex.: 45000"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      O valor de troca pela FIPE é apenas estimativo e ainda precisa passar por
+                      avaliação com um especialista.
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
+
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <Label>Parcelas</Label>
@@ -104,7 +165,8 @@ export function FinancingSimulator({ vehiclePrice, vehicleName, onSimulate }: Fi
               {formatCurrency(monthlyPayment)}
             </p>
             <p className="text-xs text-muted-foreground mt-2">
-              *Simulação com taxa de 1.5% a.m. Valores sujeitos a análise de crédito.
+              *Simulação com taxa média de {monthlyInterestRatePercent}% a.m. Valores sujeitos a
+              análise de crédito.
             </p>
           </div>
 
@@ -117,6 +179,12 @@ export function FinancingSimulator({ vehiclePrice, vehicleName, onSimulate }: Fi
               <span className="text-muted-foreground">Total a pagar:</span>
               <span className="font-medium">{formatCurrency(downPayment + (monthlyPayment * installments))}</span>
             </div>
+            {tradeInEnabled && tradeInValueApplied > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Troca (FIPE estimada):</span>
+                <span className="font-medium">{formatCurrency(tradeInValueApplied)}</span>
+              </div>
+            )}
           </div>
 
           <Button 
@@ -132,7 +200,16 @@ export function FinancingSimulator({ vehiclePrice, vehicleName, onSimulate }: Fi
   );
 }
 
-export function getInstallmentPreview(price: number, months: number = 60): number {
-  const interestRate = 0.015;
-  return price * (interestRate * Math.pow(1 + interestRate, months)) / (Math.pow(1 + interestRate, months) - 1);
+export function getInstallmentPreview(
+  price: number,
+  months: number = 60,
+  monthlyInterestRatePercent: number = 1.5,
+): number {
+  const interestRate = Math.max(0, monthlyInterestRatePercent) / 100;
+  if (interestRate <= 0) return price / months;
+  return (
+    price *
+    (interestRate * Math.pow(1 + interestRate, months)) /
+    (Math.pow(1 + interestRate, months) - 1)
+  );
 }

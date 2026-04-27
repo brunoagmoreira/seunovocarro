@@ -315,6 +315,8 @@ export interface SiteSettings {
   google_oauth_client_secret_set?: boolean;
   /** Segundos entre cada slide de destaque no banner da home. */
   hero_featured_interval_seconds?: number;
+  /** Juros médios ao mês (%) para simulação de financiamento. */
+  avg_financing_interest_rate?: number;
   updated_at: string;
 }
 

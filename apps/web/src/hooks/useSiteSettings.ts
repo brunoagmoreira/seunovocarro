@@ -15,6 +15,8 @@ export interface PublicSiteSettings {
   google_oauth_client_id: string | null;
   /** Segundos entre cada veículo em destaque no banner da home (3–120). */
   hero_featured_interval_seconds?: number;
+  /** Juros médios ao mês (%) para simulação de financiamento. */
+  avg_financing_interest_rate?: number;
 }
 
 export interface AdminSiteSettings extends PublicSiteSettings {
@@ -61,6 +63,7 @@ export function useUpdateSiteSettings() {
         google_oauth_client_id: string | null;
         google_oauth_client_secret: string | null;
         hero_featured_interval_seconds: number;
+        avg_financing_interest_rate: number;
       }>,
     ) => {
       try {

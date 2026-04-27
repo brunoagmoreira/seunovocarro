@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsOptional, IsString, MaxLength, IsInt, Min, Max } from 'class-validator';
+import { IsOptional, IsString, MaxLength, IsInt, Min, Max, IsNumber } from 'class-validator';
 
 export class UpdateSiteSettingsDto {
   @ApiPropertyOptional()
@@ -70,4 +70,12 @@ export class UpdateSiteSettingsDto {
   @Min(3)
   @Max(120)
   hero_featured_interval_seconds?: number;
+
+  @ApiPropertyOptional({ description: 'Juros médios ao mês (%) para simulação de financiamento (0–20).' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(20)
+  avg_financing_interest_rate?: number;
 }

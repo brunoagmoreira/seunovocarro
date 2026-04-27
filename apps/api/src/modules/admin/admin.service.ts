@@ -1155,6 +1155,7 @@ export class AdminService {
       social_whatsapp_url: row.social_whatsapp_url,
       google_oauth_client_id: row.google_oauth_client_id,
       hero_featured_interval_seconds: row.hero_featured_interval_seconds,
+      avg_financing_interest_rate: Number(row.avg_financing_interest_rate ?? 1.5),
     };
   }
 
@@ -1174,6 +1175,7 @@ export class AdminService {
       google_oauth_client_id: row.google_oauth_client_id,
       google_oauth_client_secret_set: Boolean(row.google_oauth_client_secret?.trim()),
       hero_featured_interval_seconds: row.hero_featured_interval_seconds,
+      avg_financing_interest_rate: Number(row.avg_financing_interest_rate ?? 1.5),
       updated_at: row.updated_at,
     };
   }
@@ -1229,6 +1231,10 @@ export class AdminService {
       const n = Math.round(Number(body.hero_featured_interval_seconds));
       data.hero_featured_interval_seconds = Math.min(120, Math.max(3, Number.isFinite(n) ? n : 5));
     }
+    if (body.avg_financing_interest_rate !== undefined) {
+      const n = Number(body.avg_financing_interest_rate);
+      data.avg_financing_interest_rate = Math.min(20, Math.max(0, Number.isFinite(n) ? n : 1.5));
+    }
     const updated = await this.prisma.siteSettings.update({
       where: { id: row.id },
       data,
@@ -1246,6 +1252,7 @@ export class AdminService {
       google_oauth_client_id: updated.google_oauth_client_id,
       google_oauth_client_secret_set: Boolean(updated.google_oauth_client_secret?.trim()),
       hero_featured_interval_seconds: updated.hero_featured_interval_seconds,
+      avg_financing_interest_rate: Number(updated.avg_financing_interest_rate ?? 1.5),
       updated_at: updated.updated_at,
     };
   }

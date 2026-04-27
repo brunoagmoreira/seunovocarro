@@ -24,14 +24,6 @@ export const VehicleCard = memo(function VehicleCard({ vehicle, className }: Veh
     return new Intl.NumberFormat('pt-BR').format(mileage);
   };
 
-  // Calculate installment (60 months, 1.5% interest)
-  const calculateInstallment = (price: number) => {
-    const rate = 0.015;
-    const months = 60;
-    const installment = price * (rate * Math.pow(1 + rate, months)) / (Math.pow(1 + rate, months) - 1);
-    return formatPrice(installment);
-  };
-
   // Check if vehicle is new (less than 7 days old)
   const isNew = () => {
     const createdAt = new Date(vehicle.createdAt);
@@ -121,14 +113,11 @@ export const VehicleCard = memo(function VehicleCard({ vehicle, className }: Veh
           <span>{TRANSMISSION_TYPES[vehicle.transmission]}</span>
         </div>
 
-        {/* Price + Installments */}
+        {/* Price */}
         <div className="mb-2">
           <span className="font-heading font-bold text-xl gradient-brand-text">
             {formatPrice(vehicle.price)}
           </span>
-          <p className="text-xs text-muted-foreground">
-            ou 60x de {calculateInstallment(vehicle.price)}
-          </p>
         </div>
 
         {/* Location & Views */}

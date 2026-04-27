@@ -583,6 +583,8 @@ model SiteSettings {
   google_oauth_client_secret       String?
   /// Segundos entre cada slide de veículo em destaque no banner da home (3–120).
   hero_featured_interval_seconds   Int      @default(5)
+  /// Juros médios ao mês (%) para simulação de financiamento.
+  avg_financing_interest_rate      Decimal  @default(1.5) @db.Decimal(5, 2)
   updated_at                       DateTime @updatedAt
 
   @@map("site_settings")

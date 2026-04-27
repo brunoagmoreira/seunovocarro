@@ -59,6 +59,7 @@ export default function AdminSettingsPage() {
     social_whatsapp_url: '',
     google_oauth_client_id: '',
     hero_featured_interval_seconds: 5,
+    avg_financing_interest_rate: 1.5,
   });
   const [googleClientSecret, setGoogleClientSecret] = useState('');
   const [secretWasSet, setSecretWasSet] = useState(false);
@@ -92,6 +93,10 @@ export default function AdminSettingsPage() {
         typeof siteSettings.hero_featured_interval_seconds === 'number'
           ? siteSettings.hero_featured_interval_seconds
           : 5,
+      avg_financing_interest_rate:
+        typeof siteSettings.avg_financing_interest_rate === 'number'
+          ? siteSettings.avg_financing_interest_rate
+          : 1.5,
     });
     setSecretWasSet(siteSettings.google_oauth_client_secret_set);
     setGoogleClientSecret('');
@@ -115,6 +120,10 @@ export default function AdminSettingsPage() {
         social_whatsapp_url: formData.social_whatsapp_url.trim() || null,
         google_oauth_client_id: formData.google_oauth_client_id.trim() || null,
         hero_featured_interval_seconds: interval,
+        avg_financing_interest_rate: Math.min(
+          20,
+          Math.max(0, Number(formData.avg_financing_interest_rate) || 1.5),
+        ),
       };
       if (googleClientSecret.trim()) {
         body.google_oauth_client_secret = googleClientSecret.trim();
@@ -240,6 +249,35 @@ export default function AdminSettingsPage() {
                   }
                 />
                 <p className="text-xs text-muted-foreground">Entre 3 e 120 segundos.</p>
+              </div>
+            </div>
+
+            <div className="bg-card rounded-2xl p-6 shadow-card">
+              <h2 className="font-heading font-semibold text-lg mb-2 flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                Simulação de financiamento
+              </h2>
+              <p className="text-sm text-muted-foreground mb-6">
+                Taxa média de juros mensal (%) usada no simulador da página do veículo.
+              </p>
+              <div className="space-y-2 max-w-xs">
+                <Label htmlFor="avg-financing-interest">Juros médios (% a.m.)</Label>
+                <Input
+                  id="avg-financing-interest"
+                  type="number"
+                  min={0}
+                  max={20}
+                  step={0.01}
+                  inputMode="decimal"
+                  value={formData.avg_financing_interest_rate}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      avg_financing_interest_rate: Number(e.target.value) || 0,
+                    })
+                  }
+                />
+                <p className="text-xs text-muted-foreground">Entre 0% e 20% ao mês.</p>
               </div>
             </div>
 

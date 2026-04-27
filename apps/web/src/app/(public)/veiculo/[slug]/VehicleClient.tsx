@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useVehicleBySlug, useSellerVehicles } from '@/hooks/useVehicles';
 import { VehicleCard } from '@/components/vehicles/VehicleCard';
+import { FinancingSimulator } from '@/components/vehicles/FinancingSimulator';
 import { useTrackView } from '@/hooks/useTrackView';
 import { ImageLightbox } from '@/components/vehicles/ImageLightbox';
 import { OptimizedImage } from '@/components/ui/optimized-image';
@@ -34,6 +35,7 @@ import { VehicleSchema } from '@/components/seo/schemas';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { getStoredUTM } from '@/hooks/useUTM';
 import { fetchApi } from '@/lib/api';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 function WhatsAppIcon({ className = '' }: { className?: string }) {
   return (
@@ -54,6 +56,7 @@ export function VehicleClient({ slug }: { slug: string }) {
   const allowAnyStatus = !isAuthLoading && isAdmin && isPreviewMode;
   
   const { data: vehicle, isLoading, error } = useVehicleBySlug(slug, allowAnyStatus);
+  const { data: siteSettings } = useSiteSettings();
   const { data: sellerVehicles } = useSellerVehicles(vehicle?.seller?.id, vehicle?.id);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -381,6 +384,14 @@ export function VehicleClient({ slug }: { slug: string }) {
                 <span className="font-heading text-3xl md:text-4xl font-bold gradient-brand-text">
                   {formatPrice(vehicle.price)}
                 </span>
+              </div>
+              <div className="mt-4 max-w-md">
+                <FinancingSimulator
+                  vehiclePrice={vehicle.price}
+                  vehicleName={`${vehicle.brand} ${vehicle.model} ${vehicle.year}`}
+                  monthlyInterestRatePercent={siteSettings?.avg_financing_interest_rate ?? 1.5}
+                  acceptsTrade={Boolean(vehicle.accepts_trade)}
+                />
               </div>
             </div>
 
