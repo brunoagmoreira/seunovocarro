@@ -51,6 +51,12 @@ function VehiclesContent() {
     transmission: searchParams.get('transmission') || undefined,
     fuel: searchParams.get('fuel') || undefined,
     state: searchParams.get('state') || undefined,
+    acceptsTrade:
+      searchParams.get('acceptsTrade') === 'true'
+        ? true
+        : searchParams.get('acceptsTrade') === 'false'
+          ? false
+          : undefined,
   }), [searchParams]);
 
   const { data: vehicles, isLoading } = useVehicles(filters, sortBy);

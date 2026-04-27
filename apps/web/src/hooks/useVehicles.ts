@@ -29,7 +29,8 @@ const mapVehicleResponse = (v: any): Vehicle => {
     videos: Array.isArray(v.media) ? v.media.filter((m: any) => m.type === 'video') : (v.videos || []),
     seller: v.seller ? {
       id: v.seller.id || 'unknown',
-      name: v.seller.full_name || v.seller.name || 'Vendedor',
+      name: v.seller.dealer?.name || v.seller.full_name || v.seller.name || 'Vendedor',
+      dealerName: v.seller.dealer?.name || undefined,
       city: v.seller.city || v.city || '',
       state: v.seller.state || v.state || '',
       avatarUrl: v.seller.avatar_url || v.seller.avatarUrl || '/placeholder.svg',

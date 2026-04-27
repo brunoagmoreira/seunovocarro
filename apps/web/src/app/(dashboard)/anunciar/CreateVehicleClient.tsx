@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, X, Loader2, ImagePlus, GripVertical, Star } from 'lucide-react';
@@ -21,6 +21,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import { fetchApi } from '@/lib/api';
 import { BRANDS, STATES, FUEL_TYPES, TRANSMISSION_TYPES } from '@/types/vehicle';
 import { useCities } from '@/hooks/useCities';
+
+const normalizeCityName = (value?: string | null) =>
+  (value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
+const extractProfileCity = (raw?: string | null) => {
+  const city = (raw || '').split(',')[0]?.trim();
+  return city || '';
+};
 
 export function CreateVehicleClient() {
   const router = useRouter();
@@ -51,31 +63,46 @@ export function CreateVehicleClient() {
     city: profile?.city || '',
     state: profile?.state || '',
     whatsapp: profile?.whatsapp || profile?.phone || '',
-    phone: profile?.phone || ''
+    phone: profile?.phone || '',
+    acceptsTrade: false
   });
 
   const { cities, isLoading: citiesLoading } = useCities(formData.state);
 
+  const resolveCityFromProfile = useCallback((rawCity?: string | null) => {
+    const candidate = extractProfileCity(rawCity);
+    if (!candidate || cities.length === 0) return '';
+    const normalizedCandidate = normalizeCityName(candidate);
+    const exact = cities.find((c) => normalizeCityName(c.nome) === normalizedCandidate);
+    if (exact) return exact.nome;
+    const contains = cities.find((c) => normalizeCityName(c.nome).includes(normalizedCandidate));
+    if (contains) return contains.nome;
+    return '';
+  }, [cities]);
+
   useEffect(() => {
     if (formData.state && formData.city) {
-      const cityExists = cities.some(c => c.nome === formData.city);
+      const normalizedCurrent = normalizeCityName(formData.city);
+      const cityExists = cities.some((c) => normalizeCityName(c.nome) === normalizedCurrent);
       if (!cityExists && cities.length > 0) {
-        setFormData(prev => ({ ...prev, city: '' }));
+        const mappedFromProfile = resolveCityFromProfile(profile?.city);
+        setFormData((prev) => ({ ...prev, city: mappedFromProfile || '' }));
       }
     }
-  }, [formData.state, cities]);
+  }, [formData.state, formData.city, cities, profile?.city, resolveCityFromProfile]);
 
   useEffect(() => {
     if (!profile) return;
+    const mappedCity = resolveCityFromProfile(profile.city);
 
     setFormData((prev) => ({
       ...prev,
       state: prev.state || profile.state || '',
-      city: prev.city || profile.city || '',
+      city: prev.city || mappedCity || extractProfileCity(profile.city),
       whatsapp: prev.whatsapp || profile.whatsapp || profile.phone || '',
       phone: prev.phone || profile.phone || '',
     }));
-  }, [profile]);
+  }, [profile, cities, resolveCityFromProfile]);
 
   if (!user) {
     return (
@@ -244,6 +271,7 @@ export function CreateVehicleClient() {
           state: formData.state,
           whatsapp: formData.whatsapp || null,
           phone: formData.phone || null,
+          accepts_trade: formData.acceptsTrade,
           status: asDraft ? 'draft' : 'pending',
           slug,
           media: uploadedMedia
@@ -494,6 +522,22 @@ export function CreateVehicleClient() {
                   Apenas o último dígito será exibido
                 </p>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Aceita troca?</Label>
+              <Select
+                value={formData.acceptsTrade ? 'true' : 'false'}
+                onValueChange={(v) => setFormData({ ...formData, acceptsTrade: v === 'true' })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="false">Não</SelectItem>
+                  <SelectItem value="true">Sim</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

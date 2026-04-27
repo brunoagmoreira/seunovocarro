@@ -20,6 +20,7 @@ import { VehicleFilters } from '@/types/vehicle';
 import { Skeleton } from '@/components/ui/skeleton';
 import { OrganizationSchema, WebsiteSearchSchema, LocalBusinessSchema } from '@/components/seo/schemas';
 import { fetchApi } from '@/lib/api';
+import { trackLandingPageView } from '@/lib/tracking';
 
 const HomeBlogSection = dynamic(
   () => import('@/components/home/HomeBlogSection').then((mod) => mod.HomeBlogSection),
@@ -78,6 +79,8 @@ export function HomeClient() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    trackLandingPageView();
+
     const sessionKey = 'snc_home_view_tracked';
     if (sessionStorage.getItem(sessionKey)) return;
 

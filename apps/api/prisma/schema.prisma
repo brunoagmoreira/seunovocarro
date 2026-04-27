@@ -173,6 +173,7 @@ model Vehicle {
   state         String
   phone         String?
   whatsapp      String?
+  accepts_trade Boolean       @default(false)
   status        VehicleStatus @default(pending)
   slug          String        @unique
   display_id    String?

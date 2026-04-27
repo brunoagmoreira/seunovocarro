@@ -29,7 +29,7 @@ import { OptimizedImage } from '@/components/ui/optimized-image';
 import { useAuth } from '@/contexts/AuthContext';
 import { FUEL_TYPES, TRANSMISSION_TYPES } from '@/types/vehicle';
 import { Badge } from '@/components/ui/badge';
-import { trackViewContent } from '@/lib/tracking';
+import { trackContact, trackViewContent } from '@/lib/tracking';
 import { VehicleSchema } from '@/components/seo/schemas';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { getStoredUTM } from '@/hooks/useUTM';
@@ -181,6 +181,13 @@ export function VehicleClient({ slug }: { slug: string }) {
 
   const allMedia = [...vehicle.images, ...vehicle.videos];
   const sellerPhone = vehicle.whatsapp || vehicle.seller?.whatsapp || '';
+  const sellerDisplayName =
+    vehicle.seller?.isDealer
+      ? (vehicle.seller?.dealerName || vehicle.seller?.name || 'Lojista')
+      : (vehicle.seller?.name || 'Vendedor');
+  const sellerDisplayImage = vehicle.seller?.isDealer
+    ? (vehicle.seller?.dealerLogoUrl || vehicle.seller?.avatarUrl)
+    : vehicle.seller?.avatarUrl;
 
   const handleDirectWhatsApp = () => {
     const digits = sellerPhone.replace(/\D/g, '');
@@ -194,6 +201,12 @@ export function VehicleClient({ slug }: { slug: string }) {
     if (typeof window !== 'undefined' && sessionId) {
       sessionStorage.setItem('snc_session_id', sessionId);
     }
+
+    trackContact('whatsapp', {
+      vehicleId: vehicle.id,
+      vehicleName: `${vehicle.brand} ${vehicle.model} ${vehicle.year}`,
+      value: vehicle.price,
+    });
 
     void fetchApi(`/vehicles/${vehicle.id}/track-whatsapp-click`, {
       method: 'POST',
@@ -422,16 +435,24 @@ export function VehicleClient({ slug }: { slug: string }) {
             <div className="bg-card rounded-2xl p-6 shadow-card sticky top-20">
               <div className="flex items-center gap-4 mb-6">
                 <OptimizedImage
-                  src={vehicle.seller?.avatarUrl}
-                  alt={vehicle.seller?.name || "Lojista"}
-                  className="w-14 h-14 rounded-full"
+                  src={sellerDisplayImage}
+                  alt={sellerDisplayName}
+                  className={`w-14 h-14 rounded-full ${vehicle.seller?.isDealer ? 'object-contain bg-white p-1' : ''}`}
                   aspectRatio="1/1"
                 />
                 <div>
-                  <h3 className="font-heading font-semibold">{vehicle.seller?.name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {vehicle.seller?.city}, {vehicle.seller?.state}
-                  </p>
+                  <h3 className="font-heading font-semibold">{sellerDisplayName}</h3>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-muted-foreground">
+                      {vehicle.seller?.city}, {vehicle.seller?.state}
+                    </p>
+                    <OptimizedImage
+                      src={sellerDisplayImage}
+                      alt={sellerDisplayName}
+                      className={`w-5 h-5 rounded-full ${vehicle.seller?.isDealer ? 'object-contain bg-white p-0.5' : ''}`}
+                      aspectRatio="1/1"
+                    />
+                  </div>
                 </div>
               </div>
 

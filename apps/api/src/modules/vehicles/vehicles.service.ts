@@ -433,7 +433,7 @@ export class VehiclesService {
             state: true,
             phone: true,
             whatsapp: true,
-            dealer: { select: { logo_url: true } },
+            dealer: { select: { name: true, logo_url: true } },
           },
         },
         media: {
@@ -511,6 +511,18 @@ export class VehiclesService {
       where.fuel = fuel as FuelType;
     }
 
+    const acceptsTradeParam =
+      query.acceptsTrade !== undefined
+        ? String(query.acceptsTrade).toLowerCase()
+        : query.accepts_trade !== undefined
+          ? String(query.accepts_trade).toLowerCase()
+          : '';
+    if (acceptsTradeParam === 'true' || acceptsTradeParam === '1') {
+      where.accepts_trade = true;
+    } else if (acceptsTradeParam === 'false' || acceptsTradeParam === '0') {
+      where.accepts_trade = false;
+    }
+
     const sort = query.sort ? String(query.sort) : 'recent';
     let orderBy: Prisma.VehicleOrderByWithRelationInput = { created_at: 'desc' };
     switch (sort) {
@@ -540,7 +552,7 @@ export class VehiclesService {
             state: true,
             phone: true,
             whatsapp: true,
-            dealer: { select: { logo_url: true } },
+            dealer: { select: { name: true, logo_url: true } },
           },
         },
         media: {
@@ -611,7 +623,7 @@ export class VehiclesService {
             state: true,
             phone: true,
             whatsapp: true,
-            dealer: { select: { logo_url: true } },
+            dealer: { select: { name: true, logo_url: true } },
           },
         },
         media: {

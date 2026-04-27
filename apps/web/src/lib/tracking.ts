@@ -33,6 +33,15 @@ export function trackMetaEvent(eventName: string, params?: Record<string, any>) 
 }
 
 /**
+ * Send a custom event to Meta Pixel
+ */
+export function trackMetaCustomEvent(eventName: string, params?: Record<string, any>) {
+  if (typeof window !== 'undefined' && window.fbq) {
+    window.fbq('trackCustom', eventName, params);
+  }
+}
+
+/**
  * Track a lead generation event (GA4 + Meta Pixel)
  * Use when: WhatsApp contact, chat started, proposal sent
  */
@@ -79,6 +88,15 @@ export function trackViewContent(vehicleInfo: VehicleInfo) {
 
   // Meta Pixel: ViewContent event
   trackMetaEvent('ViewContent', {
+    content_ids: [vehicleId],
+    content_name: vehicleName,
+    content_type: 'vehicle',
+    value,
+    currency,
+  });
+
+  // Meta Pixel: custom event requested by business
+  trackMetaCustomEvent('ViewVeiculo', {
     content_ids: [vehicleId],
     content_name: vehicleName,
     content_type: 'vehicle',
@@ -135,6 +153,22 @@ export function trackContact(method: 'whatsapp' | 'chat' | 'phone', vehicleInfo:
     content_name: vehicleName,
     content_type: 'vehicle',
   });
+
+  if (method === 'whatsapp') {
+    // Meta Pixel: custom event requested by business
+    trackMetaCustomEvent('CliqueBTWpp', {
+      content_ids: [vehicleId],
+      content_name: vehicleName,
+      content_type: 'vehicle',
+    });
+  }
+}
+
+/**
+ * Track landing page view custom event
+ */
+export function trackLandingPageView() {
+  trackMetaCustomEvent('viewLP');
 }
 
 /**

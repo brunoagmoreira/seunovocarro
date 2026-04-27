@@ -64,6 +64,10 @@ export class CreateVehicleDto {
   @IsOptional()
   whatsapp?: string;
 
+  @IsOptional()
+  @IsBoolean()
+  accepts_trade?: boolean;
+
   @IsString()
   slug!: string;
 

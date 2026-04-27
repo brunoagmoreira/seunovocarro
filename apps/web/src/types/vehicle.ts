@@ -17,6 +17,7 @@ export interface Vehicle {
   state: string;
   whatsapp: string;
   phone: string;
+  accepts_trade?: boolean;
   status: 'draft' | 'pending' | 'approved' | 'rejected';
   slug: string;
   createdAt: string;
@@ -36,6 +37,7 @@ export interface VehicleMedia {
 export interface Seller {
   id: string;
   name: string;
+  dealerName?: string;
   avatarUrl: string;
   dealerLogoUrl?: string;
   isDealer?: boolean;
@@ -58,6 +60,7 @@ export interface VehicleFilters {
   fuel?: string;
   city?: string;
   state?: string;
+  acceptsTrade?: boolean;
 }
 
 export type SortOption = 'recent' | 'price_asc' | 'price_desc' | 'mileage_asc';

@@ -51,7 +51,7 @@ const YEAR_RANGES = [
 ];
 
 export function SidebarFilters({ filters, onFilterChange }: SidebarFiltersProps) {
-  const handleChange = (key: keyof VehicleFilters, value: string | number | undefined) => {
+  const handleChange = (key: keyof VehicleFilters, value: string | number | boolean | undefined) => {
     const finalValue = value === ALL_VALUE ? undefined : value;
     onFilterChange({ ...filters, [key]: finalValue });
   };
@@ -98,7 +98,7 @@ export function SidebarFilters({ filters, onFilterChange }: SidebarFiltersProps)
       </div>
 
       {/* Filters */}
-      <Accordion type="multiple" defaultValue={['brand', 'price', 'year', 'km', 'transmission', 'fuel']} className="p-4">
+      <Accordion type="multiple" defaultValue={['brand', 'price', 'year', 'km', 'transmission', 'fuel', 'acceptsTrade']} className="p-4">
         {/* Brand */}
         <AccordionItem value="brand" className="border-b">
           <AccordionTrigger className="text-sm font-medium py-3 hover:no-underline">
@@ -388,6 +388,44 @@ export function SidebarFilters({ filters, onFilterChange }: SidebarFiltersProps)
                   </div>
                 );
               })}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Accepts trade */}
+        <AccordionItem value="acceptsTrade" className="border-t">
+          <AccordionTrigger className="text-sm font-medium py-3 hover:no-underline">
+            Aceita troca
+          </AccordionTrigger>
+          <AccordionContent className="pb-4">
+            <div className="space-y-2">
+              <button
+                onClick={() => handleChange('acceptsTrade', undefined)}
+                className={`
+                  w-full text-left px-3 py-2 rounded-lg text-sm transition-colors
+                  ${filters.acceptsTrade === undefined ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}
+                `}
+              >
+                Todos
+              </button>
+              <button
+                onClick={() => handleChange('acceptsTrade', true)}
+                className={`
+                  w-full text-left px-3 py-2 rounded-lg text-sm transition-colors
+                  ${filters.acceptsTrade === true ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}
+                `}
+              >
+                Sim
+              </button>
+              <button
+                onClick={() => handleChange('acceptsTrade', false)}
+                className={`
+                  w-full text-left px-3 py-2 rounded-lg text-sm transition-colors
+                  ${filters.acceptsTrade === false ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}
+                `}
+              >
+                Não
+              </button>
             </div>
           </AccordionContent>
         </AccordionItem>

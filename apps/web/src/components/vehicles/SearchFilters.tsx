@@ -38,7 +38,7 @@ export function SearchFilters({
   const [isOpen, setIsOpen] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const handleChange = (key: keyof VehicleFilters, value: string | number | undefined) => {
+  const handleChange = (key: keyof VehicleFilters, value: string | number | boolean | undefined) => {
     const finalValue = value === ALL_VALUE ? undefined : value;
     onFilterChange({ ...filters, [key]: finalValue });
   };
@@ -190,6 +190,34 @@ export function SearchFilters({
             {Object.entries(FUEL_TYPES).map(([key, label]) => (
               <SelectItem key={key} value={key}>{label}</SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label className="text-sm font-medium mb-2 block">Aceita troca</Label>
+        <Select
+          value={
+            filters.acceptsTrade === undefined
+              ? ALL_VALUE
+              : filters.acceptsTrade
+                ? 'true'
+                : 'false'
+          }
+          onValueChange={(v) =>
+            handleChange(
+              'acceptsTrade',
+              v === ALL_VALUE ? undefined : v === 'true'
+            )
+          }
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Todos" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_VALUE}>Todos</SelectItem>
+            <SelectItem value="true">Sim</SelectItem>
+            <SelectItem value="false">Não</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -384,6 +412,33 @@ export function SearchFilters({
                     value={filters.mileageMax || ''}
                     onChange={(e) => handleChange('mileageMax', e.target.value ? parseInt(e.target.value) : undefined)}
                   />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Aceita troca</Label>
+                  <Select
+                    value={
+                      filters.acceptsTrade === undefined
+                        ? ALL_VALUE
+                        : filters.acceptsTrade
+                          ? 'true'
+                          : 'false'
+                    }
+                    onValueChange={(v) =>
+                      handleChange(
+                        'acceptsTrade',
+                        v === ALL_VALUE ? undefined : v === 'true'
+                      )
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={ALL_VALUE}>Todos</SelectItem>
+                      <SelectItem value="true">Sim</SelectItem>
+                      <SelectItem value="false">Não</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </CollapsibleContent>
