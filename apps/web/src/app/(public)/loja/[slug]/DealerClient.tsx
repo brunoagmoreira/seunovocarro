@@ -28,7 +28,7 @@ import {
 
 export function DealerClient({ slug }: { slug: string }) {
   const { data: dealer, isLoading: loadingDealer } = useDealer(slug);
-  const { data: vehicles, isLoading: loadingVehicles } = useDealerVehicles(dealer?.id);
+  const { data: vehicles, isLoading: loadingVehicles } = useDealerVehicles(slug);
   
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
   const [selectedYear, setSelectedYear] = useState<string>('all');
@@ -38,8 +38,10 @@ export function DealerClient({ slug }: { slug: string }) {
   const { brands, years, filteredVehicles } = useMemo(() => {
     if (!vehicles) return { brands: [], years: [], filteredVehicles: [] };
     
-    const brandsSet = new Set(vehicles.map((v: any) => v.brand));
-    const yearsSet = new Set(vehicles.map((v: any) => v.year.toString()));
+    const brandsSet = new Set(vehicles.map((v: any) => v.brand).filter(Boolean));
+    const yearsSet = new Set(
+      vehicles.map((v: any) => (v.year != null ? String(v.year) : '')).filter(Boolean),
+    );
     
     let filtered = [...vehicles];
     
@@ -47,7 +49,7 @@ export function DealerClient({ slug }: { slug: string }) {
       filtered = filtered.filter((v: any) => v.brand === selectedBrand);
     }
     if (selectedYear !== 'all') {
-      filtered = filtered.filter((v: any) => v.year.toString() === selectedYear);
+      filtered = filtered.filter((v: any) => String(v.year ?? '') === selectedYear);
     }
     
     if (sortBy === 'price-asc') {
@@ -97,23 +99,24 @@ export function DealerClient({ slug }: { slug: string }) {
     );
   }
 
+  const displayName = dealer.dealer_name || dealer.name || 'Loja';
   const vehicleCount = vehicles?.length || 0;
 
   const breadcrumbItems = [
     { label: 'Início', href: '/' },
     { label: 'Lojas', href: '/lojas' },
-    { label: dealer.dealer_name }
+    { label: displayName },
   ];
 
   return (
     <div className="min-h-screen pb-24 md:pb-8 pt-16">
-      <DealerLocalBusinessSchema dealer={dealer} />
+      <DealerLocalBusinessSchema dealer={dealer} displayName={displayName} />
 
       <div className="relative h-48 md:h-64 bg-gradient-to-r from-primary/20 to-primary/5 overflow-hidden">
-        {dealer.dealer_banner && (
+        {(dealer.dealer_banner || dealer.banner_url) && (
           <img
-            src={dealer.dealer_banner}
-            alt={`Banner ${dealer.dealer_name}`}
+            src={dealer.dealer_banner || dealer.banner_url || ''}
+            alt={`Banner ${displayName}`}
             className="w-full h-full object-cover"
           />
         )}
@@ -141,16 +144,16 @@ export function DealerClient({ slug }: { slug: string }) {
             <div className="flex flex-col md:flex-row gap-6">
               <div className="flex-shrink-0">
                 <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-white shadow-lg overflow-hidden border-4 border-background">
-                  {dealer.dealer_logo ? (
+                  {dealer.dealer_logo || dealer.logo_url ? (
                     <img
-                      src={dealer.dealer_logo}
-                      alt={dealer.dealer_name}
+                      src={dealer.dealer_logo || dealer.logo_url || ''}
+                      alt={displayName}
                       className="w-full h-full object-contain p-2"
                     />
                   ) : (
                     <div className="w-full h-full gradient-brand flex items-center justify-center">
                       <span className="text-3xl md:text-4xl font-bold text-white">
-                        {dealer.dealer_name.charAt(0)}
+                        {displayName.charAt(0)}
                       </span>
                     </div>
                   )}
@@ -162,7 +165,7 @@ export function DealerClient({ slug }: { slug: string }) {
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       <h1 className="font-heading text-2xl md:text-3xl font-bold">
-                        {dealer.dealer_name}
+                        {displayName}
                       </h1>
                       {dealer.dealer_verified && (
                         <BadgeCheck className="h-6 w-6 text-primary" />
@@ -261,7 +264,7 @@ export function DealerClient({ slug }: { slug: string }) {
         <section className="mb-12">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <h2 className="font-heading text-xl md:text-2xl font-semibold">
-              Veículos de {dealer.dealer_name}
+              Veículos de {displayName}
               <span className="text-muted-foreground font-normal text-base ml-2">
                 ({filteredVehicles.length} {filteredVehicles.length === 1 ? 'veículo' : 'veículos'})
               </span>
@@ -482,15 +485,16 @@ function DealerPageSkeleton() {
   );
 }
 
-function DealerLocalBusinessSchema({ dealer }: { dealer: any }) {
+function DealerLocalBusinessSchema({ dealer, displayName }: { dealer: any; displayName: string }) {
+  const slug = dealer.dealer_slug || dealer.slug;
   const schema = {
     "@context": "https://schema.org",
     "@type": "AutoDealer",
-    "name": dealer.dealer_name,
-    "description": dealer.dealer_description,
-    "url": `https://seunovocarro.com.br/loja/${dealer.dealer_slug}`,
-    "logo": dealer.dealer_logo,
-    "image": dealer.dealer_banner,
+    "name": displayName,
+    "description": dealer.dealer_description ?? dealer.description,
+    "url": `https://seunovocarro.com.br/loja/${slug}`,
+    "logo": dealer.dealer_logo || dealer.logo_url,
+    "image": dealer.dealer_banner || dealer.banner_url,
     "telephone": dealer.phone,
     "address": {
       "@type": "PostalAddress",
