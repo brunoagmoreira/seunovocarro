@@ -79,6 +79,10 @@ interface AdminVehicle {
   created_at: string;
   seller?: {
     full_name?: string | null;
+    email?: string | null;
+    dealer?: {
+      name?: string | null;
+    } | null;
   };
 }
 
@@ -113,6 +117,16 @@ export default function AdminDashboard() {
     void fetchDashboardData();
   }, [period]);
 
+  const getSellerDisplayName = (seller?: AdminVehicle['seller']) => {
+    const fullName = seller?.full_name?.trim();
+    if (fullName) return fullName;
+    const dealerName = seller?.dealer?.name?.trim();
+    if (dealerName) return dealerName;
+    const email = seller?.email?.trim();
+    if (email) return email;
+    return 'Vendedor não informado';
+  };
+
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true);
@@ -134,7 +148,7 @@ export default function AdminDashboard() {
       const pendingVehicleItems: PendingItem[] = pendingVehicles.slice(0, 8).map((vehicle) => ({
         id: vehicle.id,
         title: `${vehicle.brand} ${vehicle.model}`,
-        subtitle: `${vehicle.year} • ${vehicle.seller?.full_name || 'Vendedor não informado'}`,
+        subtitle: `${vehicle.year} • ${getSellerDisplayName(vehicle.seller)}`,
         created_at: vehicle.created_at,
         type: 'vehicle',
       }));

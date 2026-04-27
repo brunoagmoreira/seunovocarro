@@ -6,6 +6,7 @@ import { Check, X, Eye, Clock, CheckCircle, XCircle, FileText, Search, Download,
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
@@ -50,8 +51,12 @@ interface VehicleFromAPI {
   seller?: {
     id: string;
     full_name: string | null;
+    email?: string | null;
     city: string | null;
     state: string | null;
+    dealer?: {
+      name?: string | null;
+    } | null;
   } | null;
 }
 
@@ -74,6 +79,8 @@ export default function AdminVehiclesPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [featuredUpdatingId, setFeaturedUpdatingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isBulkApproving, setIsBulkApproving] = useState(false);
 
   const loadVehicles = async () => {
     try {
@@ -88,6 +95,16 @@ export default function AdminVehiclesPage() {
   };
 
   useEffect(() => { loadVehicles(); }, []);
+
+  const getSellerDisplayName = (vehicle: VehicleFromAPI) => {
+    const fullName = vehicle.seller?.full_name?.trim();
+    if (fullName) return fullName;
+    const dealerName = vehicle.seller?.dealer?.name?.trim();
+    if (dealerName) return dealerName;
+    const email = vehicle.seller?.email?.trim();
+    if (email) return email;
+    return 'Vendedor não informado';
+  };
 
   const updateVehicleStatus = async (vehicleId: string, newStatus: 'approved' | 'pending' | 'draft') => {
     setUpdatingId(vehicleId);
@@ -165,6 +182,10 @@ export default function AdminVehiclesPage() {
   });
 
   const pendingCount = vehicles.filter(v => v.status === 'pending').length;
+  const pendingFilteredVehicles = filteredVehicles.filter((v) => v.status === 'pending');
+  const selectablePendingIds = pendingFilteredVehicles.map((v) => v.id);
+  const selectedPendingIds = selectedIds.filter((id) => selectablePendingIds.includes(id));
+  const allPendingSelected = selectablePendingIds.length > 0 && selectedPendingIds.length === selectablePendingIds.length;
 
   const handleExportCsv = () => {
     if (filteredVehicles.length === 0) {
@@ -211,6 +232,53 @@ export default function AdminVehiclesPage() {
     toast.success('Arquivo gerado', {
       description: `${filteredVehicles.length} veículo(s) no CSV (separador ;, UTF-8).`,
     });
+  };
+
+  const toggleSelectVehicle = (vehicleId: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      if (checked) return prev.includes(vehicleId) ? prev : [...prev, vehicleId];
+      return prev.filter((id) => id !== vehicleId);
+    });
+  };
+
+  const toggleSelectAllPending = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...selectablePendingIds])));
+      return;
+    }
+    setSelectedIds((prev) => prev.filter((id) => !selectablePendingIds.includes(id)));
+  };
+
+  const handleBulkApprove = async () => {
+    if (selectedPendingIds.length === 0) {
+      toast.warning('Selecione ao menos 1 anúncio pendente');
+      return;
+    }
+    setIsBulkApproving(true);
+    try {
+      await Promise.all(
+        selectedPendingIds.map((vehicleId) =>
+          fetchApi(`/vehicles/admin/${vehicleId}/status`, {
+            method: 'PATCH',
+            body: { status: 'approved' },
+            requireAuth: true,
+          }),
+        ),
+      );
+      setVehicles((prev) =>
+        prev.map((vehicle) =>
+          selectedPendingIds.includes(vehicle.id) ? { ...vehicle, status: 'approved' } : vehicle,
+        ),
+      );
+      setSelectedIds((prev) => prev.filter((id) => !selectedPendingIds.includes(id)));
+      toast.success('Anúncios aprovados', {
+        description: `${selectedPendingIds.length} anúncio(s) aprovado(s) com sucesso.`,
+      });
+    } catch (error: any) {
+      toast.error('Erro ao aprovar em lote', { description: error.message });
+    } finally {
+      setIsBulkApproving(false);
+    }
   };
 
   if (isLoading) {
@@ -268,6 +336,44 @@ export default function AdminVehiclesPage() {
           )}
         </div>
 
+        {pendingFilteredVehicles.length > 0 && (
+          <div className="mb-4 p-3 rounded-xl border bg-muted/20 flex flex-wrap items-center gap-3 justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  checked={allPendingSelected}
+                  onCheckedChange={(checked) => toggleSelectAllPending(Boolean(checked))}
+                  aria-label="Selecionar todos os pendentes filtrados"
+                />
+                <span className="text-sm text-muted-foreground">
+                  Selecionar todos os pendentes ({pendingFilteredVehicles.length})
+                </span>
+              </div>
+              {selectedPendingIds.length > 0 && (
+                <Badge variant="secondary">{selectedPendingIds.length} selecionado(s)</Badge>
+              )}
+            </div>
+            <Button
+              size="sm"
+              onClick={handleBulkApprove}
+              disabled={isBulkApproving || selectedPendingIds.length === 0}
+              className="min-w-[170px]"
+            >
+              {isBulkApproving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Aprovando...
+                </>
+              ) : (
+                <>
+                  <Check className="h-4 w-4 mr-2" />
+                  Aprovar selecionados
+                </>
+              )}
+            </Button>
+          </div>
+        )}
+
         {filteredVehicles.length === 0 ? (
           <div className="text-center py-16"><p className="text-muted-foreground">Nenhum veículo encontrado</p></div>
         ) : (
@@ -291,6 +397,13 @@ export default function AdminVehiclesPage() {
                     <div className="flex-1 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          {vehicle.status === 'pending' && (
+                            <Checkbox
+                              checked={selectedIds.includes(vehicle.id)}
+                              onCheckedChange={(checked) => toggleSelectVehicle(vehicle.id, Boolean(checked))}
+                              aria-label={`Selecionar ${vehicle.brand} ${vehicle.model}`}
+                            />
+                          )}
                           {vehicle.display_id && (
                             <Badge variant="secondary" className="text-xs font-mono bg-primary/10 text-primary">{vehicle.display_id}</Badge>
                           )}
@@ -306,7 +419,7 @@ export default function AdminVehiclesPage() {
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          Por: {vehicle.seller?.full_name || 'Desconhecido'} • {vehicle.seller?.city || vehicle.city}, {vehicle.seller?.state || vehicle.state}
+                          Por: {getSellerDisplayName(vehicle)} • {vehicle.seller?.city || vehicle.city}, {vehicle.seller?.state || vehicle.state}
                         </p>
                         <p className="font-semibold text-[#268052]">{formatPrice(vehicle.price)}</p>
                       </div>

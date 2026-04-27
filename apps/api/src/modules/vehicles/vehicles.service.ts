@@ -569,7 +569,18 @@ export class VehiclesService {
       include: {
         media: { orderBy: { order: 'asc' } },
         seller: {
-          select: { id: true, full_name: true, city: true, state: true },
+          select: {
+            id: true,
+            full_name: true,
+            email: true,
+            city: true,
+            state: true,
+            dealer: {
+              select: {
+                name: true,
+              },
+            },
+          },
         },
       },
       orderBy: { created_at: 'desc' },

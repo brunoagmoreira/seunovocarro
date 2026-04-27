@@ -201,7 +201,10 @@ export function VehicleClient({ slug }: { slug: string }) {
     : vehicle.seller?.avatarUrl;
   const contactButtonLabel = vehicle.seller?.isDealer ? 'Falar com a Loja' : 'Falar com o Vendedor';
 
-  const handleDirectWhatsApp = () => {
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+
+  const openSellerWhatsApp = (message: string) => {
     const digits = sellerPhone.replace(/\D/g, '');
     if (!digits) return;
 
@@ -235,10 +238,39 @@ export function VehicleClient({ slug }: { slug: string }) {
     }).catch(() => undefined);
 
     const phone = digits.startsWith('55') ? digits : `55${digits}`;
-    const message = encodeURIComponent(
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+  };
+
+  const handleDirectWhatsApp = () => {
+    openSellerWhatsApp(
       `Olá! Vi o ${vehicle.brand} ${vehicle.model} ${vehicle.year} no Seu Novo Carro e gostaria de mais informações.`
     );
-    window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+  };
+
+  const handleFinancingInterest = (data: {
+    downPayment: number;
+    installments: number;
+    monthlyPayment: number;
+    financedAmount: number;
+    totalToPay: number;
+    interestRatePercent: number;
+    tradeInEnabled: boolean;
+    tradeInFipeValue: number;
+  }) => {
+    const tradeMessage = data.tradeInEnabled && data.tradeInFipeValue > 0
+      ? `\n- Troca estimada (FIPE): ${formatCurrency(data.tradeInFipeValue)}`
+      : '';
+
+    openSellerWhatsApp(
+      `Olá! Tenho interesse no financiamento do ${vehicle.brand} ${vehicle.model} ${vehicle.year}.\n` +
+      `Simulação:\n` +
+      `- Entrada: ${formatCurrency(data.downPayment)}\n` +
+      `- Parcelas: ${data.installments}x de ${formatCurrency(data.monthlyPayment)}\n` +
+      `- Valor financiado: ${formatCurrency(data.financedAmount)}\n` +
+      `- Total a pagar: ${formatCurrency(data.totalToPay)}\n` +
+      `- Taxa usada na simulação: ${data.interestRatePercent}% a.m.${tradeMessage}\n\n` +
+      `Podemos continuar esse atendimento pelo WhatsApp?`
+    );
   };
 
   const nextImage = () => {
@@ -389,9 +421,7 @@ export function VehicleClient({ slug }: { slug: string }) {
                 {vehicle.year} • {FUEL_TYPES[vehicle.fuel]} • {vehicle.color || 'Cor não informada'}
               </p>
               <div className="flex items-center gap-3">
-                <span className="font-heading text-3xl md:text-4xl font-bold gradient-brand-text">
-                  {formatPrice(vehicle.price)}
-                </span>
+                <span className="font-heading text-3xl md:text-4xl font-bold gradient-brand-text">{formatPrice(vehicle.price)}</span>
               </div>
               <div className="mt-4 max-w-md">
                 <FinancingSimulator
@@ -399,6 +429,7 @@ export function VehicleClient({ slug }: { slug: string }) {
                   vehicleName={`${vehicle.brand} ${vehicle.model} ${vehicle.year}`}
                   monthlyInterestRatePercent={siteSettings?.avg_financing_interest_rate ?? 1.5}
                   acceptsTrade={Boolean(vehicle.accepts_trade)}
+                  onSimulate={handleFinancingInterest}
                 />
               </div>
             </div>

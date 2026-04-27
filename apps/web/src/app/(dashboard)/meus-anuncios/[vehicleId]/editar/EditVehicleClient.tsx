@@ -50,6 +50,7 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
   
   const [originalData, setOriginalData] = useState<any>(null);
   const [vehicleSlug, setVehicleSlug] = useState('');
+  const [currentStatus, setCurrentStatus] = useState<'draft' | 'pending' | 'approved' | 'sold' | 'expired'>('draft');
   
   const [existingMedia, setExistingMedia] = useState<VehicleMedia[]>([]);
   const [mediaToDelete, setMediaToDelete] = useState<string[]>([]);
@@ -130,6 +131,7 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
       setFormData(vehicleFormData);
       setOriginalData(vehicleFormData);
       setVehicleSlug(String(ownerVehicle.slug || ''));
+      setCurrentStatus((ownerVehicle.status as 'draft' | 'pending' | 'approved' | 'sold' | 'expired') || 'draft');
 
       const media = (ownerVehicle.media || []).sort((a: any, b: any) => a.order - b.order);
       setExistingMedia(media.map((m: any, i: number) => ({ 
@@ -301,7 +303,13 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
         return;
       }
 
-      // Step 3: Update vehicle — body must match API DTO (snake_case + slug)
+      // Step 3: Update vehicle — keep approved ads live when editing
+      const nextStatus = asDraft
+        ? 'draft'
+        : currentStatus === 'approved'
+          ? 'approved'
+          : 'pending';
+
       await fetchApi(`/vehicles/${vehicleId}`, {
         method: 'PATCH',
         body: {
@@ -323,7 +331,7 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
           phone: formData.phone || null,
           accepts_trade: formData.acceptsTrade,
           slug,
-          status: asDraft ? 'draft' : 'pending',
+          status: nextStatus,
           media: finalMedia,
         },
         requireAuth: true

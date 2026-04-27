@@ -80,7 +80,7 @@ export function HomeDealersSection() {
                     <img
                       src={dealer.dealer_banner || dealer.banner_url || ''}
                       alt=""
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain bg-muted/30"
                       loading="lazy"
                       decoding="async"
                     />
@@ -93,12 +93,12 @@ export function HomeDealersSection() {
                   )}
                 </div>
                 <div className="p-4 relative">
-                  <div className="absolute -top-8 left-4 w-14 h-14 rounded-xl bg-white shadow-lg overflow-hidden border-2 border-background">
+                  <div className="absolute -top-8 left-4 w-14 h-14 rounded-full bg-background/95 shadow-md overflow-hidden ring-1 ring-border/40">
                     {(dealer.dealer_logo || dealer.logo_url) ? (
                       <img
                         src={dealer.dealer_logo || dealer.logo_url || ''}
                         alt=""
-                        className="w-full h-full object-contain p-1"
+                        className="w-full h-full object-contain p-1.5"
                         loading="lazy"
                         decoding="async"
                       />

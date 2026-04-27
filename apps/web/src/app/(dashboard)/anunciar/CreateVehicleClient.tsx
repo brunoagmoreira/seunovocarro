@@ -10,6 +10,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -45,6 +52,7 @@ export function CreateVehicleClient() {
   // Note: userRole was removed from useAuth in the JWT refactor (now inferred from profile)
   // Actually, userRole IS present in useAuth!
   const isDealer = userRole === 'editor' || userRole === 'admin';
+  const [adMode, setAdMode] = useState<'sale' | 'rental' | null>(null);
   
   const [formData, setFormData] = useState({
     brand: '',
@@ -302,13 +310,47 @@ export function CreateVehicleClient() {
 
   return (
     <div className="min-h-screen pb-24 md:pb-8 bg-background pt-16">
+      <Dialog open={isDealer && isApproved && !adMode}>
+        <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle>Como deseja anunciar?</DialogTitle>
+            <DialogDescription>
+              Antes de continuar, selecione se este anúncio é para venda ou locação.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 pt-2">
+            <Button
+              type="button"
+              variant="kairos"
+              onClick={() => setAdMode('sale')}
+            >
+              Venda de veículo
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setAdMode('rental')}
+            >
+              Locação de veículo
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="sticky top-16 z-10 bg-background/95 backdrop-blur-lg border-b border-border">
         <div className="container py-4">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" onClick={() => router.back()}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="font-heading text-xl font-bold">Criar Anúncio</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="font-heading text-xl font-bold">Criar Anúncio</h1>
+              {adMode && (
+                <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium">
+                  {adMode === 'sale' ? 'Venda' : 'Locação'}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
