@@ -77,7 +77,8 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
     city: '',
     state: '',
     whatsapp: '',
-    phone: ''
+    phone: '',
+    acceptsTrade: false,
   });
 
   const { cities, isLoading: citiesLoading } = useCities(formData.state);
@@ -122,7 +123,8 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
         city: ownerVehicle.city,
         state: ownerVehicle.state,
         whatsapp: ownerVehicle.whatsapp || '',
-        phone: ownerVehicle.phone || ''
+        phone: ownerVehicle.phone || '',
+        acceptsTrade: Boolean(ownerVehicle.accepts_trade),
       };
       
       setFormData(vehicleFormData);
@@ -319,6 +321,7 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
           state: formData.state,
           whatsapp: formData.whatsapp || null,
           phone: formData.phone || null,
+          accepts_trade: formData.acceptsTrade,
           slug,
           status: asDraft ? 'draft' : 'pending',
           media: finalMedia,
@@ -572,6 +575,22 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
             <div className="space-y-2">
               <Label>Preço (R$) *</Label>
               <Input type="number" value={formData.price} onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })} min={0} step={100} />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Aceita troca?</Label>
+              <Select
+                value={formData.acceptsTrade ? 'true' : 'false'}
+                onValueChange={(v) => setFormData({ ...formData, acceptsTrade: v === 'true' })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="false">Não</SelectItem>
+                  <SelectItem value="true">Sim</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">
