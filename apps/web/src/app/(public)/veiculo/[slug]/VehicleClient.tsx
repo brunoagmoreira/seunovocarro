@@ -188,6 +188,7 @@ export function VehicleClient({ slug }: { slug: string }) {
   const sellerDisplayImage = vehicle.seller?.isDealer
     ? (vehicle.seller?.dealerLogoUrl || vehicle.seller?.avatarUrl)
     : vehicle.seller?.avatarUrl;
+  const contactButtonLabel = vehicle.seller?.isDealer ? 'Falar com a Loja' : 'Falar com o Vendedor';
 
   const handleDirectWhatsApp = () => {
     const digits = sellerPhone.replace(/\D/g, '');
@@ -463,7 +464,7 @@ export function VehicleClient({ slug }: { slug: string }) {
                 onClick={handleDirectWhatsApp}
               >
                 <WhatsAppIcon className="h-5 w-5 mr-2 shrink-0" />
-                <span className="truncate">Falar Com o Vendedor</span>
+                <span className="truncate">{contactButtonLabel}</span>
               </Button>
 
             </div>
@@ -500,7 +501,7 @@ export function VehicleClient({ slug }: { slug: string }) {
             onClick={handleDirectWhatsApp}
           >
             <WhatsAppIcon className="h-5 w-5 mr-2 shrink-0" />
-            <span className="truncate">Falar Com o Vendedor</span>
+            <span className="truncate">{contactButtonLabel}</span>
           </Button>
 
         </div>
