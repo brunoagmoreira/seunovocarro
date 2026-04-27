@@ -37,6 +37,11 @@ enum VehicleStatus {
   expired
 }
 
+enum ListingType {
+  sale
+  rental
+}
+
 enum Transmission {
   manual
   automatic
@@ -173,6 +178,7 @@ model Vehicle {
   state         String
   phone         String?
   whatsapp      String?
+  listing_type  ListingType   @default(sale)
   accepts_trade Boolean       @default(false)
   status        VehicleStatus @default(pending)
   slug          String        @unique

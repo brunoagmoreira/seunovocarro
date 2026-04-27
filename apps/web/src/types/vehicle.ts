@@ -17,6 +17,7 @@ export interface Vehicle {
   state: string;
   whatsapp: string;
   phone: string;
+  listing_type?: 'sale' | 'rental';
   accepts_trade?: boolean;
   status: 'draft' | 'pending' | 'approved' | 'rejected';
   slug: string;

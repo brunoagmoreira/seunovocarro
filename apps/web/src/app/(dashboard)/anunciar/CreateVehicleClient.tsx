@@ -28,6 +28,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { fetchApi } from '@/lib/api';
 import { BRANDS, STATES, FUEL_TYPES, TRANSMISSION_TYPES } from '@/types/vehicle';
 import { useCities } from '@/hooks/useCities';
+import { useDealers } from '@/hooks/useDealers';
 
 const normalizeCityName = (value?: string | null) =>
   (value || '')
@@ -72,10 +73,13 @@ export function CreateVehicleClient() {
     state: profile?.state || '',
     whatsapp: profile?.whatsapp || profile?.phone || '',
     phone: profile?.phone || '',
+    listingType: 'sale' as 'sale' | 'rental',
     acceptsTrade: false
   });
 
   const { cities, isLoading: citiesLoading } = useCities(formData.state);
+  const { data: dealers } = useDealers();
+  const currentDealer = dealers?.find((dealer) => dealer.user_id === user?.id);
 
   const resolveCityFromProfile = useCallback((rawCity?: string | null) => {
     const candidate = extractProfileCity(rawCity);
@@ -102,15 +106,19 @@ export function CreateVehicleClient() {
   useEffect(() => {
     if (!profile) return;
     const mappedCity = resolveCityFromProfile(profile.city);
+    const dealerCity = currentDealer?.city || '';
+    const dealerState = currentDealer?.state || '';
+    const dealerWhatsapp = currentDealer?.whatsapp || '';
+    const dealerPhone = currentDealer?.phone || '';
 
     setFormData((prev) => ({
       ...prev,
-      state: prev.state || profile.state || '',
-      city: prev.city || mappedCity || extractProfileCity(profile.city),
-      whatsapp: prev.whatsapp || profile.whatsapp || profile.phone || '',
-      phone: prev.phone || profile.phone || '',
+      state: prev.state || profile.state || dealerState || '',
+      city: prev.city || mappedCity || extractProfileCity(profile.city) || dealerCity,
+      whatsapp: prev.whatsapp || profile.whatsapp || profile.phone || dealerWhatsapp || dealerPhone || '',
+      phone: prev.phone || profile.phone || dealerPhone || dealerWhatsapp || '',
     }));
-  }, [profile, cities, resolveCityFromProfile]);
+  }, [profile, cities, resolveCityFromProfile, currentDealer]);
 
   if (!user) {
     return (
@@ -279,7 +287,8 @@ export function CreateVehicleClient() {
           state: formData.state,
           whatsapp: formData.whatsapp || null,
           phone: formData.phone || null,
-          accepts_trade: formData.acceptsTrade,
+          listing_type: formData.listingType,
+          accepts_trade: formData.listingType === 'rental' ? false : formData.acceptsTrade,
           status: asDraft ? 'draft' : 'pending',
           slug,
           media: uploadedMedia
@@ -322,14 +331,20 @@ export function CreateVehicleClient() {
             <Button
               type="button"
               variant="kairos"
-              onClick={() => setAdMode('sale')}
+              onClick={() => {
+                setAdMode('sale');
+                setFormData((prev) => ({ ...prev, listingType: 'sale' }));
+              }}
             >
               Venda de veículo
             </Button>
             <Button
               type="button"
               variant="outline"
-              onClick={() => setAdMode('rental')}
+              onClick={() => {
+                setAdMode('rental');
+                setFormData((prev) => ({ ...prev, listingType: 'rental', acceptsTrade: false }));
+              }}
             >
               Locação de veículo
             </Button>
@@ -566,21 +581,23 @@ export function CreateVehicleClient() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Aceita troca?</Label>
-              <Select
-                value={formData.acceptsTrade ? 'true' : 'false'}
-                onValueChange={(v) => setFormData({ ...formData, acceptsTrade: v === 'true' })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="false">Não</SelectItem>
-                  <SelectItem value="true">Sim</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {formData.listingType !== 'rental' && (
+              <div className="space-y-2">
+                <Label>Aceita troca?</Label>
+                <Select
+                  value={formData.acceptsTrade ? 'true' : 'false'}
+                  onValueChange={(v) => setFormData({ ...formData, acceptsTrade: v === 'true' })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="false">Não</SelectItem>
+                    <SelectItem value="true">Sim</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Preço (R$) *</Label>

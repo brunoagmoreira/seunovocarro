@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { IsString, IsNumber, IsEnum, IsOptional, Min, Max, IsBoolean } from 'class-validator';
-import { Transmission, FuelType, VehicleStatus } from '@prisma/client';
+import { Transmission, FuelType, VehicleStatus, ListingType } from '@prisma/client';
 
 export class CreateVehicleDto {
   @IsString()
@@ -67,6 +67,10 @@ export class CreateVehicleDto {
   @IsOptional()
   @IsBoolean()
   accepts_trade?: boolean;
+
+  @IsOptional()
+  @IsEnum(ListingType)
+  listing_type?: ListingType;
 
   @IsString()
   slug!: string;

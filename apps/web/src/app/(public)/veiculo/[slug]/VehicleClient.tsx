@@ -187,19 +187,24 @@ export function VehicleClient({ slug }: { slug: string }) {
   const allMedia = [...vehicle.images, ...vehicle.videos];
   const sellerPhone = vehicle.whatsapp || vehicle.seller?.whatsapp || '';
   const matchedDealerByUser = dealers?.find((d) => d.user_id === vehicle.seller?.id);
+  const resolvedDealerName =
+    vehicle.seller?.dealerName ||
+    matchedDealerByUser?.name ||
+    '';
+  const resolvedSellerName =
+    (vehicle.seller?.name && vehicle.seller.name !== 'Vendedor' ? vehicle.seller.name : '') ||
+    '';
   const sellerDisplayName =
-    vehicle.seller?.isDealer
-      ? (
-          vehicle.seller?.dealerName ||
-          (vehicle.seller?.name && vehicle.seller.name !== 'Vendedor' ? vehicle.seller.name : '') ||
-          matchedDealerByUser?.name ||
-          'Lojista'
-        )
-      : (vehicle.seller?.name || 'Vendedor');
-  const sellerDisplayImage = vehicle.seller?.isDealer
-    ? (vehicle.seller?.dealerLogoUrl || vehicle.seller?.avatarUrl)
+    resolvedDealerName ||
+    resolvedSellerName ||
+    'Vendedor';
+  const isDealerContact =
+    Boolean(resolvedDealerName) ||
+    Boolean(vehicle.seller?.isDealer);
+  const sellerDisplayImage = isDealerContact
+    ? (vehicle.seller?.dealerLogoUrl || matchedDealerByUser?.logo_url || vehicle.seller?.avatarUrl)
     : vehicle.seller?.avatarUrl;
-  const contactButtonLabel = vehicle.seller?.isDealer ? 'Falar com a Loja' : 'Falar com o Vendedor';
+  const contactButtonLabel = isDealerContact ? 'Falar com a Loja' : 'Falar com o Vendedor';
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -423,15 +428,17 @@ export function VehicleClient({ slug }: { slug: string }) {
               <div className="flex items-center gap-3">
                 <span className="font-heading text-3xl md:text-4xl font-bold gradient-brand-text">{formatPrice(vehicle.price)}</span>
               </div>
-              <div className="mt-4 max-w-md">
-                <FinancingSimulator
-                  vehiclePrice={vehicle.price}
-                  vehicleName={`${vehicle.brand} ${vehicle.model} ${vehicle.year}`}
-                  monthlyInterestRatePercent={siteSettings?.avg_financing_interest_rate ?? 1.5}
-                  acceptsTrade={Boolean(vehicle.accepts_trade)}
-                  onSimulate={handleFinancingInterest}
-                />
-              </div>
+              {vehicle.listing_type !== 'rental' && (
+                <div className="mt-4 max-w-md">
+                  <FinancingSimulator
+                    vehiclePrice={vehicle.price}
+                    vehicleName={`${vehicle.brand} ${vehicle.model} ${vehicle.year}`}
+                    monthlyInterestRatePercent={siteSettings?.avg_financing_interest_rate ?? 1.5}
+                    acceptsTrade={Boolean(vehicle.accepts_trade)}
+                    onSimulate={handleFinancingInterest}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="bg-card rounded-2xl p-6 shadow-card">

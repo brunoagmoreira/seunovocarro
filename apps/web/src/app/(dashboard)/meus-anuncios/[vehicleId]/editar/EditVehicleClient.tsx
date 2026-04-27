@@ -79,6 +79,7 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
     state: '',
     whatsapp: '',
     phone: '',
+    listingType: 'sale' as 'sale' | 'rental',
     acceptsTrade: false,
   });
 
@@ -125,6 +126,7 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
         state: ownerVehicle.state,
         whatsapp: ownerVehicle.whatsapp || '',
         phone: ownerVehicle.phone || '',
+        listingType: (ownerVehicle.listing_type || 'sale') as 'sale' | 'rental',
         acceptsTrade: Boolean(ownerVehicle.accepts_trade),
       };
       
@@ -329,7 +331,8 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
           state: formData.state,
           whatsapp: formData.whatsapp || null,
           phone: formData.phone || null,
-          accepts_trade: formData.acceptsTrade,
+          listing_type: formData.listingType,
+          accepts_trade: formData.listingType === 'rental' ? false : formData.acceptsTrade,
           slug,
           status: nextStatus,
           media: finalMedia,
@@ -586,6 +589,29 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
             </div>
 
             <div className="space-y-2">
+              <Label>Tipo do anúncio</Label>
+              <Select
+                value={formData.listingType}
+                onValueChange={(v) =>
+                  setFormData({
+                    ...formData,
+                    listingType: v as 'sale' | 'rental',
+                    acceptsTrade: v === 'rental' ? false : formData.acceptsTrade,
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sale">Venda</SelectItem>
+                  <SelectItem value="rental">Locação</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {formData.listingType !== 'rental' && (
+              <div className="space-y-2">
               <Label>Aceita troca?</Label>
               <Select
                 value={formData.acceptsTrade ? 'true' : 'false'}
@@ -599,7 +625,8 @@ export function EditVehicleClient({ vehicleId }: { vehicleId: string }) {
                   <SelectItem value="true">Sim</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Descrição</Label>

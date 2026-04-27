@@ -9,6 +9,7 @@ import {
   Transmission,
   FuelType,
   VehicleStatus,
+  ListingType,
 } from '@prisma/client';
 import { XMLParser } from 'fast-xml-parser';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -288,6 +289,7 @@ export class VehiclesService {
         state: this.normalizeText(field('state')) || dealer.user.state || 'MG',
         phone: this.normalizeText(field('phone')) || dealer.user.phone || undefined,
         whatsapp: this.normalizeText(field('whatsapp')) || dealer.user.whatsapp || undefined,
+        listing_type: 'sale',
         ad_code: externalId,
         slug,
       };
@@ -674,6 +676,12 @@ export class VehiclesService {
 
   async create(createDto: CreateVehicleDto, user: User) {
     const { media, ...vehicleData } = createDto;
+    const listingType = (vehicleData.listing_type || 'sale') as ListingType;
+    const safeVehicleData = {
+      ...vehicleData,
+      listing_type: listingType,
+      accepts_trade: listingType === 'rental' ? false : vehicleData.accepts_trade,
+    };
     const plan = await this.resolveDealerPlanConfigByUserId(user.id);
     if (plan.slug === 'dealer-plan-1') {
       const activeCount = await this.prisma.vehicle.count({
@@ -691,7 +699,7 @@ export class VehiclesService {
     
     return this.prisma.vehicle.create({
       data: {
-        ...vehicleData,
+        ...safeVehicleData,
         user_id: user.id,
         media: media ? {
           create: media.map((m: { url: string; type: MediaType; order: number }) => ({
@@ -719,6 +727,15 @@ export class VehiclesService {
     }
 
     const { media, ...vehicleData } = updateDto;
+    const nextListingType = (vehicleData.listing_type || vehicle.listing_type) as ListingType;
+    const safeVehicleData = {
+      ...vehicleData,
+      listing_type: nextListingType,
+      accepts_trade:
+        nextListingType === 'rental'
+          ? false
+          : vehicleData.accepts_trade,
+    };
 
     // Se houver novas mídias no update, limpamos as antigas e inserimos as novas
     // Em uma versão real, você faria um diff, mas para simplificar aqui:
@@ -729,7 +746,7 @@ export class VehiclesService {
         return tx.vehicle.update({
           where: { id },
           data: {
-            ...vehicleData,
+            ...safeVehicleData,
             media: {
               create: media.map((m: { url: string; type: MediaType; order: number }) => ({
                 url: m.url,
@@ -745,7 +762,7 @@ export class VehiclesService {
 
     return this.prisma.vehicle.update({
       where: { id },
-      data: vehicleData,
+      data: safeVehicleData,
       include: { media: true }
     });
   }

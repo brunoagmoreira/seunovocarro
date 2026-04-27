@@ -22,6 +22,7 @@ const mapVehicleResponse = (v: any): Vehicle => {
     createdAt: v.created_at || v.createdAt || new Date().toISOString(),
     displayId: v.display_id || v.displayId,
     plateEnding: v.plate_ending || v.plateEnding,
+    listing_type: (v.listing_type || v.listingType || 'sale') as 'sale' | 'rental',
     price: Number(v.price) || 0,
     mileage: Number(v.mileage) || 0,
     year: Number(v.year) || 0,
