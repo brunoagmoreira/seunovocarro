@@ -36,6 +36,7 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { getStoredUTM } from '@/hooks/useUTM';
 import { fetchApi } from '@/lib/api';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
+import { useDealers } from '@/hooks/useDealers';
 
 function WhatsAppIcon({ className = '' }: { className?: string }) {
   return (
@@ -57,6 +58,7 @@ export function VehicleClient({ slug }: { slug: string }) {
   
   const { data: vehicle, isLoading, error } = useVehicleBySlug(slug, allowAnyStatus);
   const { data: siteSettings } = useSiteSettings();
+  const { data: dealers } = useDealers();
   const { data: sellerVehicles } = useSellerVehicles(vehicle?.seller?.id, vehicle?.id);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -184,9 +186,15 @@ export function VehicleClient({ slug }: { slug: string }) {
 
   const allMedia = [...vehicle.images, ...vehicle.videos];
   const sellerPhone = vehicle.whatsapp || vehicle.seller?.whatsapp || '';
+  const matchedDealerByUser = dealers?.find((d) => d.user_id === vehicle.seller?.id);
   const sellerDisplayName =
     vehicle.seller?.isDealer
-      ? (vehicle.seller?.dealerName || vehicle.seller?.name || 'Lojista')
+      ? (
+          vehicle.seller?.dealerName ||
+          (vehicle.seller?.name && vehicle.seller.name !== 'Vendedor' ? vehicle.seller.name : '') ||
+          matchedDealerByUser?.name ||
+          'Lojista'
+        )
       : (vehicle.seller?.name || 'Vendedor');
   const sellerDisplayImage = vehicle.seller?.isDealer
     ? (vehicle.seller?.dealerLogoUrl || vehicle.seller?.avatarUrl)

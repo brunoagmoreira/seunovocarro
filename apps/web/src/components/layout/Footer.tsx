@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Facebook, Instagram, Linkedin, MessageCircle, Youtube } from 'lucide-react';
+import { Globe, MessageCircle, Share2, Video } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { POPULAR_BRANDS, POPULAR_CITIES } from '@/data/brandContent';
 import { useAvailableBrandsAndCities } from '@/hooks/useAvailableBrandsAndCities';
@@ -11,10 +11,10 @@ export function Footer() {
   const { data: siteSettings } = useSiteSettings();
 
   const socialLinks = [
-    { href: siteSettings?.social_instagram_url, icon: Instagram, label: 'Instagram' },
-    { href: siteSettings?.social_facebook_url, icon: Facebook, label: 'Facebook' },
-    { href: siteSettings?.social_linkedin_url, icon: Linkedin, label: 'LinkedIn' },
-    { href: siteSettings?.social_youtube_url, icon: Youtube, label: 'YouTube' },
+    { href: siteSettings?.social_instagram_url, icon: Share2, label: 'Instagram' },
+    { href: siteSettings?.social_facebook_url, icon: Share2, label: 'Facebook' },
+    { href: siteSettings?.social_linkedin_url, icon: Globe, label: 'LinkedIn' },
+    { href: siteSettings?.social_youtube_url, icon: Video, label: 'YouTube' },
     { href: siteSettings?.social_whatsapp_url, icon: MessageCircle, label: 'WhatsApp' },
   ].filter((item) => Boolean(item.href));
 
