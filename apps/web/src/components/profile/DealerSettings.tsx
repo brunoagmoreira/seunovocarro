@@ -356,7 +356,12 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
           {/* Logo & Banner Uploads */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs text-muted-foreground mb-2 block">Logo da Loja</Label>
+              <Label className="text-xs text-muted-foreground mb-2 block">
+                Logo da Loja{' '}
+                <span className="text-muted-foreground/60">
+                  (quadrada ou retangular; exibida em círculo no site — ideal 400×400 px ou maior)
+                </span>
+              </Label>
               <button
                 onClick={() => logoInputRef.current?.click()}
                 disabled={isUploadingLogo}
@@ -380,7 +385,10 @@ export function DealerSettings({ profile, userRole }: DealerSettingsProps) {
             </div>
             <div>
               <Label className="text-xs text-muted-foreground mb-2 block">
-                Banner <span className="text-muted-foreground/60">(1200x400px recomendado)</span>
+                Banner{' '}
+                <span className="text-muted-foreground/60">
+                  (recomendado 1200×400 px, proporção ~3:1 — preenche a faixa da capa nos cards sem bordas vazias)
+                </span>
               </Label>
               <button
                 onClick={() => bannerInputRef.current?.click()}

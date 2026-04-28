@@ -14,8 +14,8 @@ export function useVehicleCount() {
   });
 }
 
-// Helper para mapear propriedades do backend (media) para Frontend (images, videos)
-const mapVehicleResponse = (v: any): Vehicle => {
+/** Mapeia resposta da API (media, snake_case) para o tipo `Vehicle` do app. */
+export const mapVehicleResponse = (v: any): Vehicle => {
   if (!v) return v;
   return {
     ...v,

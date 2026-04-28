@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchApi } from '@/lib/api';
+import { mapVehicleResponse } from '@/hooks/useVehicles';
+import type { Vehicle } from '@/types/vehicle';
 
 export interface Dealer {
   id: string;
@@ -88,8 +90,9 @@ export function useDealer(slug: string | undefined) {
       if (!slug) return null;
       try {
         return await fetchApi<Dealer>(`/dealers/${slug}`);
-      } catch (err: any) {
-        if (err.message.includes('404')) return null;
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (/\b404\b/i.test(msg) || /não encontrad/i.test(msg)) return null;
         throw err;
       }
     },
@@ -97,5 +100,15 @@ export function useDealer(slug: string | undefined) {
   });
 }
 
-export const useDealerVehicles = (slug: string) => ({ data: [], isLoading: false });
+export function useDealerVehicles(dealerSlug: string | undefined) {
+  return useQuery({
+    queryKey: ['dealer-vehicles', dealerSlug],
+    queryFn: async () => {
+      if (!dealerSlug) return [] as Vehicle[];
+      const data = await fetchApi<any[]>(`/vehicles/dealer/${encodeURIComponent(dealerSlug)}`);
+      return Array.isArray(data) ? data.map(mapVehicleResponse) : [];
+    },
+    enabled: !!dealerSlug,
+  });
+}
 export const generateDealerSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-");

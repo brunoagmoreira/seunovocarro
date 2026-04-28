@@ -503,6 +503,16 @@ export class VehiclesService {
       where.city = { contains: city, mode: 'insensitive' };
     }
 
+    const listingTypeParam =
+      query.listingType !== undefined
+        ? String(query.listingType).toLowerCase()
+        : query.listing_type !== undefined
+          ? String(query.listing_type).toLowerCase()
+          : '';
+    if (listingTypeParam === 'sale' || listingTypeParam === 'rental') {
+      where.listing_type = listingTypeParam as any;
+    }
+
     const transmission = query.transmission ? String(query.transmission) : '';
     if (transmission && (Object.values(Transmission) as string[]).includes(transmission)) {
       where.transmission = transmission as Transmission;
@@ -562,6 +572,41 @@ export class VehiclesService {
         },
       },
       orderBy,
+    });
+    return this.applyContactRouting(vehicles as any);
+  }
+
+  /** Anúncios aprovados do lojista (página pública /loja/:slug). */
+  async findApprovedByDealerSlug(dealerSlug: string) {
+    const dealer = await this.prisma.dealer.findUnique({
+      where: { slug: dealerSlug },
+      select: { user_id: true },
+    });
+    if (!dealer) {
+      throw new NotFoundException('Lojista não encontrado');
+    }
+
+    const vehicles = await this.prisma.vehicle.findMany({
+      where: { user_id: dealer.user_id, status: VehicleStatus.approved },
+      include: {
+        seller: {
+          select: {
+            id: true,
+            full_name: true,
+            role: true,
+            avatar_url: true,
+            city: true,
+            state: true,
+            phone: true,
+            whatsapp: true,
+            dealer: { select: { name: true, logo_url: true } },
+          },
+        },
+        media: {
+          orderBy: { order: 'asc' },
+        },
+      },
+      orderBy: { created_at: 'desc' },
     });
     return this.applyContactRouting(vehicles as any);
   }

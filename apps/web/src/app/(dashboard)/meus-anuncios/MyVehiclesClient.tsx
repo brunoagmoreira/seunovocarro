@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Plus, Edit2, Trash2, Eye, Clock, CheckCircle, XCircle, FileText, Car, BadgeCheck, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +28,7 @@ interface VehicleWithMedia {
   year: number;
   price: number;
   status: string;
+  listing_type?: 'sale' | 'rental';
   slug: string;
   created_at: string;
   vehicle_media: { url: string }[];
@@ -47,6 +48,7 @@ export function MyVehiclesClient() {
   const [vehicles, setVehicles] = useState<VehicleWithMedia[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
+  const [listingFilter, setListingFilter] = useState<'all' | 'sale' | 'rental'>('all');
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -64,6 +66,7 @@ export function MyVehiclesClient() {
       
       const mappedVehicles = data.map(v => ({
         ...v,
+        listing_type: (v.listing_type || v.listingType || 'sale') as 'sale' | 'rental',
         vehicle_media: v.media || []
       }));
       
@@ -127,11 +130,16 @@ export function MyVehiclesClient() {
   };
 
   const filteredVehicles = vehicles.filter(vehicle => {
-    if (activeTab === 'all') return true;
-    if (activeTab === 'active') return vehicle.status === 'approved';
-    if (activeTab === 'pending') return vehicle.status === 'pending' || vehicle.status === 'draft';
-    if (activeTab === 'sold') return vehicle.status === 'sold';
-    return true;
+    const matchesStatus =
+      activeTab === 'all' ||
+      (activeTab === 'active' && vehicle.status === 'approved') ||
+      (activeTab === 'pending' && (vehicle.status === 'pending' || vehicle.status === 'draft')) ||
+      (activeTab === 'sold' && vehicle.status === 'sold');
+
+    const vehicleType = vehicle.listing_type || 'sale';
+    const matchesListing = listingFilter === 'all' || vehicleType === listingFilter;
+
+    return matchesStatus && matchesListing;
   });
 
   const stats = {
@@ -229,6 +237,34 @@ export function MyVehiclesClient() {
           </TabsList>
         </Tabs>
 
+        <div className="mb-6 flex flex-wrap items-center gap-2">
+          <span className="text-sm text-muted-foreground">Tipo:</span>
+          <Button
+            type="button"
+            size="sm"
+            variant={listingFilter === 'all' ? 'default' : 'outline'}
+            onClick={() => setListingFilter('all')}
+          >
+            Todos
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={listingFilter === 'sale' ? 'default' : 'outline'}
+            onClick={() => setListingFilter('sale')}
+          >
+            Venda
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={listingFilter === 'rental' ? 'default' : 'outline'}
+            onClick={() => setListingFilter('rental')}
+          >
+            Locação
+          </Button>
+        </div>
+
         {filteredVehicles.length === 0 ? (
           <div className="text-center py-16">
             <div className="w-24 h-24 mx-auto mb-6 rounded-full gradient-brand-soft flex items-center justify-center">
@@ -273,6 +309,9 @@ export function MyVehiclesClient() {
                         <Badge variant={status.variant} className="text-xs">
                           <StatusIcon className="h-3 w-3 mr-1" />
                           {status.label}
+                        </Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          {vehicle.listing_type === 'rental' ? 'Locação' : 'Venda'}
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">{vehicle.year}</p>

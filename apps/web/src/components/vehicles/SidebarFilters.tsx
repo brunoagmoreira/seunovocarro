@@ -98,7 +98,7 @@ export function SidebarFilters({ filters, onFilterChange }: SidebarFiltersProps)
       </div>
 
       {/* Filters */}
-      <Accordion type="multiple" defaultValue={['brand', 'price', 'year', 'km', 'transmission', 'fuel', 'acceptsTrade']} className="p-4">
+      <Accordion type="multiple" defaultValue={['brand', 'listingType', 'price', 'year', 'km', 'transmission', 'fuel', 'acceptsTrade']} className="p-4">
         {/* Brand */}
         <AccordionItem value="brand" className="border-b">
           <AccordionTrigger className="text-sm font-medium py-3 hover:no-underline">
@@ -127,6 +127,44 @@ export function SidebarFilters({ filters, onFilterChange }: SidebarFiltersProps)
                 value={filters.model || ''}
                 onChange={(e) => handleChange('model', e.target.value || undefined)}
               />
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Listing type */}
+        <AccordionItem value="listingType" className="border-b">
+          <AccordionTrigger className="text-sm font-medium py-3 hover:no-underline">
+            Tipo do anúncio
+          </AccordionTrigger>
+          <AccordionContent className="pb-4">
+            <div className="space-y-2">
+              <button
+                onClick={() => handleChange('listingType', undefined)}
+                className={`
+                  w-full text-left px-3 py-2 rounded-lg text-sm transition-colors
+                  ${!filters.listingType ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}
+                `}
+              >
+                Todos
+              </button>
+              <button
+                onClick={() => handleChange('listingType', 'sale')}
+                className={`
+                  w-full text-left px-3 py-2 rounded-lg text-sm transition-colors
+                  ${filters.listingType === 'sale' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}
+                `}
+              >
+                Venda
+              </button>
+              <button
+                onClick={() => handleChange('listingType', 'rental')}
+                className={`
+                  w-full text-left px-3 py-2 rounded-lg text-sm transition-colors
+                  ${filters.listingType === 'rental' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}
+                `}
+              >
+                Locação
+              </button>
             </div>
           </AccordionContent>
         </AccordionItem>

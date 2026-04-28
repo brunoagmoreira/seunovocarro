@@ -96,7 +96,16 @@ export class DealersService {
     const dealer = await this.prisma.dealer.findUnique({
       where: { slug },
       include: {
-        user: { select: { email: true, phone: true, whatsapp: true, city: true, state: true } },
+        user: {
+          select: {
+            email: true,
+            phone: true,
+            whatsapp: true,
+            city: true,
+            state: true,
+            _count: { select: { vehicles: true } },
+          },
+        },
       },
     });
 
@@ -104,7 +113,22 @@ export class DealersService {
       throw new NotFoundException('Lojista não encontrado');
     }
 
-    return dealer;
+    return this.formatDealerPublicDetail(dealer);
+  }
+
+  /** Página pública /loja/:slug — mesmo shape da listagem + campos extras para o layout. */
+  private formatDealerPublicDetail(d: DealerWithUserCount) {
+    const base = this.formatDealerPublicList(d);
+    return {
+      ...base,
+      dealer_description: d.description,
+      dealer_address: d.address,
+      dealer_working_hours: d.working_hours,
+      dealer_instagram: d.instagram,
+      dealer_facebook: d.facebook,
+      dealer_website: d.website,
+      dealer_cnpj: d.cnpj,
+    };
   }
 
   async create(createDealerDto: CreateDealerDto, user: User) {

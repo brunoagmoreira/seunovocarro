@@ -25,6 +25,12 @@ export class VehiclesController {
     return this.vehiclesService.findAll(query);
   }
 
+  /** Deve ficar antes de @Get(':slug'), senão "dealer" vira slug de veículo. */
+  @Get('dealer/:dealerSlug')
+  findByDealerSlug(@Param('dealerSlug') dealerSlug: string) {
+    return this.vehiclesService.findApprovedByDealerSlug(dealerSlug);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('mine')
   findMine(@CurrentUser() user: User) {

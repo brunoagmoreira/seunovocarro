@@ -37,6 +37,19 @@ const normalizeCityName = (value?: string | null) =>
     .toLowerCase()
     .trim();
 
+const normalizeStateUf = (value?: string | null) => {
+  const raw = (value || '').trim();
+  if (!raw) return '';
+  if (raw.length === 2) return raw.toUpperCase();
+  const normalized = normalizeCityName(raw);
+  const matched = STATES.find(
+    (state) =>
+      normalizeCityName(state.name) === normalized ||
+      normalizeCityName(state.uf) === normalized,
+  );
+  return matched?.uf || '';
+};
+
 const extractProfileCity = (raw?: string | null) => {
   const city = (raw || '').split(',')[0]?.trim();
   return city || '';
@@ -106,14 +119,15 @@ export function CreateVehicleClient() {
   useEffect(() => {
     if (!profile) return;
     const mappedCity = resolveCityFromProfile(profile.city);
+    const profileStateUf = normalizeStateUf(profile.state);
+    const dealerStateUf = normalizeStateUf(currentDealer?.state);
     const dealerCity = currentDealer?.city || '';
-    const dealerState = currentDealer?.state || '';
     const dealerWhatsapp = currentDealer?.whatsapp || '';
     const dealerPhone = currentDealer?.phone || '';
 
     setFormData((prev) => ({
       ...prev,
-      state: prev.state || profile.state || dealerState || '',
+      state: prev.state || profileStateUf || dealerStateUf || '',
       city: prev.city || mappedCity || extractProfileCity(profile.city) || dealerCity,
       whatsapp: prev.whatsapp || profile.whatsapp || profile.phone || dealerWhatsapp || dealerPhone || '',
       phone: prev.phone || profile.phone || dealerPhone || dealerWhatsapp || '',

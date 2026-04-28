@@ -75,30 +75,30 @@ export function HomeDealersSection() {
                 href={`/loja/${dealer.dealer_slug || dealer.slug}`}
                 className="group block bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-elevated transition-all"
               >
-                <div className="h-20 bg-gradient-to-r from-primary/20 to-primary/5 relative">
-                  {(dealer.dealer_banner || dealer.banner_url) && (
+                <div className="relative h-24 w-full overflow-hidden bg-gradient-to-r from-primary/20 to-primary/5">
+                  {(dealer.dealer_banner || dealer.banner_url) ? (
                     <img
                       src={dealer.dealer_banner || dealer.banner_url || ''}
                       alt=""
-                      className="w-full h-full object-contain bg-muted/30"
+                      className="absolute inset-0 h-full w-full object-cover"
                       loading="lazy"
                       decoding="async"
                     />
-                  )}
+                  ) : null}
                   {(dealer.dealer_verified || dealer.verified) && (
-                    <div className="absolute top-2 right-2 bg-primary/90 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                    <div className="absolute top-2 right-2 z-10 bg-primary/90 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
                       <BadgeCheck className="h-3 w-3" />
                       Verificado
                     </div>
                   )}
                 </div>
                 <div className="p-4 relative">
-                  <div className="absolute -top-8 left-4 w-14 h-14 rounded-full bg-background/95 shadow-md overflow-hidden ring-1 ring-border/40">
+                  <div className="absolute -top-8 left-4 size-14 shrink-0 rounded-full bg-background shadow-md ring-1 ring-border/40 overflow-hidden">
                     {(dealer.dealer_logo || dealer.logo_url) ? (
                       <img
                         src={dealer.dealer_logo || dealer.logo_url || ''}
                         alt=""
-                        className="w-full h-full object-contain p-1.5"
+                        className="h-full w-full rounded-full object-cover"
                         loading="lazy"
                         decoding="async"
                       />

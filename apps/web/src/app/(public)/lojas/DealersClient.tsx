@@ -101,22 +101,22 @@ function DealerCard({ dealer, featured = false }: { dealer: Dealer; featured?: b
         featured && "ring-2 ring-primary"
       )}
     >
-      <div className="h-24 bg-gradient-to-r from-primary/20 to-primary/5 relative">
-        {dealer.dealer_banner && (
+      <div className="relative h-28 w-full overflow-hidden bg-gradient-to-r from-primary/20 to-primary/5">
+        {(dealer.dealer_banner || dealer.banner_url) ? (
           <img
-            src={dealer.dealer_banner}
+            src={dealer.dealer_banner || dealer.banner_url || ''}
             alt=""
-            className="w-full h-full object-contain bg-muted/30"
+            className="absolute inset-0 h-full w-full object-cover"
           />
-        )}
+        ) : null}
         {featured && (
-          <Badge className="absolute top-2 right-2 bg-yellow-500 text-yellow-950 border-0">
+          <Badge className="absolute top-2 right-2 z-10 bg-yellow-500 text-yellow-950 border-0">
             <Star className="h-3 w-3 mr-1" />
             Destaque
           </Badge>
         )}
         {dealer.dealer_verified && (
-          <Badge className="absolute top-2 left-2 gradient-brand text-white border-0">
+          <Badge className="absolute top-2 left-2 z-10 gradient-brand text-white border-0">
             <BadgeCheck className="h-3 w-3 mr-1" />
             Verificado
           </Badge>
@@ -124,23 +124,23 @@ function DealerCard({ dealer, featured = false }: { dealer: Dealer; featured?: b
       </div>
 
       <div className="p-4 relative">
-        <div className="absolute -top-8 left-4 w-16 h-16 rounded-full bg-background/95 shadow-md overflow-hidden ring-1 ring-border/40">
-          {dealer.dealer_logo ? (
+        <div className="absolute -top-8 left-4 size-16 shrink-0 rounded-full bg-background shadow-md ring-1 ring-border/40 overflow-hidden">
+          {dealer.dealer_logo || dealer.logo_url ? (
             <img 
-              src={dealer.dealer_logo} 
+              src={dealer.dealer_logo || dealer.logo_url || ''} 
               alt="" 
-              className="w-full h-full object-contain p-1.5" 
+              className="h-full w-full object-cover" 
             />
           ) : (
             <div className="w-full h-full gradient-brand flex items-center justify-center text-white font-bold text-xl">
-              {dealer.dealer_name.charAt(0)}
+              {(dealer.dealer_name || dealer.name || 'L').charAt(0)}
             </div>
           )}
         </div>
 
         <div className="pt-6">
           <h3 className="font-heading font-semibold group-hover:text-primary transition-colors line-clamp-1">
-            {dealer.dealer_name}
+            {dealer.dealer_name || dealer.name}
           </h3>
           {dealer.city && dealer.state && (
             <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
