@@ -5,6 +5,7 @@ import { fetchApi } from '@/lib/api';
 import Link from 'next/link';
 import { ShieldCheck, Zap, Clock, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
+import { Badge } from '@/components/ui/badge';
 
 interface FeaturedVehicleResponse {
   id: string;
@@ -19,6 +20,8 @@ interface FeaturedVehicleResponse {
     type?: string;
     order?: number;
   }>;
+  listing_type?: 'sale' | 'rental';
+  listingType?: 'sale' | 'rental';
 }
 
 interface HeroSlide {
@@ -28,6 +31,7 @@ interface HeroSlide {
   imageUrl: string | null;
   linkUrl: string;
   priceLabel: string;
+  listingType: 'sale' | 'rental';
 }
 
 const defaultSlide: HeroSlide = {
@@ -37,6 +41,7 @@ const defaultSlide: HeroSlide = {
   imageUrl: '',
   linkUrl: '/veiculos',
   priceLabel: '',
+  listingType: 'sale',
 };
 
 function formatPrice(value?: number | string) {
@@ -49,9 +54,16 @@ function formatPrice(value?: number | string) {
   }).format(numeric);
 }
 
+function formatPriceLabel(value: number | string | undefined, listingType: 'sale' | 'rental') {
+  const base = formatPrice(value);
+  if (!base) return '';
+  return listingType === 'rental' ? `${base} / locação` : base;
+}
+
 function mapFeaturedToSlide(vehicle: FeaturedVehicleResponse): HeroSlide {
   const title = [vehicle.brand, vehicle.model, vehicle.version].filter(Boolean).join(' ').trim();
   const year = vehicle.year ? String(vehicle.year) : '';
+  const listingType = vehicle.listing_type || vehicle.listingType || 'sale';
   const image = vehicle.media?.find((item) => item.type === 'image' && item.url)?.url
     || vehicle.media?.find((item) => item.url)?.url
     || null;
@@ -59,10 +71,18 @@ function mapFeaturedToSlide(vehicle: FeaturedVehicleResponse): HeroSlide {
   return {
     id: vehicle.id,
     title: title || 'Veículo em destaque',
-    subtitle: year ? `Ano ${year}` : 'Veículo em destaque na plataforma',
+    subtitle:
+      listingType === 'rental'
+        ? year
+          ? `Locação • Ano ${year}`
+          : 'Locação disponível'
+        : year
+          ? `Venda • Ano ${year}`
+          : 'Veículo em destaque na plataforma',
     imageUrl: image,
     linkUrl: vehicle.slug ? `/veiculo/${vehicle.slug}` : '/veiculos',
-    priceLabel: formatPrice(vehicle.price),
+    priceLabel: formatPriceLabel(vehicle.price, listingType),
+    listingType,
   };
 }
 
@@ -158,7 +178,7 @@ export function HeroBanner() {
   const destaqueButton = (
     <Link href={currentSlide.linkUrl} className="inline-block w-full sm:w-auto">
       <button className="bg-[#FFD91A] hover:bg-[#ffe34d] text-black font-bold py-4 px-8 rounded-full shadow-[0_8px_20px_-6px_rgba(255,217,26,0.5)] transition-all transform hover:scale-105 active:scale-95 text-lg w-full sm:w-auto">
-        Ver Destaque
+        {currentSlide.listingType === 'rental' ? 'Ver Locação' : 'Ver Destaque'}
       </button>
     </Link>
   );
@@ -197,6 +217,12 @@ export function HeroBanner() {
                 className="relative w-full max-w-[min(100%,25.2rem)] animate-fade-in flex flex-col text-left lg:ml-auto"
               >
                 <div className="mb-3 w-full px-0">
+                  <Badge
+                    variant="secondary"
+                    className="mb-2 bg-white/15 text-white border-white/30"
+                  >
+                    {currentSlide.listingType === 'rental' ? 'Locação' : 'Venda'}
+                  </Badge>
                   <h2 className="text-left text-xl sm:text-2xl md:text-3xl font-heading font-bold text-white leading-snug text-balance">
                     {currentSlide.title}
                   </h2>

@@ -98,7 +98,7 @@ export function HomeDealersSection() {
                       <img
                         src={dealer.dealer_logo || dealer.logo_url || ''}
                         alt=""
-                        className="h-full w-full object-cover"
+                        className="h-full w-full rounded-full object-cover"
                         loading="lazy"
                         decoding="async"
                       />

@@ -88,6 +88,24 @@ export function MobileFiltersSheet({ filters, onFilterChange }: MobileFiltersShe
             />
           </div>
 
+          {/* Listing type */}
+          <div>
+            <Label className="text-sm font-medium mb-2 block">Tipo do anúncio</Label>
+            <Select
+              value={filters.listingType || ALL_VALUE}
+              onValueChange={(v) => handleChange('listingType', v)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_VALUE}>Todos</SelectItem>
+                <SelectItem value="sale">Venda</SelectItem>
+                <SelectItem value="rental">Locação</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* State */}
           <div>
             <Label className="text-sm font-medium mb-2 block">Estado</Label>

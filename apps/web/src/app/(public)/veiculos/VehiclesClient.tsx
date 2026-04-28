@@ -42,6 +42,7 @@ function VehiclesContent() {
   const filters: VehicleFilters = useMemo(() => ({
     brand: searchParams.get('brand') || undefined,
     model: searchParams.get('model') || undefined,
+    listingType: (searchParams.get('listingType') || searchParams.get('listing_type') || undefined) as 'sale' | 'rental' | undefined,
     yearMin: searchParams.get('yearMin') ? parseInt(searchParams.get('yearMin')!) : undefined,
     yearMax: searchParams.get('yearMax') ? parseInt(searchParams.get('yearMax')!) : undefined,
     priceMin: searchParams.get('priceMin') ? parseInt(searchParams.get('priceMin')!) : undefined,

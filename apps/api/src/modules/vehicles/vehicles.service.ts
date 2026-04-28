@@ -503,6 +503,16 @@ export class VehiclesService {
       where.city = { contains: city, mode: 'insensitive' };
     }
 
+    const listingTypeParam =
+      query.listingType !== undefined
+        ? String(query.listingType).toLowerCase()
+        : query.listing_type !== undefined
+          ? String(query.listing_type).toLowerCase()
+          : '';
+    if (listingTypeParam === 'sale' || listingTypeParam === 'rental') {
+      where.listing_type = listingTypeParam as any;
+    }
+
     const transmission = query.transmission ? String(query.transmission) : '';
     if (transmission && (Object.values(Transmission) as string[]).includes(transmission)) {
       where.transmission = transmission as Transmission;

@@ -51,6 +51,7 @@ export interface Seller {
 export interface VehicleFilters {
   brand?: string;
   model?: string;
+  listingType?: 'sale' | 'rental';
   yearMin?: number;
   yearMax?: number;
   priceMin?: number;

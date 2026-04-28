@@ -12,6 +12,8 @@ interface VehicleCardProps {
 }
 
 export const VehicleCard = memo(function VehicleCard({ vehicle, className }: VehicleCardProps) {
+  const listingType = vehicle.listing_type || 'sale';
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -98,6 +100,10 @@ export const VehicleCard = memo(function VehicleCard({ vehicle, className }: Veh
         <h3 className="font-heading font-bold text-lg leading-tight mb-1 group-hover:text-primary transition-colors">
           {vehicle.brand} {vehicle.model}
         </h3>
+
+        <Badge variant="secondary" className="mb-2 text-xs">
+          {listingType === 'rental' ? 'Locação' : 'Venda'}
+        </Badge>
         
         {/* Version */}
         <p className="text-sm text-muted-foreground mb-3 line-clamp-1">
@@ -118,6 +124,9 @@ export const VehicleCard = memo(function VehicleCard({ vehicle, className }: Veh
           <span className="font-heading font-bold text-xl gradient-brand-text">
             {formatPrice(vehicle.price)}
           </span>
+          {listingType === 'rental' && (
+            <span className="ml-2 text-xs text-muted-foreground">/ locação</span>
+          )}
         </div>
 
         {/* Location & Views */}
