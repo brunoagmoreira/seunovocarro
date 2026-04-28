@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from 'react';
-import { BarChart3, Calendar, Eye, MessageCircle, Car } from 'lucide-react';
+import { BarChart3, Calendar, Eye, MessageCircle, Car, Download } from 'lucide-react';
 import { fetchApi } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -14,6 +15,7 @@ import {
 
 interface VehicleMetricRow {
   id: string;
+  unique_id?: string;
   brand: string;
   model: string;
   year: number;
@@ -111,6 +113,30 @@ export function MetricsClient() {
     });
   }, [data?.vehicles]);
 
+  const exportVehiclesCsv = () => {
+    if (!vehicles.length) return;
+    const escapeCsv = (value: string | number) => `"${String(value).replace(/"/g, '""')}"`;
+    const rows = [
+      ['ID Único', 'ID Interno', 'Veículo', 'Status', 'Views', 'Cliques WPP'],
+      ...vehicles.map((v) => [
+        v.unique_id || v.id.slice(0, 8).toUpperCase(),
+        v.id,
+        `${v.brand} ${v.model} ${v.year}`,
+        v.status,
+        v.views,
+        v.whatsapp_clicks,
+      ]),
+    ];
+    const csv = rows.map((row) => row.map((cell) => escapeCsv(cell)).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `metricas-veiculos-${period}dias.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (isLoading) {
     return (
       <div className="container py-8 pt-24">
@@ -186,10 +212,22 @@ export function MetricsClient() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <BarChart3 className="h-5 w-5" />
-              Views e cliques por veículo
-            </CardTitle>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <BarChart3 className="h-5 w-5" />
+                Views e cliques por veículo
+              </CardTitle>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={exportVehiclesCsv}
+                disabled={!vehicles.length}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Exportar CSV
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {!vehicles.length ? (
@@ -199,6 +237,7 @@ export function MetricsClient() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border text-muted-foreground">
+                      <th className="py-2 pr-3 text-left font-medium">ID Único</th>
                       <th className="py-2 pr-3 text-left font-medium">Veículo</th>
                       <th className="py-2 pr-3 text-left font-medium">Status</th>
                       <th className="py-2 text-right font-medium">Views</th>
@@ -208,6 +247,7 @@ export function MetricsClient() {
                   <tbody>
                     {vehicles.map((v) => (
                       <tr key={v.id} className="border-b border-border/50">
+                        <td className="py-2 pr-3 font-mono text-xs">{v.unique_id || v.id.slice(0, 8).toUpperCase()}</td>
                         <td className="py-2 pr-3">
                           {v.brand} {v.model} {v.year}
                         </td>

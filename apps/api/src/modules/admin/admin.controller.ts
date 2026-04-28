@@ -148,6 +148,7 @@ export class AdminController {
       billing_enabled?: boolean;
       billing_frequency?: string;
       max_vehicles?: number;
+      max_featured_vehicles?: number;
       xml_enabled?: boolean;
       sdr_enabled?: boolean;
       sdr_whatsapp?: string;
@@ -176,6 +177,7 @@ export class AdminController {
       discount_fixed?: number | null;
       exempt?: boolean;
       trial_ends_on?: string | null;
+      max_featured_vehicles_override?: number | null;
     },
   ) {
     return this.adminService.updateDealerBilling(user, dealerId, body);

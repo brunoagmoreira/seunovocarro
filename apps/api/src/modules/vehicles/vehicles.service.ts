@@ -123,10 +123,26 @@ export class VehiclesService {
     return {
       slug: planSlug,
       maxVehicles: Number(plan?.max_vehicles || 3),
+      maxFeaturedVehicles: Number(
+        features.max_featured_vehicles ??
+          (planSlug === 'dealer-plan-1' ? 0 : planSlug === 'dealer-plan-2' ? 1 : 3),
+      ),
+      maxFeaturedVehiclesOverride:
+        typeof metadata.max_featured_vehicles_override === 'number'
+          ? Number(metadata.max_featured_vehicles_override)
+          : null,
       xmlEnabled: Boolean(features.xml_enabled),
       sdrEnabled: Boolean(features.sdr_enabled),
       sdrWhatsapp: this.normalizeText(features.sdr_whatsapp),
     };
+  }
+
+  private async resolveFeaturedLimitByUserId(userId: string): Promise<number> {
+    const plan = await this.resolveDealerPlanConfigByUserId(userId);
+    if (plan.maxFeaturedVehiclesOverride !== null && plan.maxFeaturedVehiclesOverride !== undefined) {
+      return Math.max(0, Number(plan.maxFeaturedVehiclesOverride) || 0);
+    }
+    return Math.max(0, Number(plan.maxFeaturedVehicles) || 0);
   }
 
   private async applyContactRouting<T extends { user_id: string; whatsapp?: string | null; seller?: any }>(vehicles: T[]) {
@@ -655,6 +671,27 @@ export class VehiclesService {
         'Só é possível destacar anúncios publicados (aprovados). Aprove o veículo antes.',
       );
     }
+    if (featured) {
+      const limit = await this.resolveFeaturedLimitByUserId(vehicle.user_id);
+      if (limit <= 0) {
+        throw new BadRequestException(
+          'Este vendedor/lojista não possui destaque no plano atual.',
+        );
+      }
+      const featuredCount = await this.prisma.vehicle.count({
+        where: {
+          user_id: vehicle.user_id,
+          status: VehicleStatus.approved,
+          featured: true,
+          id: { not: vehicle.id },
+        },
+      });
+      if (featuredCount >= limit) {
+        throw new BadRequestException(
+          `Limite de destaque atingido para este vendedor/lojista (${limit}). Ajuste no Admin > Planos para permitir mais.`,
+        );
+      }
+    }
     return this.prisma.vehicle.update({
       where: { id },
       data: { featured },
@@ -963,6 +1000,7 @@ export class VehiclesService {
       where: { user_id: userId },
       select: {
         id: true,
+        display_id: true,
         brand: true,
         model: true,
         year: true,
@@ -1037,6 +1075,7 @@ export class VehiclesService {
 
     const rows = vehicles.map((v) => ({
       id: v.id,
+      unique_id: v.display_id || v.id.slice(0, 8).toUpperCase(),
       brand: v.brand,
       model: v.model,
       year: v.year,

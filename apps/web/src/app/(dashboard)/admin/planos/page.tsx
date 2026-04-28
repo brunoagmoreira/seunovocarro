@@ -20,6 +20,7 @@ interface DealerPlan {
   billing_enabled: boolean;
   billing_frequency: string;
   max_vehicles: number;
+  max_featured_vehicles: number;
   xml_enabled: boolean;
   sdr_enabled: boolean;
   sdr_whatsapp: string;
@@ -46,6 +47,7 @@ interface DealerItem {
   billing_exempt: boolean;
   billing_trial_ends_on: string | null;
   billing_trial_active: boolean;
+  max_featured_vehicles_override: number | null;
   asaas_customer_id: string | null;
   last_charge?: {
     id: string;
@@ -104,6 +106,7 @@ export default function AdminDealerPlansPage() {
           billing_enabled: plan.billing_enabled,
           billing_frequency: plan.billing_frequency,
           max_vehicles: Number(plan.max_vehicles) || 0,
+          max_featured_vehicles: Number(plan.max_featured_vehicles) || 0,
           xml_enabled: plan.xml_enabled,
           sdr_enabled: plan.sdr_enabled,
           sdr_whatsapp: plan.sdr_whatsapp,
@@ -144,6 +147,7 @@ export default function AdminDealerPlansPage() {
           discount_fixed: dealer.billing_discount_fixed,
           exempt: dealer.billing_exempt,
           trial_ends_on: dealer.billing_trial_ends_on,
+          max_featured_vehicles_override: dealer.max_featured_vehicles_override,
         },
       });
       toast.success('Condição comercial atualizada');
@@ -321,6 +325,13 @@ export default function AdminDealerPlansPage() {
                   onChange={(e) => updatePlanLocal(plan.slug, { max_vehicles: Number(e.target.value) || 0 })}
                 />
               </div>
+              <div className="space-y-2">
+                <Label>Destaques incluídos no plano</Label>
+                <Input type="number" value={plan.max_featured_vehicles} disabled />
+                <p className="text-xs text-muted-foreground">
+                  Regras padrão: Plano 1 = 0, Plano 2 = 1, Plano 3 = 3.
+                </p>
+              </div>
               <div className="flex items-center justify-between">
                 <Label>Importação XML</Label>
                 <Switch
@@ -408,7 +419,7 @@ export default function AdminDealerPlansPage() {
                     </Badge>
                   )}
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
                   <Select value={dealer.plan_slug} onValueChange={(value) => updateDealerPlan(dealer.id, value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um plano" />
@@ -449,6 +460,17 @@ export default function AdminDealerPlansPage() {
                     onChange={(e) =>
                       updateDealerBillingLocal(dealer.id, {
                         billing_discount_fixed: e.target.value === '' ? null : Number(e.target.value),
+                      })
+                    }
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Destaques (override)"
+                    value={dealer.max_featured_vehicles_override ?? ''}
+                    onChange={(e) =>
+                      updateDealerBillingLocal(dealer.id, {
+                        max_featured_vehicles_override:
+                          e.target.value === '' ? null : Math.max(0, Number(e.target.value) || 0),
                       })
                     }
                   />

@@ -30,6 +30,7 @@ export class AdminService {
         name: 'Plano 1',
         price: 0,
         max_vehicles: 3,
+        max_featured_vehicles: 0,
         xml_enabled: false,
         sdr_enabled: false,
         sdr_whatsapp: '',
@@ -39,6 +40,7 @@ export class AdminService {
         name: 'Plano 2',
         price: 199,
         max_vehicles: 999999,
+        max_featured_vehicles: 1,
         xml_enabled: true,
         sdr_enabled: false,
         sdr_whatsapp: '',
@@ -48,6 +50,7 @@ export class AdminService {
         name: 'Plano 3',
         price: 499,
         max_vehicles: 999999,
+        max_featured_vehicles: 3,
         xml_enabled: true,
         sdr_enabled: true,
         sdr_whatsapp: '',
@@ -70,6 +73,7 @@ export class AdminService {
             xml_enabled: plan.xml_enabled,
             sdr_enabled: plan.sdr_enabled,
             sdr_whatsapp: plan.sdr_whatsapp,
+            max_featured_vehicles: plan.max_featured_vehicles,
           } as any,
         },
         update: {
@@ -632,6 +636,7 @@ export class AdminService {
           billing_enabled: features.billing_enabled ?? true,
           billing_frequency: features.billing_frequency || 'monthly',
           max_vehicles: plan.max_vehicles,
+          max_featured_vehicles: Number(features.max_featured_vehicles ?? (plan.slug === 'dealer-plan-1' ? 0 : plan.slug === 'dealer-plan-2' ? 1 : 3)),
           xml_enabled: Boolean(features.xml_enabled),
           sdr_enabled: Boolean(features.sdr_enabled),
           sdr_whatsapp: features.sdr_whatsapp || '',
@@ -653,6 +658,10 @@ export class AdminService {
           billing_exempt: Boolean(billing.exempt),
           billing_trial_ends_on: this.parseTrialEndsOn(billing.trial_ends_on),
           billing_trial_active: this.isBillingTrialActive(billing as Record<string, unknown>),
+          max_featured_vehicles_override:
+            typeof metadata.max_featured_vehicles_override === 'number'
+              ? Number(metadata.max_featured_vehicles_override)
+              : null,
           asaas_customer_id: billing.asaas_customer_id || null,
           last_charge: billing.last_charge || null,
         };
@@ -669,6 +678,7 @@ export class AdminService {
       billing_enabled?: boolean;
       billing_frequency?: string;
       max_vehicles?: number;
+      max_featured_vehicles?: number;
       xml_enabled?: boolean;
       sdr_enabled?: boolean;
       sdr_whatsapp?: string;
@@ -691,6 +701,8 @@ export class AdminService {
         max_vehicles: data.max_vehicles ?? current.max_vehicles,
         features: {
           ...features,
+            max_featured_vehicles:
+              data.max_featured_vehicles ?? features.max_featured_vehicles ?? 0,
           billing_enabled: data.billing_enabled ?? features.billing_enabled ?? true,
           billing_frequency: data.billing_frequency ?? features.billing_frequency ?? 'monthly',
           xml_enabled: data.xml_enabled ?? features.xml_enabled ?? false,
@@ -764,6 +776,7 @@ export class AdminService {
       discount_fixed?: number | null;
       exempt?: boolean;
       trial_ends_on?: string | null;
+      max_featured_vehicles_override?: number | null;
     },
   ) {
     this.checkAdmin(user);
@@ -796,6 +809,10 @@ export class AdminService {
             exempt,
             trial_ends_on: trialEndsOn,
           },
+          max_featured_vehicles_override:
+            data.max_featured_vehicles_override === null || data.max_featured_vehicles_override === undefined
+              ? null
+              : Math.max(0, Number(data.max_featured_vehicles_override) || 0),
         } as any,
       },
       select: { id: true, name: true, slug: true },
