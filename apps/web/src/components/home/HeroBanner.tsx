@@ -69,6 +69,7 @@ function mapFeaturedToSlide(vehicle: FeaturedVehicleResponse): HeroSlide {
 export function HeroBanner() {
   const [slides, setSlides] = useState<HeroSlide[]>([defaultSlide]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [loadError, setLoadError] = useState(false);
   const { data: siteSettings } = useSiteSettings();
 
   const slideIntervalMs = useMemo(() => {
@@ -85,10 +86,27 @@ export function HeroBanner() {
         });
         if (data && data.length > 0) {
           setSlides(data.map(mapFeaturedToSlide));
+          setLoadError(false);
+          return;
         }
       } catch {
-        console.error('Failed to load featured vehicles for hero');
+        // fallback below
       }
+
+      try {
+        const fallback = await fetchApi<FeaturedVehicleResponse[]>('/vehicles', {
+          params: { sort: 'recent', limit: 12 },
+        });
+        if (fallback && fallback.length > 0) {
+          setSlides(fallback.map(mapFeaturedToSlide));
+          setLoadError(false);
+          return;
+        }
+      } catch {
+        console.error('Failed to load hero vehicles from featured and fallback list');
+      }
+
+      setLoadError(true);
     };
     void loadFeaturedVehicles();
   }, []);
@@ -218,9 +236,15 @@ export function HeroBanner() {
             ) : (
               <div className="flex w-full max-w-lg flex-col text-left lg:ml-auto">
                 <div className="aspect-video w-full rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm flex items-center justify-center px-4">
-                  <span className="text-left text-white/30 font-medium text-sm">
-                    Adicione a foto do carro no Admin
-                  </span>
+                  {loadError ? (
+                    <span className="text-left text-white/70 font-medium text-sm">
+                      Nao foi possivel carregar os carros em destaque agora.
+                    </span>
+                  ) : (
+                    <span className="text-left text-white/30 font-medium text-sm">
+                      Adicione a foto do carro no Admin
+                    </span>
+                  )}
                 </div>
                 <div className="mt-4">{destaqueButton}</div>
               </div>
